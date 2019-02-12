@@ -9,3 +9,5 @@ out
 gen
 .idea/
 
+# npm debug
+npm-debug.log
