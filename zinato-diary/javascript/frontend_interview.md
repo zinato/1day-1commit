@@ -16,3 +16,5 @@
 
 5.  [Javascript] 이번 기술 면접 중 기억나는 질문과 답변들 (프론트엔드) - by Jim Kim 님 <br/>
 <https://bit.ly/2kUEpwQ>
+6. [Github] Github으로 포트폴리오 만들기 - by Kyuho Lee 님 <br />
+<https://bit.ly/2UXY5Nr>
