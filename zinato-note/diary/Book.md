@@ -17,7 +17,7 @@
     - Count : 1
 
 - The Art of Computer Programming (기초 알고리즘) 1권 
-    - Page : 
+    - Page : 32
     - Date : 20190520
     - Count : 1  
 * * *
