@@ -17,15 +17,15 @@
     - Count : 1
 
 - The Art of Computer Programming (기초 알고리즘) 1권 
-    - Page : 32
-    - Date : 20190520
+    - Page : 35
+    - Date : 20190609
     - Count : 1  
 * * *
 ### 취미로 읽는 책 
 * * *
 - 모방범 1 
-    -  Page : 240
-    -  Date : 20190605
+    -  Page : 260
+    -  Date : 20190609
 
 - 누워서 읽는 퍼즐북
     - Page : 49
