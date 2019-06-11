@@ -2,8 +2,8 @@
 ### 공부하는 책들을 기록합니다. 
 * * *
 - 다양한 예제로 학습하는 데이터 구조와 알고리즘 for Java
-    - Page : 236
-    - Date : 20190605 
+    - Page : 241
+    - Date : 20190611 
     - Count : 1
 
 - 러닝 자바스크립트 
@@ -17,8 +17,8 @@
     - Count : 1
 
 - The Art of Computer Programming (기초 알고리즘) 1권 
-    - Page : 37
-    - Date : 20190609
+    - Page : 39
+    - Date : 20190611
     - Count : 1  
 * * *
 ### 취미로 읽는 책 
