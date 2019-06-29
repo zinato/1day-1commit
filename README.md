@@ -20,7 +20,8 @@
 ### 1. How to Install 
 * * *
 - npm 모듈 사용 시 
-> npm i 1day-1commit
+
+``` npm i 1day-1commit ```
 
 npm 을 사용할 시 위 명령어로 설치할 수 있습니다. 
 * * *
