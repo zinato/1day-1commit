@@ -1,6 +1,6 @@
 {
   "name": "1day-1commit",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "Just commit every day",
   "main": "index.js",
   "scripts": {
