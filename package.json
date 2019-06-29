@@ -1,0 +1,22 @@
+{
+  "name": "1day-1commit",
+  "version": "1.0.0",
+  "description": "Just commit every day",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zinato/1day-1commit.git"
+  },
+  "keywords": [
+    "commit"
+  ],
+  "author": "hyunil.jang",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/zinato/1day-1commit/issues"
+  },
+  "homepage": "https://github.com/zinato/1day-1commit#readme"
+}
