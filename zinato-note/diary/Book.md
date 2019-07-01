@@ -7,7 +7,7 @@
     - Count : 1
 
 - 러닝 자바스크립트 
-    - Page : 20
+    - Page : 50
     - Date : 20190630
     - Count : 2
 
