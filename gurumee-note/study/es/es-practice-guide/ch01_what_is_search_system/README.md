@@ -94,7 +94,7 @@ $ brew tap AdoptOpenJDK/openjdk
 $ brew install adoptopenjdk-openjdk8
 ```
 
-엘라스틱 스택은 사실 맥의 경우 `Homebrew`로 설치가 가능합니다만, 책을 따라 6.4.3 버전을 설치하도록 하겠습니다.
+엘라스틱 스택은 사실 맥의 경우 `Homebrew`로 설치가 가능합니다만, 책을 따라 수동으로 6.4.3 버전을 설치하도록 하겠습니다.
 
 ### Elasticsearch 설치
 
