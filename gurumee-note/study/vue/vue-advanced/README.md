@@ -15,7 +15,7 @@ Contents
 7. [동적 라우팅](./ch07.md)
 8. [리팩토링 #1 ListItem](./ch08.md)
 9. [리팩토링 #2 UserProfile](./ch09.md)
-10. 리팩토링 #3 Mixins vs HOC
+10. [리팩토링 #3 Mixins vs HOC](./ch10.md)
 11. 리팩토링 #4 데이터 호출과 UX
 12. 리팩토링 #5 async & await API 호출
 13. 외부 라이브러리 모듈화
