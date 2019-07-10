@@ -11,7 +11,7 @@ Contents
 
 #### 기본 용어
 
-![엘라스틱서치 데이터 구조]()
+![엘라스틱서치 데이터 구조](./img/data_structure.png)
 
 ##### Index (인덱스) 
 
