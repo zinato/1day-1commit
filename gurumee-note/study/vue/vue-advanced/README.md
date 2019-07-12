@@ -16,7 +16,7 @@ Contents
 8. [리팩토링 #1 ListItem](./ch08.md)
 9. [리팩토링 #2 UserProfile](./ch09.md)
 10. [리팩토링 #3 Mixins vs HOC](./ch10.md)
-11. 리팩토링 #4 데이터 호출과 UX
+11. [리팩토링 #4 Router Navigation](./ch11.md)
 12. 리팩토링 #5 async & await API 호출
 13. 외부 라이브러리 모듈화
 14. 컴포넌트 디자인 패턴
