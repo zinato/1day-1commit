@@ -17,7 +17,7 @@ Contents
 9. [리팩토링 #2 UserProfile](./ch09.md)
 10. [리팩토링 #3 Mixins vs HOC](./ch10.md)
 11. [리팩토링 #4 Router Navigation](./ch11.md)
-12. 리팩토링 #5 async & await API 호출
-13. 외부 라이브러리 모듈화
-14. 컴포넌트 디자인 패턴
+12. [리팩토링 #5 async & await API 호출](./ch12.md)
+13. [외부 라이브러리 모듈화](./ch13.md)
+14. [컴포넌트 디자인 패턴](./ch14.md)
 15. 서비스 배포
