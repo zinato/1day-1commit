@@ -7,10 +7,13 @@ Contents
 -----------------
 1. 학습 목표
 2. 요구 사항
+3. 목차
+
 
 ## 학습 목표
 
 백기선님의 이번 강좌는 TDD 기반으로 Spring HATEOAS, Spring REST Docs 를 활용하여 Self-Description Message + HATEOAS 한 API 서버를 만드는 것입니다. 
+
 
 ## 요구 사항
 
@@ -22,3 +25,16 @@ Contents
     - Sprint REST Docs
     - Spring Data JPA
     - Spring Security OAuth
+
+
+## 목차
+
+1. [REST API 및 프로젝트 소개](./ch01.md)
+2. [이벤트 생성 API 개발](./ch02.md)
+3. [HATEOAS와 Self-Description Message 적용](./ch03.md)
+4. [이벤트 조회 및 수정 REST API 개발](./ch04.md)
+5. [REST API 보안 적용](./ch05.md)
+
+프로젝트 소스 코드는 다음 URL을 참고하세요. 각 챕터마다 브랜치를 남겨놓았으니 비교해보면서 보시면 훨씬 편할 거에요!
+
+* [소스 코드](https://github.com/gurumee92/keesun-rest-api)
