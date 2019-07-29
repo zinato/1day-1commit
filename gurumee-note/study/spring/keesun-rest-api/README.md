@@ -32,9 +32,10 @@ Contents
 1. [REST API 및 프로젝트 소개](./ch01.md)
 2. [이벤트 생성 API 개발 #1](./ch02_01.md)
 3. [이벤트 생성 API 개발 #2](./ch02_02.md)
-4. [HATEOAS와 Self-Descriptive Message 적용](./ch03.md)
-5. [이벤트 조회 및 수정 REST API 개발](./ch04.md)
-6. [REST API 보안 적용](./ch05.md)
+4. [HATEOAS와 Self-Descriptive Message 적용 #1](./ch03_01.md)
+5. [HATEOAS와 Self-Descriptive Message 적용 #2](./ch03_02.md)
+6. [이벤트 조회 및 수정 REST API 개발](./ch04.md)
+7. [REST API 보안 적용](./ch05.md)
 
 프로젝트 소스 코드는 다음 URL을 참고하세요. 각 챕터마다 브랜치를 남겨놓았으니 비교해보면서 보시면 훨씬 편할 거에요!
 
