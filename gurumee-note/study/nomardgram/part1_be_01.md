@@ -12,7 +12,8 @@ Contents
 4. 가상환경이란 무엇인가?
 5. 쿠키 커터로 프로젝트 빠르게 설치하기
 6. 데이터 베이스 설치하기
-7. 이미지 앱 만들기
+7. 유저 모델 작업하기
+8. 이미지 앱 및 모델들 작업하기
 
 ## 시작하며...
 
@@ -184,5 +185,134 @@ $ python manage.py createsuperuser
 그 후 서버를 킨 후, /admin 으로 들어가 우리가 만든 계정으로 접속해보세요.
 
 
-## 이미지 앱 만들기
+## 유저 모델 작업하기
+
+자 이번에는 유저 모델을 정의합시다. 쿠키 커터로 만들어진 장고 앱은 기본적으로 프로젝트와 동일한 이름의 앱을 하나 가지고 있습니다. 그리고 여기에서 users 앱이 정의되어 있죠. `nomadgram/users/models.py`에 우리가 원하느 User 클래스가 존재합니다.
+
+nomadgram/nomadgram/users/models.py
+```python
+from django.contrib.auth.models import AbstractUser
+from django.db.models import CharField
+from django.urls import reverse
+from django.utils.translation import ugettext_lazy as _
+
+
+class User(AbstractUser):
+
+    # First Name and Last Name do not cover name patterns
+    # around the globe.
+    name = CharField(_("Name of User"), blank=True, max_length=255)
+
+    def get_absolute_url(self):
+        return reverse("users:detail", kwargs={"username": self.username})
+```
+
+여기 `AbstractUser`는 장고에서 기본적으로 제공하는 계정을 관리할 수 있는 클래스입니다. 우리는 이것을 확장해서, 계정 정보를 추가하면 됩니다. 우리가 추가할 것은 website, bio, phone, gender 입니다. username, email 등 기타 정보는 AbstractUser가 갖고 있기 때문에 따로 적으시지 않아도 됩니다. 다음 처럼 수정해주세요.
+
+nomadgram/nomadgram/users/models.py
+```python
+from django.contrib.auth.models import AbstractUser
+from django.db.models import CharField, URLField, TextField
+from django.urls import reverse
+from django.utils.translation import ugettext_lazy as _
+
+
+class User(AbstractUser):
+
+    GENDER_CHOICES = (
+        ('male', 'Male'),
+        ('female', 'Female'),
+        ('not-specified', 'Not specified')
+    )
+
+    # First Name and Last Name do not cover name patterns
+    # around the globe.
+    name = CharField(_("Name of User"), blank=True, max_length=255)
+    # 아래가 추가 코드입니다.
+    website = URLField(null=True)
+    bio = TextField(null=True)
+    phone = CharField(max_length=140, null=True)
+    gender = CharField(max_length=80, choices=GENDER_CHOICES, null=True)
+
+    def get_absolute_url(self):
+        return reverse("users:detail", kwargs={"username": self.username})
+```
+
+각 필드마다 null=True 구문을 쓴 이유는 쿠키커터가 이미 사용자 앱에 대한 정보를 데이터베이스에 기록했기 때문입니다. 만약 우리가 계정에 대한 정보를 저장한 후, 모델을 건드렸을 상황에 대해서 예방차원인 것이지요. 이렇게 하면, 이전에 데이터들까지 마이그레이션할 수 있습니다. 이들 필드가 null 이 될 수 있기 때문이죠. 이제 터미널에 다음을 입력하세요.
+
+
+```bash
+# DB에 필드 정보를 알려줍니다.
+$ python manage.py makemigrations
+
+# 실제 수정된 정보를 데이터베이스에 적용합니다. 이 때 테이블의 구조가 바뀝니다!
+$ python magage.py migrate
+```
+
+
+## 이미지 앱 및 모델들 작업하기
+
+이번에는 이미지 앱을 만들도록 하겠습니다. 터미널에 다음을 입력하세요.
+
+```bash
+$ django-admin startapp images
+```
+
+이제 images 앱을 만들었습니다. 그 후 앱을 프로젝트와 연결하겠습니다. `config/settings/base.py`에서 LOCAL_APPS 를 다음처럼 수정해주세요.
+
+nomadgram/config/settings/base.py
+```python
+# 이전 코드와 동일
+
+LOCAL_APPS = [
+    "nomadgram.users.apps.UsersConfig",
+    # Your stuff: custom apps go here
+    "images",
+]
+# https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
+INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+
+# 이전 코드와 동일
+```
+
+원래 기본적인 장고는 INSTALLED_APPS에 모두 정의하고 우리가 만든 앱도 여기에 둡니다. 그러나 쿠키커터로 만든 장고 앱은 장고 모듈, 서드 파티 모듈, 개발자가 만든 로컬 모듈로 나누어서 모듈들을 연결합니다. 추후에 더해지지만요. 
+
+이제 모델 작업을 해봅시다. 인스타그램에서, 사진을 올리며, 그 사진에 대한 설명을 씁니다. 그리고 우리 친구들은 댓글을 달고 좋아요를 누르지요. 이 때 사진을 업로드하거나 댓글을 달거나 좋아요를 누르거나 모두 시간 정보가 들어가 있습니다. 이들을 차례대로 구현해보겠습니다.
+`images/models.py`에 다음 코드를 넣어주세요.
+
+nomadgram/images/models.py
+```python
+from django.db import models
+
+# Create your models here.
+
+class TimeStampedModel(models.Model):
+    """
+    시간 정보에 대한 Abstract Class입니다. 처음 만들어진 날짜, 수정된 날짜들에 대한 정보를 가집니다.
+    Image, Comment, Like의 기본 클래스가 됩니다.
+    """
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        abstract = True
+
+
+class Image(TimeStampedModel):
+    """
+    인스타그램에서 사진 정보를 저장하는 모델입니다. 사진 경로, 위치, 설명에 대한 정보가 들어갑니다.
+    """
+
+    file = models.ImageField()
+    location = models.CharField(max_length=140)
+    caption = models.TextField()
+
+
+class Comment(TimeStampedModel):
+    """
+    댓글 정보를 저장하는 모델입니다.
+    """
+    message = models.TextField()
+```
+
 
