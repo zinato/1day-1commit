@@ -12,6 +12,7 @@ Contents
 4. 가상환경이란 무엇인가?
 5. 쿠키 커터로 프로젝트 빠르게 설치하기
 6. 데이터 베이스 설치하기
+7. 이미지 앱 만들기
 
 ## 시작하며...
 
@@ -103,3 +104,85 @@ $ pipenv shell
 ```
 
 이제 프로젝트 설치가 끝났습니다. 만약 컴퓨터를 끄거나 가상 환경에서 나갔다면 장고 프로젝트를 구동시키거나 의존성을 설치할 때 반드시 켜야 하는 것을 잊지 마세요. 앞으로 가정할 때 가상 환경이 켜져있다고 가정하겠습니다.
+
+
+## 데이터 베이스 설치하기
+
+자 이제 데이터 베이스 문제를 고쳐보도록 하겠습니다. 먼저, 우리의 문제는 다음과 같습니다.
+
+1. 연결할 PostgreSQL이 없다.
+2. 접속 정보가 없다.
+
+우리는 `PostgreSQL`을 설치해야 하지만 저는 이전에 도커로 한다고 말씀드렸죠? 여기서는 도커, 도커-컴포즈가 설치되어 있다고 가정하겠습니다. 먼저 프로젝트 디렉토리 하단에 `docker-compose.yaml`을 작성하겠습니다.
+
+nomadgram/docker-compose.yaml
+```yaml
+version: '3.6'
+
+services:
+  postgresql:
+    hostname: postgresqldb
+    image: postgres
+    restart: always
+    ports: 
+      - 5432:5432
+    volumes:
+      - postgresql-data:/var/lib/postgresql/data
+      - ./postgresql:/docker-entrypoint-initdb.d
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: nomadgram
+      POSTGRES_INITDB_ARGS: --encoding=UTF-8
+    
+volumes:
+  postgresql-data:
+    name: test-postgresql-data
+```
+
+이것은 단순히 PostgreSQL만을 키는 도커 컴포즈 파일입니다. 원래는 여러 개를 한꺼번에 띄울 때 자주 쓰이지만 저는 docker run 도 귀찮아서 보통 도커 컴포즈로 작업합니다. 굉장히 쉽거든요. 이제 PostgreSQL을 키겠습니다. 터미널에 다음을 입력하세요.
+
+```bash
+$ docker-compose up --build -d
+```
+
+이렇게 하면, 이미지 설치 및 컨테이너를 데몬으로 띄웁니다, 여기서 데몬으로 띄운다는 것은 백그라운드에서 PostgreSQL을 실행한다고 생각하시면 됩니다. 이제 PostgreSQL도 켰으니 우리 앱에 접속 정보를 알려주어야 합니다. `config/settings/base.py`에 DATABASE 설정 값을 다음처럼 수정해주세요.
+
+nomadgram/config/settings/base.py
+```python
+
+# 이전 코드와 동일
+
+DATABASES = {
+    # "default": env.db("DATABASE_URL", default="postgres://localhost:5432/nomadgram")
+    "default": {
+        "ENGINE": 'django.db.backends.postgresql',
+        "NAME": "nomadgram",
+        "USER": "user",
+        "PASSWORD": "password",
+        "HOST": "localhost",
+        "PORT": "5432"
+    }
+}
+DATABASES["default"]["ATOMIC_REQUESTS"] = True
+
+# 이전 코드와 동일
+```
+
+쿠키 커터로 설정하는 방법이 따로 있는 것 같은데, 저는 잘 모르니 일단 기본적인 장고 설정으로 하겠습니다. 잘 보시면, docker-compose.yaml에 설정한 DB값들을 넣은 것을 확인할 수 있습니다. 이제 디비가 잘 돌아가는지 확인해볼까요? 터미널에 다음을 입력하세요.
+
+```bash
+$ python manage.py migrate
+```
+
+위 명령어가 잘 수행되면 설정이 잘 된 것입니다. 그리고 이번 절의 내용과는 상관 없지만 관리자 계정을 생성합시다.
+
+```bash
+$ python manage.py createsuperuser
+```
+
+그 후 서버를 킨 후, /admin 으로 들어가 우리가 만든 계정으로 접속해보세요.
+
+
+## 이미지 앱 만들기
+
