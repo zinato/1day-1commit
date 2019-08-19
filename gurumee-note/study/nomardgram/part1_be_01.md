@@ -14,6 +14,8 @@ Contents
 6. 데이터 베이스 설치하기
 7. 유저 모델 작업하기
 8. 이미지 앱 및 모델들 작업하기
+9. 어드민 패널 작업하기
+10. 마치며...
 
 ## 시작하며...
 
@@ -335,3 +337,113 @@ class Like(TimeStampedModel):
 
 `Comment`, `Like`는 각각 댓글, 좋아요 정보를 표시한 것입니다. 마찬가지로 한 유저는 여러 개의 댓글과 좋아요를 할 수 있습니다. 또한 사진에는 여러 개의 댓글과 좋아요가 남겨질 수 있죠. 하지만 댓글, 좋아요 입장에서 봤을 때, 하나의 유저, 하나의 그림 속에서만 존재합니다. 이들 역시 다대다 관계라는 것이지요. 이들을 표현해 두었습니다.
 
+
+## 어드민 패널 작업하기
+
+장고의 최대 장점 중 하나는 손쉽게 어드민 패널, 관리자 페이지를 꾸밀 수 있다는 것입니다. 먼저 이해를 위하여 쿠키커터가 만든 유저의 admin은 한 번 살펴볼까요? 
+
+nomadgram/nomdgram/users/admin.py
+```python
+from django.contrib import admin
+from django.contrib.auth import admin as auth_admin
+from django.contrib.auth import get_user_model
+
+from nomadgram.users.forms import UserChangeForm, UserCreationForm
+
+User = get_user_model()
+
+
+@admin.register(User)
+class UserAdmin(auth_admin.UserAdmin):
+
+    form = UserChangeForm
+    add_form = UserCreationForm
+    fieldsets = (("User", {"fields": ("name", "followers", 'followings')}),) + auth_admin.UserAdmin.fieldsets
+    list_display = ["username", "name", "is_superuser"]
+    search_fields = ["name"]
+```
+
+장고 프레임워크를 모르시면, 무슨 소린지 잘 모르실 수 있습니다. 차근 찬근 살펴보죠.
+
+`@admin.register(User)`
+
+이 부분은 `데코레이션`이라고 자바의 `애노테이션`과 유사한 역할을 합니다. 쉽게 생각하면, 관리자 페이지에 우리 유저를 등록하는 일을 합니다.
+
+`form = UserChangeForm`
+`add_form = UserCreationForm`
+
+이 부분은 쿠키 커터가 만들어둔 장고 폼 클래스를 가져다 쓰는 것입니다. 각각 유저 정보를 수정, 유저를 추가할 때 쓰이는 폼 클래스들입니다.
+
+`fieldsets = (("User", {"fields": ("name", "followers", 'followings')}),) + auth_admin.UserAdmin.fieldsets`
+
+이 부분은 쉽게 생각해서 수정할 수 있는 필드를 표시해 둔 곳이라고 생각하면 됩니다. 이름, followers, followings를 수정할 수 있는 것이죠.
+
+`list_display = ["username", "name", "is_superuser"]`
+
+관리자 페이지에서 모델을 표시할 때 보이는 필드 목록입니다.
+
+`search_fields = ["name"]`
+
+관리자 페이지에서 모델을 검색할 때 적용할 필드 이름입니다. 이번에는 우리 모델들의 `ModelAdmin`을 적용해 보겠습니다. images의 admin.py에 다음 코드를 입력하세요
+
+nomadgram/images/admin.py
+```python
+from django.contrib import admin
+from .models import Image, Comment, Like
+# Register your models here.
+
+@admin.register(Image)
+class ImageAdmin(admin.ModelAdmin):
+
+    list_display_links = (
+        'location',
+    )
+
+    search_fields = (
+        'location',
+        'caption',
+    )
+
+    list_filter = (
+        'location',
+        'creator',
+    )
+
+    list_display = (
+        'file',
+        'location',
+        'caption',
+        'creator',
+        'created_at',
+        'updated_at'
+    )
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = (
+        'message',
+        'creator',
+        'image',
+        'created_at',
+        'updated_at'
+    )
+
+
+
+@admin.register(Like)
+class LikeAdmin(admin.ModelAdmin):
+    list_display = (
+        'creator',
+        'image',
+        'created_at',
+        'updated_at'
+    )
+```            
+
+우리의 모델들도 이렇게 관리자 페이지에 등록을 해 두었습니다. 각 필드에 대해서는 장고 문서를 보고 필드를 적용하고 관리자 페이지에 적용되는 것을 보면 금방 익힐 수 있을 것입니다.
+
+
+## 마치며..
+
+이렇게 해서 백엔드 파트1이 끝났습니다. 파트2에서는 API 작업을 도와주는 DRF 적용이 주를 이룰 것으로 보입니다. 이상 감사합니다.
