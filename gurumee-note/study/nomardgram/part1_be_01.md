@@ -233,13 +233,16 @@ class User(AbstractUser):
     bio = TextField(null=True)
     phone = CharField(max_length=140, null=True)
     gender = CharField(max_length=80, choices=GENDER_CHOICES, null=True)
+    followers = ManyToManyField("self")
+    following = ManyToManyField("self")
 
     def get_absolute_url(self):
         return reverse("users:detail", kwargs={"username": self.username})
 ```
 
-각 필드마다 null=True 구문을 쓴 이유는 쿠키커터가 이미 사용자 앱에 대한 정보를 데이터베이스에 기록했기 때문입니다. 만약 우리가 계정에 대한 정보를 저장한 후, 모델을 건드렸을 상황에 대해서 예방차원인 것이지요. 이렇게 하면, 이전에 데이터들까지 마이그레이션할 수 있습니다. 이들 필드가 null 이 될 수 있기 때문이죠. 이제 터미널에 다음을 입력하세요.
+followers, following 부분을 유의해서 보세요. 이것은 다대다 관계를 표현한 것입니다. 한 유저는 자신이 팔로우하는 친구들이 있겠죠? 그리고 자신을 팔로우하는 친구들이 있을 겁니다. 이 때 각 유저는 유저들의 목록들을 가질 수 있습니다. 이것이 다대다 관계 `ManyToMany`입니다.
 
+또한 각 필드마다 null=True 구문을 쓴 이유는 쿠키커터가 이미 사용자 앱에 대한 정보를 데이터베이스에 기록했기 때문입니다. 만약 우리가 계정에 대한 정보를 저장한 후, 모델을 건드렸을 상황에 대해서 예방차원인 것이지요. 이렇게 하면, 이전에 데이터들까지 마이그레이션할 수 있습니다. 이들 필드가 null 이 될 수 있기 때문이죠. 이제 터미널에 다음을 입력하세요.
 
 ```bash
 # DB에 필드 정보를 알려줍니다.
@@ -306,6 +309,7 @@ class Image(TimeStampedModel):
     file = models.ImageField()
     location = models.CharField(max_length=140)
     caption = models.TextField()
+    creator = models.ForeignKey(user_models.User, on_delete=models.CASCADE, null=True)
 
 
 class Comment(TimeStampedModel):
@@ -313,6 +317,21 @@ class Comment(TimeStampedModel):
     댓글 정보를 저장하는 모델입니다.
     """
     message = models.TextField()
+    creator = models.ForeignKey(user_models.User, on_delete=models.CASCADE, null=True)
+    image = models.ForeignKey(Image, on_delete=models.CASCADE, null=True)
+
+
+class Like(TimeStampedModel):
+    """
+    사진에 좋아요 정보를 저장하는 모델입니다.
+    """
+    creator = models.ForeignKey(user_models.User, on_delete=models.CASCADE, null=True)
+    image = models.ForeignKey(Image, on_delete=models.CASCADE, null=True)
 ```
 
+`TimeStampedModel`은 생성된 날짜, 수정된 날짜를 자동으로 기록하는 모델입니다. 사진, 좋아요, 댓글들은 모두 생성된 날짜, 수정된 날짜 정보가 들어 있지요. 중복을 제거하기 위해 추상 모델을 정의한 것입니다. 그것을 `Meta` 클래스로 정의한 후 `abstract=True` 값을 주어 선언하였습니다.
+
+`Image`는 사진 정보를 의미합니다. 이미지, 장소, 설명 정보가 있으며, 생성한 유저를 담고 있습니다. 이 때, 한 유저는 여러 개의 사진을 가질 수 있지만, 사진의 소유자는 딱 한 유저뿐입니다. 이를 OneToMany 라고 표현하며, 장고에서는 ForeignKey 로 표현할 수 있습니다.
+
+`Comment`, `Like`는 각각 댓글, 좋아요 정보를 표시한 것입니다. 마찬가지로 한 유저는 여러 개의 댓글과 좋아요를 할 수 있습니다. 또한 사진에는 여러 개의 댓글과 좋아요가 남겨질 수 있죠. 하지만 댓글, 좋아요 입장에서 봤을 때, 하나의 유저, 하나의 그림 속에서만 존재합니다. 이들 역시 다대다 관계라는 것이지요. 이들을 표현해 두었습니다.
 
