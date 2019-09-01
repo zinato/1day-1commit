@@ -1,4 +1,4 @@
-BE #1 프로젝트 세팅
+BE #1 프로젝트 세팅과 장고
 ================
 
 > "노마드 코더"에서 제공하는 인스타그램 클론 코딩 강의를 따라하며, 배운 것들을 정리한 문서입니다.
@@ -14,6 +14,8 @@ Contents
 6. 데이터 베이스 설치하기
 7. 유저 모델 작업하기
 8. 이미지 앱 및 모델들 작업하기
+9. 어드민 패널 작업하기
+10. 마치며...
 
 ## 시작하며...
 
@@ -233,13 +235,16 @@ class User(AbstractUser):
     bio = TextField(null=True)
     phone = CharField(max_length=140, null=True)
     gender = CharField(max_length=80, choices=GENDER_CHOICES, null=True)
+    followers = ManyToManyField("self")
+    following = ManyToManyField("self")
 
     def get_absolute_url(self):
         return reverse("users:detail", kwargs={"username": self.username})
 ```
 
-각 필드마다 null=True 구문을 쓴 이유는 쿠키커터가 이미 사용자 앱에 대한 정보를 데이터베이스에 기록했기 때문입니다. 만약 우리가 계정에 대한 정보를 저장한 후, 모델을 건드렸을 상황에 대해서 예방차원인 것이지요. 이렇게 하면, 이전에 데이터들까지 마이그레이션할 수 있습니다. 이들 필드가 null 이 될 수 있기 때문이죠. 이제 터미널에 다음을 입력하세요.
+followers, following 부분을 유의해서 보세요. 이것은 다대다 관계를 표현한 것입니다. 한 유저는 자신이 팔로우하는 친구들이 있겠죠? 그리고 자신을 팔로우하는 친구들이 있을 겁니다. 이 때 각 유저는 유저들의 목록들을 가질 수 있습니다. 이것이 다대다 관계 `ManyToMany`입니다.
 
+또한 각 필드마다 null=True 구문을 쓴 이유는 쿠키커터가 이미 사용자 앱에 대한 정보를 데이터베이스에 기록했기 때문입니다. 만약 우리가 계정에 대한 정보를 저장한 후, 모델을 건드렸을 상황에 대해서 예방차원인 것이지요. 이렇게 하면, 이전에 데이터들까지 마이그레이션할 수 있습니다. 이들 필드가 null 이 될 수 있기 때문이죠. 이제 터미널에 다음을 입력하세요.
 
 ```bash
 # DB에 필드 정보를 알려줍니다.
@@ -306,6 +311,7 @@ class Image(TimeStampedModel):
     file = models.ImageField()
     location = models.CharField(max_length=140)
     caption = models.TextField()
+    creator = models.ForeignKey(user_models.User, on_delete=models.CASCADE, null=True)
 
 
 class Comment(TimeStampedModel):
@@ -313,6 +319,131 @@ class Comment(TimeStampedModel):
     댓글 정보를 저장하는 모델입니다.
     """
     message = models.TextField()
+    creator = models.ForeignKey(user_models.User, on_delete=models.CASCADE, null=True)
+    image = models.ForeignKey(Image, on_delete=models.CASCADE, null=True)
+
+
+class Like(TimeStampedModel):
+    """
+    사진에 좋아요 정보를 저장하는 모델입니다.
+    """
+    creator = models.ForeignKey(user_models.User, on_delete=models.CASCADE, null=True)
+    image = models.ForeignKey(Image, on_delete=models.CASCADE, null=True)
 ```
 
+`TimeStampedModel`은 생성된 날짜, 수정된 날짜를 자동으로 기록하는 모델입니다. 사진, 좋아요, 댓글들은 모두 생성된 날짜, 수정된 날짜 정보가 들어 있지요. 중복을 제거하기 위해 추상 모델을 정의한 것입니다. 그것을 `Meta` 클래스로 정의한 후 `abstract=True` 값을 주어 선언하였습니다.
 
+`Image`는 사진 정보를 의미합니다. 이미지, 장소, 설명 정보가 있으며, 생성한 유저를 담고 있습니다. 이 때, 한 유저는 여러 개의 사진을 가질 수 있지만, 사진의 소유자는 딱 한 유저뿐입니다. 이를 OneToMany 라고 표현하며, 장고에서는 ForeignKey 로 표현할 수 있습니다.
+
+`Comment`, `Like`는 각각 댓글, 좋아요 정보를 표시한 것입니다. 마찬가지로 한 유저는 여러 개의 댓글과 좋아요를 할 수 있습니다. 또한 사진에는 여러 개의 댓글과 좋아요가 남겨질 수 있죠. 하지만 댓글, 좋아요 입장에서 봤을 때, 하나의 유저, 하나의 그림 속에서만 존재합니다. 이들 역시 다대다 관계라는 것이지요. 이들을 표현해 두었습니다.
+
+
+## 어드민 패널 작업하기
+
+장고의 최대 장점 중 하나는 손쉽게 어드민 패널, 관리자 페이지를 꾸밀 수 있다는 것입니다. 먼저 이해를 위하여 쿠키커터가 만든 유저의 admin은 한 번 살펴볼까요? 
+
+nomadgram/nomdgram/users/admin.py
+```python
+from django.contrib import admin
+from django.contrib.auth import admin as auth_admin
+from django.contrib.auth import get_user_model
+
+from nomadgram.users.forms import UserChangeForm, UserCreationForm
+
+User = get_user_model()
+
+
+@admin.register(User)
+class UserAdmin(auth_admin.UserAdmin):
+
+    form = UserChangeForm
+    add_form = UserCreationForm
+    fieldsets = (("User", {"fields": ("name", "followers", 'followings')}),) + auth_admin.UserAdmin.fieldsets
+    list_display = ["username", "name", "is_superuser"]
+    search_fields = ["name"]
+```
+
+장고 프레임워크를 모르시면, 무슨 소린지 잘 모르실 수 있습니다. 차근 찬근 살펴보죠.
+
+`@admin.register(User)`
+
+이 부분은 `데코레이션`이라고 자바의 `애노테이션`과 유사한 역할을 합니다. 쉽게 생각하면, 관리자 페이지에 우리 유저를 등록하는 일을 합니다.
+
+`form = UserChangeForm`
+`add_form = UserCreationForm`
+
+이 부분은 쿠키 커터가 만들어둔 장고 폼 클래스를 가져다 쓰는 것입니다. 각각 유저 정보를 수정, 유저를 추가할 때 쓰이는 폼 클래스들입니다.
+
+`fieldsets = (("User", {"fields": ("name", "followers", 'followings')}),) + auth_admin.UserAdmin.fieldsets`
+
+이 부분은 쉽게 생각해서 수정할 수 있는 필드를 표시해 둔 곳이라고 생각하면 됩니다. 이름, followers, followings를 수정할 수 있는 것이죠.
+
+`list_display = ["username", "name", "is_superuser"]`
+
+관리자 페이지에서 모델을 표시할 때 보이는 필드 목록입니다.
+
+`search_fields = ["name"]`
+
+관리자 페이지에서 모델을 검색할 때 적용할 필드 이름입니다. 이번에는 우리 모델들의 `ModelAdmin`을 적용해 보겠습니다. images의 admin.py에 다음 코드를 입력하세요
+
+nomadgram/images/admin.py
+```python
+from django.contrib import admin
+from .models import Image, Comment, Like
+# Register your models here.
+
+@admin.register(Image)
+class ImageAdmin(admin.ModelAdmin):
+
+    list_display_links = (
+        'location',
+    )
+
+    search_fields = (
+        'location',
+        'caption',
+    )
+
+    list_filter = (
+        'location',
+        'creator',
+    )
+
+    list_display = (
+        'file',
+        'location',
+        'caption',
+        'creator',
+        'created_at',
+        'updated_at'
+    )
+
+
+@admin.register(Comment)
+class CommentAdmin(admin.ModelAdmin):
+    list_display = (
+        'message',
+        'creator',
+        'image',
+        'created_at',
+        'updated_at'
+    )
+
+
+
+@admin.register(Like)
+class LikeAdmin(admin.ModelAdmin):
+    list_display = (
+        'creator',
+        'image',
+        'created_at',
+        'updated_at'
+    )
+```            
+
+우리의 모델들도 이렇게 관리자 페이지에 등록을 해 두었습니다. 각 필드에 대해서는 장고 문서를 보고 필드를 적용하고 관리자 페이지에 적용되는 것을 보면 금방 익힐 수 있을 것입니다.
+
+
+## 마치며..
+
+이렇게 해서 백엔드 파트1이 끝났습니다. 파트2에서는 API 작업을 도와주는 DRF 적용이 주를 이룰 것으로 보입니다. 이상 감사합니다.
