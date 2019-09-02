@@ -1,6 +1,8 @@
-1. [자료구조와 알고리즘의 이해](https://gurumee92.tistory.com/121)
-2. [재귀](https://gurumee92.tistory.com/122)
-3. [자료구조 리스트](https://gurumee92.tistory.com/123)
+## 자료구조
+
+01. [자료구조와 알고리즘의 이해](https://gurumee92.tistory.com/121)
+02. [재귀](https://gurumee92.tistory.com/122)
+03. [자료구조 리스트](https://gurumee92.tistory.com/123)
 04. 배열 리스트 구현
 05. 연결 리스트 구현
 06. 이중 연결 리스트 구현
@@ -26,3 +28,13 @@
 26. 해쉬 테이블 구현
 27. 자료구조 그래프
 28. 그래프 구현과 응용
+
+## 알고리즘
+
+## 데이터베이스
+
+## 네트워크
+
+## 컴퓨터 구조
+
+## 운영체제
