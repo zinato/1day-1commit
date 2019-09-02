@@ -1,5 +1,5 @@
 1. [자료구조와 알고리즘의 이해](https://gurumee92.tistory.com/121)
-2. 재귀
+2. [재귀](https://gurumee92.tistory.com/122)
 3. 자료구조 리스트
 4. 연결 리스트 구현
 5. 원형 연결 리스트 구현
