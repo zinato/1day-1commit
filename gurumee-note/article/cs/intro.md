@@ -4,7 +4,7 @@
 02. [재귀](https://gurumee92.tistory.com/122)
 03. [자료구조 리스트](https://gurumee92.tistory.com/123)
 04. [배열 리스트 구현](https://gurumee92.tistory.com/124)
-05. 연결 리스트 구현
+05. [연결 리스트 구현](https://gurumee92.tistory.com/125)
 06. 이중 연결 리스트 구현
 07. 자료구조 스택
 08. 스택 구현
