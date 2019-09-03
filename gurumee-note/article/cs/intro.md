@@ -3,7 +3,7 @@
 01. [자료구조와 알고리즘의 이해](https://gurumee92.tistory.com/121)
 02. [재귀](https://gurumee92.tistory.com/122)
 03. [자료구조 리스트](https://gurumee92.tistory.com/123)
-04. 배열 리스트 구현
+04. [배열 리스트 구현](https://gurumee92.tistory.com/124)
 05. 연결 리스트 구현
 06. 이중 연결 리스트 구현
 07. 자료구조 스택
