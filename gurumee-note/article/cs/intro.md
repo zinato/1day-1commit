@@ -7,7 +7,7 @@
 05. [연결 리스트 구현](https://gurumee92.tistory.com/125)
 06. [이중 연결 리스트 구현](https://gurumee92.tistory.com/126)
 07. [자료구조 스택과 구현](https://gurumee92.tistory.com/127)
-08. 스택 응용
+08. [스택 응용 - 계산기](https://gurumee92.tistory.com/128)
 09. 자료구조 큐와 구현
 10. 큐 응용
 11. 자료구조 트리와 구현
