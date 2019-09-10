@@ -10,7 +10,7 @@
 08. [스택 응용 - 계산기](https://gurumee92.tistory.com/128)
 09. [자료구조 큐와 구현](https://gurumee92.tistory.com/129)
 10. [자료구조 이진 트리와 구현](https://gurumee92.tistory.com/130)
-11. 이진 트리 응용 - 수식 트리
+11. [이진 트리 응용 - 수식 트리](https://gurumee92.tistory.com/131)
 12. 자료구조 우선순위 큐와 구현
 13. 정렬
 14. 자료구조 이진 탐색 트리와 구현
