@@ -13,7 +13,7 @@
 11. [이진 트리 응용 - 수식 트리](https://gurumee92.tistory.com/131)
 12. [자료구조 우선순위 큐와 구현](https://gurumee92.tistory.com/132)
 13. [정렬 알고리즘 1부 버블 정렬](https://gurumee92.tistory.com/133)
-14. 정렬 알고리즘 2부 선택 정렬
+14. [정렬 알고리즘 2부 선택 정렬](https://gurumee92.tistory.com/134)
 15. 정렬 알고리즘 3부 삽입 정렬
 16. 정렬 알고리즘 4부 힙 정렬
 17. 정렬 알고리즘 5부 병합 정렬
