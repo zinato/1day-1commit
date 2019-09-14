@@ -15,8 +15,8 @@
 13. [정렬 알고리즘 1부 버블 정렬](https://gurumee92.tistory.com/133)
 14. [정렬 알고리즘 2부 선택 정렬](https://gurumee92.tistory.com/134)
 15. [정렬 알고리즘 3부 삽입 정렬](https://gurumee92.tistory.com/135)
-16. 정렬 알고리즘 4부 힙 정렬
-17. 정렬 알고리즘 5부 병합 정렬
+16. [정렬 알고리즘 4부 힙 정렬](https://gurumee92.tistory.com/136)
+17. [정렬 알고리즘 5부 병합 정렬](https://gurumee92.tistory.com/137)
 18. 정렬 알고리즘 6부 퀵 정렬
 19. 정렬 알고리즘 7부 기수 정렬과 정리
 20. 자료구조 이진 탐색 트리와 구현
