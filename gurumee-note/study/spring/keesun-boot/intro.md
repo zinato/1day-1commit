@@ -9,7 +9,7 @@ Contents
 3. [스프링 부트 원리 2부 내장 웹 서버](./ch03.md)
 4. [스프링 부트 활용 1부 Spring Boot 핵심 기능](./ch04.md)
 5. [스프링 부트 활용 2부 Spring MVC](./ch05.md)
-6. 스프링 부트 활용 3부 Spring Data
+6. [스프링 부트 활용 3부 Spring Data](./ch06.md)
 7. 스프링 부트 활용 4부 Spring Security
 8. 스프링 부트 활용 5부 그 외.. 
 9. 스프링 부트 운영
