@@ -10,7 +10,7 @@ Contents
 4. [스프링 부트 활용 1부 Spring Boot 핵심 기능](./ch04.md)
 5. [스프링 부트 활용 2부 Spring MVC](./ch05.md)
 6. [스프링 부트 활용 3부 Spring Data](./ch06.md)
-7. 스프링 부트 활용 4부 Spring Security
+7. [스프링 부트 활용 4부 Spring Security](./ch07.md)
 8. 스프링 부트 활용 5부 그 외.. 
 9. 스프링 부트 운영
 
