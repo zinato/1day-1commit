@@ -21,7 +21,7 @@
 19. [정렬 알고리즘 7부 기수 정렬](https://gurumee92.tistory.com/139)
 20. [자료구조 이진 탐색 트리와 구현](https://gurumee92.tistory.com/140)
 21. 자료구조 AVL 트리와 구현
-22. [자료구조 해쉬 테이블과 구현](https://gurumee92.tistory.com/141)
+22. [자료구조 해쉬 테이블과 구현](https://gurumee92.tistory.com/142)
 23. 자료구조 그래프와 구현
 24. 그래프 응용 1부 깊이 우선 탐색(DFS)
 25. 그래프 응용 2부 너비 우선 탐색(BFS)
