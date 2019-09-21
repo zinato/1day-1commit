@@ -24,7 +24,7 @@
 22. [자료구조 해쉬 테이블과 구현](https://gurumee92.tistory.com/142)
 23. [자료구조 그래프와 구현](https://gurumee92.tistory.com/143)
 24. [그래프 응용 1부 DFS와 BFS](https://gurumee92.tistory.com/144)
-25. 그래프 응용 2부 최소 신장 트리(MST)와 크루스칼 알고리즘
+25. [그래프 응용 2부 최소 신장 트리(MST)와 크루스칼 알고리즘](https://gurumee92.tistory.com/145)
 
 ## 알고리즘
 
