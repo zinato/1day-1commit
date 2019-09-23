@@ -20,7 +20,7 @@
 18. [정렬 알고리즘 6부 퀵 정렬](https://gurumee92.tistory.com/138)
 19. [정렬 알고리즘 7부 기수 정렬](https://gurumee92.tistory.com/139)
 20. [자료구조 이진 탐색 트리와 구현](https://gurumee92.tistory.com/140)
-21. 자료구조 AVL 트리와 구현
+21. [자료구조 AVL 트리와 구현](https://gurumee92.tistory.com/146)
 22. [자료구조 해쉬 테이블과 구현](https://gurumee92.tistory.com/142)
 23. [자료구조 그래프와 구현](https://gurumee92.tistory.com/143)
 24. [그래프 응용 1부 DFS와 BFS](https://gurumee92.tistory.com/144)
