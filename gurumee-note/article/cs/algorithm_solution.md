@@ -3,7 +3,7 @@
 ## 알고리즘 문제 해결 전략(알고스팟)
 
 1. [PICNIC](https://gurumee92.tistory.com/147)
-2. BOARDCOVER
+2. [BOARDCOVER](https://gurumee92.tistory.com/148)
 3. CLOCKSYNC
 4. QUADTREE
 5. FENCE
