@@ -77,6 +77,7 @@
 73. PROJECTS
 74. BISHOPS
 75. TRAPCARD
+76. [BOGGLE](https://gurumee92.tistory.com/149)
 
 ## 프로그래머스 고득점 kit
 
