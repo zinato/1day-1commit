@@ -4,7 +4,7 @@
 
 1. [PICNIC](https://gurumee92.tistory.com/147)
 2. [BOARDCOVER](https://gurumee92.tistory.com/148)
-3. CLOCKSYNC
+3. [CLOCKSYNC](https://gurumee92.tistory.com/150)
 4. QUADTREE
 5. FENCE
 6. FANMEETING
