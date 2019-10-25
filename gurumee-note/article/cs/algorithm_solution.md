@@ -6,7 +6,7 @@
 2. [BOARDCOVER](https://gurumee92.tistory.com/148)
 3. [CLOCKSYNC](https://gurumee92.tistory.com/150)
 4. [QUADTREE](https://gurumee92.tistory.com/153)
-5. FENCE
+5. [FENCE](https://gurumee92.tistory.com/154)
 6. FANMEETING
 7. WILDCARD
 8. JLIS
