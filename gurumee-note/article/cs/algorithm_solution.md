@@ -3,10 +3,10 @@
 ## 알고리즘 문제 해결 전략(알고스팟)
 
 1. [PICNIC](https://gurumee92.tistory.com/147)
-2. BOARDCOVER
-3. CLOCKSYNC
-4. QUADTREE
-5. FENCE
+2. [BOARDCOVER](https://gurumee92.tistory.com/148)
+3. [CLOCKSYNC](https://gurumee92.tistory.com/150)
+4. [QUADTREE](https://gurumee92.tistory.com/153)
+5. [FENCE](https://gurumee92.tistory.com/154)
 6. FANMEETING
 7. WILDCARD
 8. JLIS
@@ -77,6 +77,7 @@
 73. PROJECTS
 74. BISHOPS
 75. TRAPCARD
+76. [BOGGLE](https://gurumee92.tistory.com/149)
 
 ## 프로그래머스 고득점 kit
 
