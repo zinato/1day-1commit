@@ -86,7 +86,7 @@
 3. [위장](https://gurumee92.tistory.com/158)
 4. [베스트 앨범](https://gurumee92.tistory.com/159)
 5. 프린터
-6. 탑
+6. [탑](https://gurumee92.tistory.com/166)
 7. 다리를 지나는 트럭
 8. 기능개발
 9. 쇠막대기
