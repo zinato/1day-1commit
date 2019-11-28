@@ -87,7 +87,7 @@
 4. [베스트 앨범](https://gurumee92.tistory.com/159)
 5. [프린터](https://gurumee92.tistory.com/167)
 6. [탑](https://gurumee92.tistory.com/166)
-7. 다리를 지나는 트럭
+7. [다리를 지나는 트럭](https://gurumee92.tistory.com/168)
 8. 기능개발
 9. 쇠막대기
 10. 주식가격
