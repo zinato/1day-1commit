@@ -90,7 +90,7 @@
 7. [다리를 지나는 트럭](https://gurumee92.tistory.com/168)
 8. [기능개발](https://gurumee92.tistory.com/169)
 9. 쇠막대기
-10. 주식가격
+10. [주식가격](https://gurumee92.tistory.com/170)
 11. [더 맵게](https://gurumee92.tistory.com/163)
 12. 라면공장
 13. 디스크 컨트롤러
