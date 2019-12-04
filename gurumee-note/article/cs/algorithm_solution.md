@@ -93,7 +93,7 @@
 10. [주식가격](https://gurumee92.tistory.com/170)
 11. [더 맵게](https://gurumee92.tistory.com/163)
 12. [라면공장](https://gurumee92.tistory.com/172)
-13. 디스크 컨트롤러
+13. [디스크 컨트롤러](https://gurumee92.tistory.com/173)
 14. 이중우선순위큐
 15. k번째 수
 16. [가장 큰 수](https://gurumee92.tistory.com/161)
