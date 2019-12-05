@@ -81,35 +81,35 @@
 
 ## 프로그래머스 고득점 kit
 
-1. 완주하지 못한 선수
-2. 전화번호 목록
-3. 위장
-4. 베스트 앨범
-5. 프린터
-6. 탑
-7. 다리를 지나는 트럭
-8. 기능개발
-9. 쇠막대기
-10. 주식가격
-11. 더 맵게
-12. 라면공장
-13. 디스크 컨트롤러
+1. [완주하지 못한 선수](https://gurumee92.tistory.com/156)
+2. [전화번호 목록](https://gurumee92.tistory.com/157)
+3. [위장](https://gurumee92.tistory.com/158)
+4. [베스트 앨범](https://gurumee92.tistory.com/159)
+5. [프린터](https://gurumee92.tistory.com/167)
+6. [탑](https://gurumee92.tistory.com/166)
+7. [다리를 지나는 트럭](https://gurumee92.tistory.com/168)
+8. [기능개발](https://gurumee92.tistory.com/169)
+9. [쇠막대기](https://gurumee92.tistory.com/171)
+10. [주식가격](https://gurumee92.tistory.com/170)
+11. [더 맵게](https://gurumee92.tistory.com/163)
+12. [라면공장](https://gurumee92.tistory.com/172)
+13. [디스크 컨트롤러](https://gurumee92.tistory.com/173)
 14. 이중우선순위큐
 15. k번째 수
-16. 가장 큰 수
+16. [가장 큰 수](https://gurumee92.tistory.com/161)
 17. H-Index
 18. 모의고사
 19. 소수 찾기
 20. 숫자 야구
 21. 카펫
-22. 체육복
+22. [체육복](https://gurumee92.tistory.com/160)
 23. 조이스틱
-24. 큰 수 만들기
+24. [큰 수 만들기](https://gurumee92.tistory.com/162)
 25. 구명보트
 26. 단속카메라
 27. 섬 연결하기
 28. 저울
-29. N으로 표현
+29. [N으로 표현](https://gurumee92.tistory.com/164)
 30. 타일 장식물
 31. 정수 삼각형
 32. 등굣길
@@ -119,7 +119,7 @@
 36. 타겟 넘버
 37. 네트워크
 38. 단어 변환
-39. 여행경로
+39. [여행경로](https://gurumee92.tistory.com/165)
 40. 예산
 41. 입국심사
 42. 징검다리
