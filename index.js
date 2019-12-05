@@ -1,1 +1,1 @@
-//Just Commit Every Day.
+//Just Commit Every Thing
