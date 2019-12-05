@@ -1,7 +1,7 @@
 {
   "name": "1day-1commit",
   "version": "0.0.1",
-  "description": "Just commit every day",
+  "description": "Just commit every thing",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
