@@ -95,7 +95,7 @@
 12. [라면공장](https://gurumee92.tistory.com/172)
 13. [디스크 컨트롤러](https://gurumee92.tistory.com/173)
 14. [이중우선순위큐](https://gurumee92.tistory.com/174)
-15. k번째 수
+15. [k번째 수](https://gurumee92.tistory.com/175)
 16. [가장 큰 수](https://gurumee92.tistory.com/161)
 17. H-Index
 18. 모의고사
