@@ -99,7 +99,7 @@
 16. [가장 큰 수](https://gurumee92.tistory.com/161)
 17. [H-Index](https://gurumee92.tistory.com/177)
 18. [모의고사](https://gurumee92.tistory.com/178)
-19. 소수 찾기
+19. [소수 찾기](https://gurumee92.tistory.com/179)
 20. 숫자 야구
 21. 카펫
 22. [체육복](https://gurumee92.tistory.com/160)
