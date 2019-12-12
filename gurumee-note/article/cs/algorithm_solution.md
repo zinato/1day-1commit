@@ -101,7 +101,7 @@
 18. [모의고사](https://gurumee92.tistory.com/178)
 19. [소수 찾기](https://gurumee92.tistory.com/179)
 20. [숫자 야구](https://gurumee92.tistory.com/180)
-21. 카펫
+21. [카펫](https://gurumee92.tistory.com/181)
 22. [체육복](https://gurumee92.tistory.com/160)
 23. 조이스틱
 24. [큰 수 만들기](https://gurumee92.tistory.com/162)
