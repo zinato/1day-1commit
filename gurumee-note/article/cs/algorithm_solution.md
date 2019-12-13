@@ -94,14 +94,14 @@
 11. [더 맵게](https://gurumee92.tistory.com/163)
 12. [라면공장](https://gurumee92.tistory.com/172)
 13. [디스크 컨트롤러](https://gurumee92.tistory.com/173)
-14. 이중우선순위큐
-15. k번째 수
+14. [이중우선순위큐](https://gurumee92.tistory.com/174)
+15. [k번째 수](https://gurumee92.tistory.com/175)
 16. [가장 큰 수](https://gurumee92.tistory.com/161)
-17. H-Index
-18. 모의고사
-19. 소수 찾기
-20. 숫자 야구
-21. 카펫
+17. [H-Index](https://gurumee92.tistory.com/177)
+18. [모의고사](https://gurumee92.tistory.com/178)
+19. [소수 찾기](https://gurumee92.tistory.com/179)
+20. [숫자 야구](https://gurumee92.tistory.com/180)
+21. [카펫](https://gurumee92.tistory.com/181)
 22. [체육복](https://gurumee92.tistory.com/160)
 23. 조이스틱
 24. [큰 수 만들기](https://gurumee92.tistory.com/162)
