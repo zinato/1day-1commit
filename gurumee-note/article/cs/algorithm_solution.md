@@ -103,9 +103,9 @@
 20. [숫자 야구](https://gurumee92.tistory.com/180)
 21. [카펫](https://gurumee92.tistory.com/181)
 22. [체육복](https://gurumee92.tistory.com/160)
-23. 조이스틱
+23. [조이스틱](https://gurumee92.tistory.com/182)
 24. [큰 수 만들기](https://gurumee92.tistory.com/162)
-25. 구명보트
+25. [구명보트](https://gurumee92.tistory.com/183)
 26. 단속카메라
 27. 섬 연결하기
 28. 저울
