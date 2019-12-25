@@ -1,4 +1,4 @@
-#타입스크립트를 정리한 블로그
+# 타입스크립트를 정리한 블로그
 
 1. [TypeScript] 기초 문법 - Basic Type \
 <https://blog.naver.com/zinato/220408968544>
