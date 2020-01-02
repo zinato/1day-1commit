@@ -5,3 +5,6 @@
 
 2. Clean Architecture - (2) 함수형 프로그래밍 \
 <https://bit.ly/363hS3M>
+
+3. Clean Architecture - (3) 설계원칙 - SRP (단일 책임 원칙) \
+<https://bit.ly/39xXWZ6>
