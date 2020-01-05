@@ -106,9 +106,9 @@
 23. [조이스틱](https://gurumee92.tistory.com/182)
 24. [큰 수 만들기](https://gurumee92.tistory.com/162)
 25. [구명보트](https://gurumee92.tistory.com/183)
-26. 단속카메라
+26. [단속카메라](https://gurumee92.tistory.com/184)
 27. 섬 연결하기
-28. 저울
+28. [저울](https://gurumee92.tistory.com/185)
 29. [N으로 표현](https://gurumee92.tistory.com/164)
 30. 타일 장식물
 31. 정수 삼각형
