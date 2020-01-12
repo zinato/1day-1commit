@@ -8,3 +8,6 @@
 
 3. Clean Architecture - (3) 설계원칙 - SRP (단일 책임 원칙) \
 <https://bit.ly/39xXWZ6>
+
+4. Clean Architecture - (4) 설계원칙 - OCP (개방 폐쇄 원칙), LSP (리스코프 치환 원칙) \
+<https://bit.ly/35L0v71>
