@@ -1,6 +1,9 @@
 
 # 2019.08 ~ 10 
 - Bitberry와 GCP Endpoint를 활용한 Wallet API 개발
+  - 자바 8
+  - GCP Cloud Endpoint 
+  - Bitberry Wallet Integration API
 
 # 2020.01 ~ 02
 - Github Action을 통해 CI/CD 사내 적용을 위한 작업 수행
