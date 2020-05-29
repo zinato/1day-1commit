@@ -15,3 +15,11 @@
 - 테스트 코드 구현 (로컬, 테스트 서버)
 - 실제 Xpeare 서비스를 위한 토큰 및 루니버스 API를 통한 자체 Asset API 설계 / DB 설계
 - 보안 가이드 라인 설계
+
+# Xp-soultion-Asset API - Proxy Server 구축
+
+- 2020.05 ~ 06
+- Java8, GCP AppEngine, GCP Compute Engine, JUnit, Luniverse API, nodejs proxy server opensource
+- 루니버스 API 를 사용한 블록체인 토큰 지급을 위한 API 개발
+- GCP AppEngine은 고정 IP를 제공하지 않아 Compute Engine을 활용하여 Proxy Server를 구축하여 루니버스의
+WhiteIP 등록하여 연결
