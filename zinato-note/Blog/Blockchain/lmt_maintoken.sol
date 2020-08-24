@@ -116,6 +116,10 @@ contract MainToken is LinearMintableToken {
     return super.decreaseAllowance(_spender, _subtractedValue);
   }
 
+  /*
+  approveAndCall approve 와 transferFrom이 동시에 호출, transaction 이 한번만 발생. transferFrom이 호출 되기 위해서는
+  approve가 승인된 spende이여야함. burnFrom도 마찬가지 
+  */
   function approveAndCall(address _spender, uint256 _value, bytes _extraData) onlyUnlocked whenNotPaused
   public returns
   (bool success) {
