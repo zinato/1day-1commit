@@ -142,7 +142,30 @@ $ git submodule add https://github.com/kakawait/hugo-tranquilpeak-theme.git them
     ├─ ...
 ```
 
-여기서 `blog/themes/hugo-tranquilpeak-theme/exampleSite/config.toml`을 복사해서 `blog/config.toml`에 옮겨 놓자. 그 후 자신에게 맞게 커스텀하면 된다. 이제 터미널에 다음을 입력해보자.
+여기서 `blog/themes/hugo-tranquilpeak-theme/exampleSite/config.toml`을 복사해서 `blog/config.toml`에 옮겨 놓자. 그 후 자신에게 맞게 커스텀하면 된다. 제일 중요한 것은 다음을 바꿔줘야 한다는 것이다. 
+
+blog/config.toml
+```toml
+# ...
+# 여기가 바뀌어야 합니다.
+# https://<username>.github.io/
+baseURL = "https://gurumee92.github.io/"
+
+# ...
+languageCode = "en-us"
+defaultContentLanguage = "en-us"
+title = "Gurumee92's Devlog"
+theme = "hugo-tranquilpeak-theme"
+disqusShortname = "hugo-tranquilpeak-theme"
+# googleAnalytics = "UA-123-45"
+paginate = 7
+canonifyurls = true
+
+[permalinks]
+  post = "/:year/:month/:slug/"
+```
+
+이제 터미널에 다음을 입력해보자.
 
 ```bash
 # 로컬 서버 실행
@@ -173,7 +196,79 @@ Press Ctrl+C to stop
 ![로컬 띄어놓은 화면](./02.png)
 
 
-## Git 레포지토리 연결 및 배포 자동화
+## Git 레포지토리 연결 및 쉘 스크립트 작성
+
+터미널에 다음을 입력한다. `blog`에 `Github Repository blog`, `blog/public`에 `Github Repositroy <username>.github.io`를 연결한다.
+
+```bash
+# 현재 위치 확인
+$ pwd
+/Users/gurumee/Workspaces/blog
+
+# blog -> blog 레포지토리 연결
+# git remote add origin http://github.com/<username>/blog.git
+$ git remote add origin http://github.com/gurumee92/blog.git
+
+# blog/public -> <username>.github.io 연결
+# git submodule add -b master http://github.com/<username>/<username>.github.io.git public
+$ git submodule add -b master http://github.com/gurumee92/gurumee92.github.io.git public
+```
+
+이제 배포를 보다 쉽게 하기 위해서 쉘 스크립트를 작성한다. `blog` 프로젝트 루트 디렉토리에, `deploy.sh`를 만들고 다음을 입력한다.
+
+blog/deploy.sh
+```bash
+#!/bin/bash
+
+echo -e "\033[0;32mDeploying updates to GitHub...\033[0m"
+
+# Build the project.
+# hugo -t <여러분의 테마>
+hugo -t hugo-tranquilpeak-theme
+
+# Go To Public folder, sub module commit
+cd public
+# Add changes to git.
+git add .
+
+# Commit changes.
+msg="rebuilding site `date`"
+if [ $# -eq 1 ]
+  then msg="$1"
+fi
+git commit -m "$msg"
+
+# Push source and build repos.
+git push origin master
+
+# Come Back up to the Project Root
+cd ..
+
+
+# blog 저장소 Commit & Push
+git add .
+
+msg="rebuilding site `date`"
+if [ $# -eq 1 ]
+  then msg="$1"
+fi
+git commit -m "$msg"
+
+git push origin master
+```
+
+그 후, 터미널에 다음을 입력한다.
+
+```bash
+# deploy.sh 실행 파일 권한 부여
+$ chmod 777 deploy.sh
+
+# 배포 실행
+$ ./deploy.sh
+```
+
+조금 이따가 `https://<username>.github.io`를 접속하면, 블로그가 뜬 것을 확인할 수 있다.
+
 
 ## 포스트 작성하기
 
