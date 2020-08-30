@@ -6,7 +6,7 @@
 
 ## 목차
 
-1.  [들어가기](./01-introduction/01-introduction.md.md)
+1.  [들어가기](./01-introduction/01-introduction.md)
 2.  [객체 생성과 파괴](02-object-commont-method/02-object-create-destroy.md)
 3.  [모든 객체의 공통 메서드](./03-object-common-method/03-object-common-method.md)
 4.  [클래스와 인터페이스](./04-class-and-interface/04-class-and-interface.md)
