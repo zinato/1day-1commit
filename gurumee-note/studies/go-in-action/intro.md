@@ -7,7 +7,7 @@
 ## 목차
 
 1.  [Go와의 첫 만남](./01-first-meeting-with-go/01-first-meeting-with-go.md)
-2.  [Go 간단히 살펴보기]()
+2.  [Go 간단히 살펴보기](./02-go-simple-tour/02-go-simple-tour.md)
 3.  [패키징과 내장 도구들]()
 4.  [배열, 슬라이스, 맵]()
 5.  [Go의 타입 시스템]()
