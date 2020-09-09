@@ -126,6 +126,67 @@ public class Period {
 
 ## 다중정의는 신중히 사용하라
 
+다음 처럼 다중 정의를 해보자.
+
+```java
+public class CollectionClassifier {
+    public static String classify(Set<?> s) {
+        return "집합";
+    }
+
+    public static String classify(List<?> l) {
+        return "리스트";
+    }
+
+    public static String classify(Collection<?> c) {
+        return "콜렉션";
+    }
+}
+```
+
+그 후 다음 테스트 코드를 작성해보자.
+
+```java
+class Item52Test {
+    @Test
+    @DisplayName("다중 정의 테스트")
+    public void test01(){
+        Collection<?>[] collections = {
+                new HashSet<String>(),
+                new ArrayList<BigInteger>(),
+                new HashMap<String, Integer>().values()
+        };
+
+        List<String> list = Arrays.stream(collections)
+                .map(CollectionClassifier::classify)
+                .collect(Collectors.toList());
+
+        // 집합 1개
+        assertEquals(1, list.stream().filter("집합"::equalsIgnoreCase).count());
+        // 리스트 1개
+        assertEquals(1, list.stream().filter("리스트"::equalsIgnoreCase).count());
+        // 컬렉션 1개
+        assertEquals(1, list.stream().filter("콜렉션"::equalsIgnoreCase).count());
+    }
+}
+```
+
+이 테스트는 통과할까? 실패한다. 세 `classify` 메서드 중 어느 메서드를 호출할지가 컴파일 타임에 정해지기 때문이다. 런타임에는 타입이 매번 달라지지만, 메서드를 선택하는 데 영향을 주진 못한다. 우리가 이렇게 헷갈리는 이유는 **재정의한 메서드는 동적으로 선택되고, 다중정의한 메서드는 동적으로 선택되기 때문이다.**
+
+이 문제를 어떻게 해결할 수 있을까? `classify`를 하나로 합치는 방법이 있다. 이렇게 말이다.
+
+```java
+public class CollectionClassifier {
+    public static String classify(Collection<?> c) {
+        return c instanceof Set ? "집합" : c instanceof List ? "리스트" : "콜렉션";
+    }
+}
+```
+
+실제 테스트를 돌려보면 통돠하는 것을 알 수 있다. 책에서는 다음의 사항들을 권장하고 있다.
+
+* 안전하고 보수적으로 가려면 매개변수 수가 같은 다중 정의는 만들지 말자
+* 다중정의하는 대신 메서드 이름을 다르게 지어주는 길도 있음을 알자
 
 
 ## 가변인수는 신중히 사용하라
