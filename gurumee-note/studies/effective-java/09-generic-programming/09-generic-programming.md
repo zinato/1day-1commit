@@ -45,7 +45,70 @@ for (Element e: elements) {
 
 ## 정확한 답이 필요하다면 float와 double은 피하라
 
-`float`, `double`은 근사치로 계산하도록 설계되었다. "정확"과는 거리가 있다는 것이다. 금융 계산처럼 정확한 계산이 필요할 땐, `BigDecimal`, `int`, `long`을 사용해라. 
+`float`, `double`은 근사치로 계산하도록 설계되었다. "정확"과는 거리가 있다는 것이다. 다음 코드를 보자.
+
+```java
+@Test
+@DisplayName("실수로 테스트")
+public void test01() {
+    double funds = 1.00;
+    int itemsBought = 0;
+
+    for (double price = 0.10; funds >= price; price += 0.10) {
+        funds -= price;
+        itemsBought++;
+    }
+
+    assertNotEquals(4, itemsBought);
+    assertNotEquals(0, funds);
+}
+```
+
+원래 의도라면, 4개를 구입하고 0원이 남아야 하지만, 실제로는 3개, 0.399999원이 남아있다. 금융 계산처럼 정확한 계산이 필요할 땐, `BigDecimal`, `int`, `long`을 사용해라. 먼저 위의 코드를 `BigDecimal`로 바꾼 코드이다.
+
+```java
+@Test
+@DisplayName("BigDecimal로 테스트")
+public void test02() {
+    final BigDecimal TEN_CENTS = new BigDecimal(".10");
+    BigDecimal funds = new BigDecimal("1.00");
+    int itemsBought = 0;
+
+    for (BigDecimal price = TEN_CENTS; funds.compareTo(price) >= 0; price = price.add(TEN_CENTS)) {
+        funds = funds.subtract(price);
+        itemsBought++;
+    }
+
+    assertEquals(4, itemsBought);
+    assertEquals(0, funds.intValue());
+}
+```
+
+정확한 결과가 나온다. 그러나 `BigDecimal`의 단점은 다음 2가지가 있다.
+
+1) 기본 타입에 비해 사용하기 어렵다.
+2) 느리다.
+
+이번엔 기본 타입으로 계산하기 위해서 단위를 달러에서 센트로 바꾼 코드이다.
+
+```java
+@Test
+@DisplayName("정수 테스트")
+public void test03() {
+    int funds = 100;
+    int itemsBought = 0;
+
+    for (int price = 10; funds >= price; price += 10) {
+        funds -= price;
+        itemsBought++;
+    }
+
+    assertEquals(4, itemsBought);
+    assertEquals(0, funds);
+}
+```
+
+역시 테스트 결과는 정상적으로 나온다. 그러나 기본 타입은 거대한 실수를 표현할 때 계산이 쪼금 복잡하다. 책에서는 아홉자리는 `int`, 18자리는 `long` 그 이후 자릿 수는 `BigDecimal`을 쓸 것을 권고하고 있다.
 
 
 ## 박싱된 기본 타입보다는 기본 타입을 사용하라
