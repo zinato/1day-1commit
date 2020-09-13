@@ -218,4 +218,20 @@ public void test01() {
 
 ## 일반적으로 통용되는 명명 규칙을 따르라
 
+명명 규칙은 `자바 언어 명세`에 기술되어 있다. 어지간하면, 이들을 반드시 따르는 것이 좋다. 책에 나온 몇 가지 규칙을 기술한다.
 
+1. 객체를 생성할 수 있는 클래스는 단수 명사 혹은 명사구를 사용한다.
+    ex) Thread, PriorityQueue, CessPiece
+2. 객체를 생성할 수 없는 클래스는 보통 복수형 명사를 사용한다.
+    ex) Collectors, Collections
+3. 인터페이스는, 클래스와 동일 혹은 `able`, `ible`로 끝나는 형용사로 짓는다.
+    ex) Runnable, Iterable
+4. 어떤 동작을 수행하는 메서드는 동사, 동사구로 짓는다.
+    ex) append, drawImage
+5. boolean은 is 혹은 has로 하는 것이 좋다.
+    ex) isDigit, hasSiblings
+6. 객체 타입을 바꿔서 혹은 다른 타입의 또 다른 객체를 반환하는 인스턴스 메서드는 toTYPE 형태로 짓는다.
+    ex) toString, toArray
+7. 정적 패토리는 이 중에서 고르자.
+    ex) from, of, valueOf, instance, getInstance, newInstance, getType, newType
+    
