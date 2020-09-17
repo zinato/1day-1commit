@@ -162,6 +162,196 @@ a b c d e f g h i j k l m n o p q r s t u v w x y z
 
 ## 경쟁 상태와 락 기법
 
+이런 동시성 처리를 할 때 주의할 점이 있다. 스레드끼리는 자원을 공유하기 때문에, 일종의 `경쟁 상태(Race Condition)`라고 불리우는 골치 아픈 문제가 발생한다. 아래 예제를 보자.
+
+```go
+package main
+
+import (
+	"fmt"
+	"runtime"
+	"sync"
+)
+
+var (
+	counter int
+	wg      sync.WaitGroup
+)
+
+func intCounter(id int) {
+	defer wg.Done()
+
+	for count := 0; count < 2; count++ {
+		value := counter
+		runtime.Gosched()
+		value++
+		counter = value
+	}
+}
+
+func main() {
+	wg.Add(2)
+
+	go intCounter(1)
+	go intCounter(2)
+
+	wg.Wait()
+	fmt.Println("Result: ", counter)
+}
+```
+
+쉽게 설명하면, 고루틴 2개가 번갈아가면서 실행되면서 `counter`의 값을 각각 2번씩 반복하면서 1씩 증가시키는 프로그램이다. 그런데 코드를 실행해보면 결과는 2가 나올 때가 있다. (4, 2 중 하나가 나온다.) 
+
+![경쟁 상태](./05.png)
+
+위의 그림은 앞선 예제에서 `counter`가 고루틴 2개에 의해서 덮어 씌어지는 것을 보여준다. 
+
+`Go`는 `go run` 혹은 `go build` 명령 시에 이런 경쟁 상태를 트레이싱할 수 있는 옵션을 제공한다. `-race`를 붙이면 된다.
+
+```bash
+# go run -race 파일
+$ go run -race example.go
+==================
+WARNING: DATA RACE
+Read at 0x00000127f540 by goroutine 8:
+  main.intCounter()
+      /Users/gurumee/Studies/go-in-action/ch06/example_06_02_race_condition.go:18 +0x79
+
+Previous write at 0x00000127f540 by goroutine 7:
+  main.intCounter()
+      /Users/gurumee/Studies/go-in-action/ch06/example_06_02_race_condition.go:21 +0x9a
+
+Goroutine 8 (running) created at:
+  main.main()
+      /Users/gurumee/Studies/go-in-action/ch06/example_06_02_race_condition.go:29 +0x89
+
+Goroutine 7 (finished) created at:
+  main.main()
+      /Users/gurumee/Studies/go-in-action/ch06/example_06_02_race_condition.go:28 +0x68
+==================
+Result:  4
+Found 1 data race(s)
+exit status 66
+```
+
+실제 실행 시 레이스 컨디션을 트레이싱 하게 해보았다. 예상대로 `intCounter` 함수에서 레이싱 컨디션이 발생할 수 있다고 경로를 띄우고 있다.
+
+이런 해결책으로 "공유 자원 기법(Lock 기법)"이라는 방법이 있다. 먼저 `atomic`을 사용하는 것이다. 다음 코드를 보자.
+
+```go
+package main
+
+import (
+	"fmt"
+	"runtime"
+	"sync"
+	"sync/atomic"
+)
+
+var (
+	counter int64
+	wg      sync.WaitGroup
+)
+
+func intCounter(id int) {
+	defer wg.Done()
+
+	for count := 0; count < 2; count++ {
+		atomic.AddInt64(&counter, 1)
+		runtime.Gosched()
+	}
+}
+
+func main() {
+	wg.Add(2)
+
+	go intCounter(1)
+	go intCounter(2)
+
+	wg.Wait()
+	fmt.Println("Result: ", counter)
+}
+```
+
+`atomic`은 정수 및 포인터에 대한 접근을 동기화할 수 있는 저수준의 잠금 매커니즘을 제공한다.
+
+위 코드처럼 경쟁 상태에 놓여 있는 변수에 일종의 락을 걸어서 연산이 끝난 후 락을 해제한다. 그래서 경쟁 상태를 발생하지 않게 한다. 실제 위의 파일을 `-race` 옵션으로 실행해주면 해당 경고들이 사라짐을 볼 수 있다.
+
+```bash
+go run -race example.go
+Result:  4
+```
+
+다른 잠금 기법은 `뮤텍스`를 활용하는 것이다. 이는 `상호 배타(mutual exclusion` 개념을 추상화한 것이다. 어떤 임계 지역을 생성하여 이 지역에는 하나의 고루틴만 통과할 수 있게 만들어두는 것이다. 코드를 보자.
+
+```go
+package main
+
+import (
+	"fmt"
+	"runtime"
+	"sync"
+)
+
+var (
+	counter int64
+	wg      sync.WaitGroup
+	mutex   sync.Mutex
+)
+
+func intCounter(id int) {
+	defer wg.Done()
+
+	for count := 0; count < 2; count++ {
+		mutex.Lock()
+		{
+			value := counter
+			runtime.Gosched()
+			value++
+			counter = value
+		}
+		mutex.Unlock()
+	}
+}
+
+func main() {
+	wg.Add(2)
+
+	go intCounter(1)
+	go intCounter(2)
+
+	wg.Wait()
+	fmt.Println("Result: ", counter)
+}
+```
+
+`intCounter`를 자세히 보자.
+
+
+```go
+func intCounter(id int) {
+	defer wg.Done()
+
+	for count := 0; count < 2; count++ {
+        // 임계 부분 시작 점
+		mutex.Lock()
+		{
+			value := counter
+			runtime.Gosched()
+			value++
+			counter = value
+        }
+        // 임계 부분 끝 점
+		mutex.Unlock()
+	}
+}
+```
+
+`mutex.Lock` 이후 부터는 임계 지역에 들어간다. `mutex.Unlock` 호출 이후 임계 지역이 풀린다. 물론 이런 방법들이 훌륭하긴 하지만 여전히 어렵다. 
+
+잠금 기법의 경우, 잠금을 적절히 해제하지 않으면 "데드락"이라는 심각한 문제를 초래하게 된다. 그래서 조심 또 조심해서 코딩을 해야 한다.
+
+
 ## 채널
 
 버퍼가 없는 채널
