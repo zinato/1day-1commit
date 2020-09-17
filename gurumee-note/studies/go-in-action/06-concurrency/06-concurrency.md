@@ -44,6 +44,120 @@
 
 ## 고루틴
 
+`고루틴`은 일종의 경량 스레드이다. 쓰는 방법은 쉽다. 함수 호출 앞에 `go` 라는 키워드만 붙이면 된다.
+
+다음 예제를 보자.
+
+```go
+package main
+
+import (
+	"fmt"
+	"runtime"
+	"sync"
+	"time"
+)
+
+func main() {
+	// 스케줄러가 사용할 하나의 논리 프로세스 할당
+	runtime.GOMAXPROCS(1)
+
+	// wg는 프로그램 종료를 대기하기 위해 사용
+	// 고루틴 개수만큼 더해준다.
+	var wg sync.WaitGroup
+	wg.Add(2)
+
+	fmt.Println("고루틴 시작!")
+
+	go func() {
+		// main 함수에 종료를 알리기 위해 Done 함수 호출
+		defer wg.Done()
+
+		// 소문자를 3번 출력한다.
+		for count := 0; count < 3; count++ {
+			time.Sleep(3 * time.Second)
+			for char := 'a'; char < 'a'+26; char++ {
+				fmt.Printf("%c ", char)
+			}
+			fmt.Println()
+		}
+	}()
+
+	go func() {
+		// main 함수에 종료를 알리기 위해 Done 함수 호출
+		defer wg.Done()
+
+		// 대문자를 3번 출력한다.
+		for count := 0; count < 3; count++ {
+			time.Sleep(3 * time.Second)
+			for char := 'A'; char < 'A'+26; char++ {
+				fmt.Printf("%c ", char)
+			}
+			fmt.Println()
+		}
+	}()
+
+	fmt.Println("고루틴 대기 중")
+	wg.Wait()
+
+	fmt.Println("고루틴 끝~!")
+}
+```
+
+한 코드 한 코드 뜯어서 보자.
+
+```go
+runtime.GOMAXPROCS(1)
+```
+
+위 코드는 주석에도 적혀져 있지만, 논리 프로세스의 개수를 조절하는 것이다. 따라서 이 프로그램이 실행되면 단 하나의 논리 프로세스가 할당된다.
+
+```go
+var wg sync.WaitGroup
+wg.Add(2)
+
+fmt.Println("고루틴 시작!")
+// ...
+
+
+fmt.Println("고루틴 대기 중")
+wg.Wait()
+
+fmt.Println("고루틴 끝~!")
+```
+
+`WaitGroup`은 "카운팅 세마포어"라는 방식으로 고루틴이 종료될 때까지 메인 스레드가 유지되게끔 한다. 고루틴의 개수만큼 `WaitGroup`에 추가해주어야 하며, `Wait`를 호출해야 설정한 개수만큼 고루틴이 끝날 때까지 대기한다. 
+
+```go
+// ...
+go func() {
+		// main 함수에 종료를 알리기 위해 Done 함수 호출
+    defer wg.Done()
+
+    // 소문자를 3번 출력한다.
+    for count := 0; count < 3; count++ {
+        time.Sleep(3 * time.Second)
+        for char := 'a'; char < 'a'+26; char++ {
+            fmt.Printf("%c ", char)
+        }
+        fmt.Println()
+    }
+}()
+// ...
+```
+
+`defer`를 사용해서 고루틴이 종료 시에 `WaitGroup.Done`을 호출하여 고루틴이 끝났음을 알린다. 이는 익명 함수로써 소문자를 3번 출력하고 끝이 난다. 아래 익명함수는 대문자를 출력하고 끝이난다.
+
+프로그램을 실행해보면, 3초마다 대문자/소문자 출력이 무작위로 출력되는 것을 볼 수 있다.
+
+```
+A B C D E F G H I J K L M N O P Q R S T U V W X Y Z 
+a b c d e f g h i j k l m n o p q r s t u v w x y z 
+a b c d e f g h i j k l m n o p q r s t u v w x y z 
+A B C D E F G H I J K L M N O P Q R S T U V W X Y Z 
+A B C D E F G H I J K L M N O P Q R S T U V W X Y Z 
+a b c d e f g h i j k l m n o p q r s t u v w x y z 
+```
 
 
 ## 경쟁 상태와 락 기법
