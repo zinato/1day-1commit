@@ -148,15 +148,18 @@ go func() {
 
 `defer`를 사용해서 고루틴이 종료 시에 `WaitGroup.Done`을 호출하여 고루틴이 끝났음을 알린다. 이는 익명 함수로써 소문자를 3번 출력하고 끝이 난다. 아래 익명함수는 대문자를 출력하고 끝이난다.
 
-프로그램을 실행해보면, 3초마다 대문자/소문자 출력이 무작위로 출력되는 것을 볼 수 있다.
+프로그램을 실행해보면, 3초마다 대문자/소문자 출력이 무작위로 출력되는 것을 볼 수 있다. 다음은 내 로컬 머신에서 프로그램을 실행시킨 결과이다.
 
 ```
+고루틴 시작!
+고루틴 대기 중
+a b c d e f g h i j k l m n o p q r s t u v w x y z 
+A B C D E F G H I J K L M N O P Q R S T U V W X Y Z 
 A B C D E F G H I J K L M N O P Q R S T U V W X Y Z 
 a b c d e f g h i j k l m n o p q r s t u v w x y z 
 a b c d e f g h i j k l m n o p q r s t u v w x y z 
 A B C D E F G H I J K L M N O P Q R S T U V W X Y Z 
-A B C D E F G H I J K L M N O P Q R S T U V W X Y Z 
-a b c d e f g h i j k l m n o p q r s t u v w x y z 
+고루틴 끝~!
 ```
 
 
@@ -200,11 +203,11 @@ func main() {
 }
 ```
 
-쉽게 설명하면, 고루틴 2개가 번갈아가면서 실행되면서 `counter`의 값을 각각 2번씩 반복하면서 1씩 증가시키는 프로그램이다. 그런데 코드를 실행해보면 결과는 2가 나올 때가 있다. (4, 2 중 하나가 나온다.) 
+쉽게 설명하면, 고루틴 2개가 번갈아가면서 실행되면서 `counter`의 값을 각각 2번씩 반복하면서 1씩 증가시키는 프로그램이다. 그런데 코드를 실행해보면 결과는 4 혹은 2가 나온다. 4가 나올 때가 정상 결과이며, 2가 나올 때는 "경쟁 상태"에 걸려 에러가 난 것이다.
 
 ![경쟁 상태](./05.png)
 
-위의 그림은 앞선 예제에서 `counter`가 고루틴 2개에 의해서 덮어 씌어지는 것을 보여준다. 
+위의 그림은 앞선 예제에서 `counter`가 고루틴 2개에 의해서 덮어 씌어지는 것을 보여준다. (이것이 바로 "경쟁 상태"이다.)
 
 `Go`는 `go run` 혹은 `go build` 명령 시에 이런 경쟁 상태를 트레이싱할 수 있는 옵션을 제공한다. `-race`를 붙이면 된다.
 
@@ -354,6 +357,291 @@ func intCounter(id int) {
 
 ## 채널
 
-버퍼가 없는 채널
+잠금 기법은 동기화 문제에서 제일 골치 아픈 "경쟁 상태"를 훌륭하게 해결한다. 하지만. `Go`의 전체적인 방향인, 쉽고 오류가 적으며 재미있는 프로그래밍으로 보기에는 다소 무리가 있다.
 
-버퍼가 있는 채널
+"채널"이란 기능은 고루틴 사이의 동기화를 지원하는 또 다른 방식 중 하나이다. 채널은 다음과 같이 `make(chan <Type>, <버퍼 개수>)`로 만들 수 있다.
+
+```go
+// 버퍼의 크기가 정해지지 않은 정수 채널
+unbuffered := make(chan int)
+
+// 버퍼의 크기가 정해진 정수 채널
+buffered := make(chan int, 10)
+```
+
+채널에 값을 보내려면 `<-` 연산자를 호출하면 된다. `채널 <- 값` 형태이다.
+
+```go
+unbuffered := make(chan int)
+unbuffered <- 5
+```
+
+채널에서 값을 꺼내려면, 반대로 `변수 <- 채널` 형태로 연산자를 호출하면 된다.
+
+```go
+value := <- unbuffered
+```
+
+### 버퍼가 없는 채널 vs 버퍼가 있는 채널
+
+**버퍼가 없는 채널**은 값을 전달 받기 전에 어떤 값을 얼마나 보유할 수 있을지 크기가 결정되지 않은 채널이다. 
+
+![버퍼가 없는 채널](./06.png)
+
+버퍼가 없는 채널은, 위의 그림처럼 채널에 값을 보내거나 받기 전에 값을 전달하는 고루틴과 전달 받는 고루틴이 같은 시점에 채널을 사용할 수 있어야 한다.
+
+예제를 살펴보자.
+
+```go
+package main
+
+import (
+	"fmt"
+	"math/rand"
+	"sync"
+	"time"
+)
+
+var wg sync.WaitGroup
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
+
+func main() {
+	// 버퍼 없는 채널 생성
+	court := make(chan int)
+	// 고루틴 당 하나씩 총 2개의 카운터
+	wg.Add(2)
+
+	go player("나딜", court)
+	go player("죠코비치", court)
+
+	court <- 1
+	wg.Wait()
+}
+
+func player(name string, court chan int) {
+	defer wg.Done()
+
+	for {
+		ball, ok := <-court
+
+		if !ok {
+			fmt.Printf("%s 선수가 승리했습니다.\n", name)
+			return
+		}
+
+		n := rand.Intn(100)
+
+		if n%13 == 0 {
+			fmt.Printf("%s 선수가 공을 받아치지 못했습니다.\n", name)
+			//채널을 닫는다.
+			close(court)
+			return
+		}
+
+		fmt.Printf("%s 선수가 %d 번째 공을 받아쳤습니다.\n", name, ball)
+		ball++
+
+		court <- ball
+	}
+}
+```
+
+차례 차례 살펴보자.
+
+```go
+func main() {
+	// 버퍼 없는 채널 생성
+	court := make(chan int)
+	// 고루틴 당 하나씩 총 2개의 카운터
+	wg.Add(2)
+
+	// 고루틴들 준비 상태 완료
+	go player("나딜", court)
+	go player("죠코비치", court)
+
+	// 게임 시작! 채널도 송수신 준비 완료
+	court <- 1
+	wg.Wait()
+}
+```
+
+먼저, 두 고루틴 사이에서 공을 쳐낸 횟수를 교환하기 위해서, 버퍼가 없는 채널을 생성하였다. 
+
+또한 두 고루틴이 끝날때까지 대기하기 위해 카운터 2를 `WaitGroup`에 추가한다. 
+
+이제 `player` 함수를 고루틴에 실어내고 그리고 채널 `court`에 1을 전송하여 게임을 시작한다.
+
+이후, `player`에서 패배가 결정날 때까지 이 작업이 반복된다.
+
+```go
+func player(name string, court chan int) {
+	defer wg.Done()
+
+	for {
+		ball, ok := <-court
+
+		if !ok {
+			fmt.Printf("%s 선수가 승리했습니다.\n", name)
+			return
+		}
+
+		n := rand.Intn(100)
+
+		if n%13 == 0 {
+			fmt.Printf("%s 선수가 공을 받아치지 못했습니다.\n", name)
+			//채널을 닫는다.
+			close(court)
+			return
+		}
+
+		fmt.Printf("%s 선수가 %d 번째 공을 받아쳤습니다.\n", name, ball)
+		ball++
+
+		court <- ball
+	}
+}
+```
+
+`player` 함수는 무한 반복을 돌면서, 채널 `court`가 더 이상 수신 받는 `ball`이 없으면 이기는 것으로 끝을 낸다. 
+
+또한, 100개의 무작위 수를 뽑아서 13으로 나누었을 때 나머지가 없다면 패배한 것으로 끝을 낸다. 이때 채널을 닫아버림으로써, 더 이상 `ball`을 전송하지 않는다. 
+
+승리/패배가 결정이 나지 않는다면, `ball`을 1 올린 후 채널 `court`에 전송한다.
+
+
+**버퍼가 있는 채널**은 고루틴이 값을 받아가기 전까지 채널에 보관할 수 있는 값의 개수를 지정할 수 있다. 
+
+![버퍼가 있는 채널](./07.png)
+
+위의 그림은, 버퍼가 있는 채널이 송수신하는 모습을 보여준다. 이 채널은 송수신 과정이 반드시 동시에 이루어질 필요는 없다. 
+
+여기서 중요한 것은 잠금이 실행되는 방법의 차이가 있는데, 일단 데이터를 받는 작업에서 잠금은 채널 내에 받아갈 값이 없을 때 일어난다. 
+
+데이터를 보내는 작업에서 잠금은 버퍼가 가득 차서 더 이상 값을 보관할 수 없을 때 일어난다. **버퍼가 없는 채널은 데이터를 송수신이 동시에 이루어지지만 버퍼가 있는 채널은 동시에 일어남을 보장하지 않는다는 것**이다.
+
+다음 예제를 살펴보자.
+
+```go
+package main
+
+import (
+	"fmt"
+	"math/rand"
+	"sync"
+	"time"
+)
+
+const (
+	numberOfGorouines = 4
+	taskLoad          = 10
+)
+
+var wg sync.WaitGroup
+
+func init() {
+	rand.Seed(time.Now().Unix())
+}
+
+func main() {
+	// 채널생성, 10개의 값을 보관 가능
+	tasks := make(chan string, taskLoad)
+	// 4개의 고루틴이 실행됨
+	wg.Add(numberOfGorouines)
+
+	// 4개의 고루틴 실행
+	for gr := 1; gr <= numberOfGorouines; gr++ {
+		go worker(tasks, gr)
+	}
+
+	// 10개의 작업을 채널에 송신
+	for post := 1; post <= taskLoad; post++ {
+		tasks <- fmt.Sprintf("작업: %d", post)
+	}
+
+	close(tasks)
+	wg.Wait()
+}
+
+func worker(tasks chan string, worker int) {
+	defer wg.Done()
+
+	for {
+		// 채널에서 값을 꺼냄.
+		task, ok := <-tasks
+
+		// 채널이 닫혔다면, 고루틴 종료
+		if !ok {
+			fmt.Printf("작업자 :%d : 종료합니다.\n", worker)
+			return
+		}
+
+		// 작업 실행
+		fmt.Printf("작업자 :%d : 작업 시작 :%s\n", worker, task)
+		sleep := rand.Int63n(100)
+		time.Sleep(time.Duration(sleep) * time.Microsecond)
+
+		fmt.Printf("작업자 :%d : 작업 완료 :%s\n", worker, task)
+	}
+}
+```
+
+역시 하나 하나 뜯어보자.
+
+```go
+func main() {
+	// 채널생성, 10개의 값을 보관 가능
+	tasks := make(chan string, taskLoad)
+	// 4개의 고루틴이 실행됨
+	wg.Add(numberOfGorouines)
+
+	// 4개의 고루틴 실행
+	for gr := 1; gr <= numberOfGorouines; gr++ {
+		go worker(tasks, gr)
+	}
+
+	// 10개의 작업을 채널에 송신
+	for post := 1; post <= taskLoad; post++ {
+		tasks <- fmt.Sprintf("작업: %d", post)
+	}
+
+	close(tasks)
+	wg.Wait()
+}
+```
+
+먼저, 10개의 데이터를 보관할 수 있는 버퍼가 있는 채널 `tasks`를 생성한다. 그리고 고루틴 4개를 실행하기 때문에, `WaitGroup`의 개수를 추가한다.
+
+이후 `worker` 함수를 총 4번 고루틴에 실어준다.
+
+그리고 10개의 태스크를 채널에 전송한다. 이후 채널을 닫고 고루틴이 종료할 때까지 기다린다. **실제로 채널이 닫히더라도 고루틴은 채널에서 데이터를 계속 받을 수 있다.** 이제 실제 그 태스크를 처리하는 `worker` 함수를 살펴보자.
+
+```go
+func worker(tasks chan string, worker int) {
+	defer wg.Done()
+
+	for {
+		// 채널에서 값을 꺼냄.
+		task, ok := <-tasks
+
+		// 채널이 닫혔다면, 고루틴 종료
+		if !ok {
+			fmt.Printf("작업자 :%d : 종료합니다.\n", worker)
+			return
+		}
+
+		// 작업 실행
+		fmt.Printf("작업자 :%d : 작업 시작 :%s\n", worker, task)
+		sleep := rand.Int63n(100)
+		time.Sleep(time.Duration(sleep) * time.Microsecond)
+
+		fmt.Printf("작업자 :%d : 작업 완료 :%s\n", worker, task)
+	}
+}
+```
+
+`worker` 함수는 채널에 더 이상 데이터를 수신 받을 수 없을 때까지 무한 반복된다. 먼저 채널이 비었다면, 고루틴을 종료한다.
+
+그리고 태스크를 처리할 때 약간의 시간을 주어 어느 정도 고르게 4개의 고루틴이 채널의 데이터를 꺼내서 처리하게 만들었다. 실제 코드를 실행하면 4개의 고루틴이 번갈아가면서 데이터를 처리하는 것을 확인할 수 있다.
