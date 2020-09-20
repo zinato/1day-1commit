@@ -1,8 +1,8 @@
-# TICK 스택 소개
+# 00. TICK 스택 설치와 간단 튜토리얼
 
 ![logo](../logo.png)
 
-> Influx Data 공식 문서를 요약한 내용입니다.
+> Influx Data 공식 문서를 요약한 내용입니다. TICK 스택이 무엇인지 알아보고, 로컬 머신에 설치해봅니다. 또한 간단 튜토리얼도 진행합니다.
 
 ## InfluxData Platform
 
@@ -79,6 +79,71 @@ $ ./sandbox down
 
 **이 절은 샌드 박스를 실행 시켜두어야 한다.**
 
+먼저 샌드박스를 통해 도커 컨테이너로 접근해야 한다. (샌드박스가 아닌, 직접 설치의 경우 건너띄어도 좋다.)
+
+```bash
+$ ./sandbox enter influxdb
+Using latest, stable releases
+Entering /bin/bash session in the influxdb container...
+root@3fbecff17a7d:/# 
+```
+
+이제 `influx` 명령어를 통해서 `InfluxDB`에 접속해본다.
+
+```bash
+root@3fbecff17a7d:/# influx
+Connected to http://localhost:8086 version 1.8.0
+InfluxDB shell version: 1.8.0
+> 
+```
+
+이제 `show databases` 라는 명령어를 입력해서 `InfluxDB` 내 저장되어 있는 데이터베이스 목록을 확인한다.
+
+```bash
+> show databases;
+name: databases
+name
+----
+telegraf
+_internal
+```
+
+`_internal`은 `InfluxDB`가 실행되면 자동으로 만들어지는 데이터베이스이다. 또한, `telegraf`는 `Telegraf`와 연동되었을 때 기본적으로 설정된 데이터베이스 이름이다. 즉, 현재 도커 컨테이너로 띄어진 `Telegraf`가 수집한 메트릭들이 들어있다. 많은 지표들이 들어있지만 `CPU`의 `usage_idle`이라는 메트릭을 쿼리해볼 것이다. 먼저 데이터베이스 접속이 필요하다.
+
+```bash
+> use telegraf;
+Using database telegraf
+```
+
+이제 쿼리를 해보자. `usage_idle`을 시간 순으로 역순하여, 10개만 조회해볼 것이다.
+
+```bash
+> SELECT "usage_idle" FROM "telegraf"."autogen"."cpu" ORDER BY time DESC LIMIT 10
+name: cpu
+time                usage_idle
+----                ----------
+1600642630000000000 98.9837398374128
+1600642630000000000 99.22271037511601
+1600642630000000000 99.19028340079242
+1600642630000000000 99.39516129034594
+1600642630000000000 99.18864097364977
+1600642630000000000 99.19517102613956
+1600642630000000000 99.1820040899988
+1600642625000000000 99.7971602434033
+1600642625000000000 98.98373983741318
+1600642625000000000 99.59595959598728
+```
+
+문법은 `SQL`과 비슷하다. 여기서 "usage_idle"은 **필드**이며 메트릭의 값을 나타낸다. "telegraf"는 **데이터베이스**, "autogen"은 **리텐션폴리시**, "cpu"는 **메저먼트**이다. 간단 설명을 하자면, 메저먼트는 `SQL`에서 테이블과 같다. 리텐션 폴리시는 일종의 제약으로써, 보통은 데이터 보존 기간을 정할 때 사용한다.
+
+참고적으로 `Telegraf`는 5초에 한 번씩 수집된 결과를 `InfluxDB`에 저장한다. 또한, `Chronograf`로 터미널에서가 아닌 시각화된 모습으로 확인할 수 있다. "localhost:8888"에 접속한 후 왼쪽 탭에서 "Explore" 탭을 선택하면 다음 화면을 확인할 수 있다.
+
+![크로노그래프](./02.png)
+
+현재 `Chronograf`에서 LIMIT 절을 사용하면 에러가 난다. 그래서 LIMIT 절을 제거하였다.
+
+
 ## Kapacitor + Chronograf 알림 만들기
 
 **이 절은 샌드 박스를 실행 시켜두어야 한다.**
+
