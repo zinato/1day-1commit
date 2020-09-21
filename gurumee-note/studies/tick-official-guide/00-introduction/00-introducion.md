@@ -147,3 +147,62 @@ time                usage_idle
 
 **이 절은 샌드 박스를 실행 시켜두어야 한다.**
 
+이번에는 `Kapacitor`와 `Chronograf`를 이용하여, "Alert"를 만들어보자. 사실 이 작업은 `Chronograf`가 없어도 할 수 있지만, 터미널 환경에서 작업해야 한다. 그래서 간단 튜토리얼 치고는 얘기가 길어질 것 같아 `Chronograf`와 연동하여 알림 작업만 진행해보도록 한다. 먼저, `Chronograf`, `InfluxDB`, `Kapacitor`가 연동되어 있는지 확인해야 한다.
+
+`Chronograf("localhost:8888")`에 접속한다. 왼쪽 탭에 "Configuration" 탭을 눌러보자.
+
+![크로노그래프-설정](./03.png)
+
+누르게 되면 다음 화면처럼 `InfluxDB` 및 `Kapacitor`를 설정할 수 있는 UI 화면이 보인다.
+
+![크로노그래프-설정2](./04.png)
+
+이미 샌드박스로 실행시켰기 때문에 연동이 되어있다. 샌드박스로 설치한 경우가 아니라면, 이 화면에서 `InfluxDB`와 `Kapacitor`를 연동시켜주어야 한다. 만약 같은 머신이 아닌 여러 머신에 컴포넌트들을 각각 설치했다면 `/etc/influxdb/influxdb.conf`, `/etc/kapacitor/kapacitor.conf`에서 직접 이들에 대한 설정을 해주어야 한다. 이는 각 컴포넌트의 공식 가이드를 살펴보길 바란다.
+
+* [Chronograf 연동 가이드](https://docs.influxdata.com/chronograf/v1.8/administration/creating-connections/)
+* [InfluxDB 설정 가이드](https://docs.influxdata.com/influxdb/v1.8/administration/config/)
+* [Kapacitor 설정 가이드](https://docs.influxdata.com/kapacitor/v1.5/administration/configuration/)
+
+자 이제 알림을 만들어보자. 왼쪽 탭에 "Alerting"을 눌러보자.
+
+![크로노그래프-알림1](./05.png)
+
+그럼 다음 화면이 보일 것이다.
+
+![크로노그래프-알림2](./06.png)
+
+화면에서 "Build Alert Rule"이라는 파란색 버튼을 클릭한다. 그럼 다음과 같이 알림 설정 화면으로 넘어간다.
+
+![크로노그래프-알림3](./07.png)
+
+우리가 만들 알림은 "cpu" 메트릭 중 "usage_idle"이 **threshold 값 99**보다 아래가 되었을 때 알림을 만든다. 먼저 이름을 "CPU_USAGE_THRESHOLD_LESS_THAN_99"로, 알림 타입을 "threshold"로 설정한다.
+
+![크로노그래프-알림4](./08.png)
+
+그 후 "DB.RetentionPolicy"는 "telegraf.autogen"선택한다. 그 다음 "Measurement & Tags"에서는 "cpu"를 선택한다. 마지막으로 "Field"에는 "usage_idle"을 선택한다.
+
+![크로노그래프-알림5](./09.png)
+
+그럼 "Condition" 탭에서 드랍다운에서는 "less than"을, 그리고 임계값 99을 입력한다. 
+
+![크로노그래프-알림6](./10.png)
+
+이제 알림을 만든다. 우측 상단에 "Save Rule"이라는 초록색 버튼을 누른다. 
+
+![크로노그래프-알림7](./11.png)
+
+그럼 다음 화면이 뜨게 된다. 
+
+![크로노그래프-알림8](./12.png)
+
+한 개의 알림과 `TICKScript`가 생성되었다. 알림 자체가 `Kapacitor`의 DSL인 `TICKScript` 기반으로 만들어지기 때문이다. 이제 왼쪽 탭의 "Alerting > Alert History"를 눌러보자.
+
+![크로노그래프-알림9](./13.png)
+
+그럼 알림 내역이 보이는 화면이 뜬다.
+
+![크로노그래프-알림10](./14.png)
+
+운영자가 만든 알림에 대한 내역들이 나와 있는 것이다. 상태가 변할 때만 그 시간과 값이 체크되는데 여기서는 2개의 상태만 쓴다. 99보다 아래면 크리티컬("빨간색") 그리고 99보다 위면 정상("초록색")이다. 
+
+기본 튜토리얼은 끝났다. 이제 `InfluxDB`, `Telegraf`, `Kapacitor`, `Chronograf` 순으로 가이드를 정리할 예정이다.
