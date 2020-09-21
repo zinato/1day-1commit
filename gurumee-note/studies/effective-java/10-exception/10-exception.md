@@ -70,6 +70,20 @@ try {
 
 ## 표준 예외를 사용하라
 
+"바퀴를 재 발명하지 말자." 예외도 이를 벗어날 수 없다. 표준 예외를 익히면, 개발자에게 이득이 될 것이다. 중요한 것은 `Exception`, `RuntimeException`, `Throwable`, `Error`는 직접 사용하지 말라는 것이다. 책에서 정리한 표준 예외들은 다음과 같다.
+
+| 예외 | 사용처 |
+| :-- | :-- |
+| IllegalArgumentException | 허용하지 않는 값이 인수로 건네졌을 때 |
+| IllegalStateException | 객체가 메서드를 수행하기에 적절하지 않은 상태일 때 |
+| NullPointException | null을 허용하지 않는 메서드에 null을 건넸을 때 |
+| IndexOutOfBoundsException | 인덱스가 범위를 벗어날 때 |
+| ConcurrentModificationException | 허용하지 않는 동시 수정이 발견됐을 때 |
+| UnsupportedOperationException | 호출한 메서드를 지원하지 않을 때 |
+
+숫자를 다루는 경우 `ArithmeticException` 혹은 `NumberFormatException` 등을 재사용할 수 있을 것이다. 상황이 부합한다면, 표준 예외를 쓰는 것이 좋다.
+
+
 ## 추상화 수준에 맞는 예외를 던져라
 
 ## 메서드가 던지는 모든 예외를 문서화하라
