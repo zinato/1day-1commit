@@ -267,5 +267,347 @@ exit status 2
 
 ## 재사용 가능한 리소스 풀 관리하기 Pool
 
+이번에는, 버퍼가 있는 채널을 이용하여 공유가 가능한 리소스 풀을 생성하고 이를 관리하는 패턴을 알아보자. 이러한 패턴은 데이버테이스 연결이나, 메모리 버퍼 등 리소스의 정적인 집합을 관리할 때 매우 유용하다. 코드를 보자.
+
+```go
+package pool
+
+import (
+	"errors"
+	"io"
+	"log"
+	"sync"
+)
+
+type Pool struct {
+	m sync.Mutex
+	resources chan io.Closer
+	factory func() (io.Closer, error)
+	closed bool
+}
+
+var ErrPoolClosed = errors.New("Pool is closed.")
+
+func New(fn func() (io.Closer, error), size uint) (*Pool, error) {
+	if size <= 0 {
+		return nil, errors.New("Pool's size too small")
+	}
+
+	return &Pool{
+		factory:   fn,
+		resources: make(chan io.Closer, size),
+	}, nil
+}
+
+func (p *Pool) Acquire() (io.Closer, error) {
+	select {
+	case r, ok := <-p.resources:
+		log.Println("Resource acquire:", "Shared Resource")
+		if !ok {
+			return nil, ErrPoolClosed
+		}
+		return r, nil
+	default:
+		log.Println("Resource acquire:", "New Resource")
+		return p.factory()
+	}
+}
+
+func (p *Pool) Release(r io.Closer) {
+	p.m.Lock()
+	defer p.m.Unlock()
+
+	if p.closed {
+		r.Close()
+		return
+	}
+
+	select {
+	case p.resources <- r:
+		log.Println("Resource Return: ", "Returned Resource Queue")
+	default:
+		log.Println("Resource Return: ", "Release Resource")
+		r.Close()
+	}
+}
+
+func (p *Pool) Close() {
+	p.m.Lock()
+	defer p.m.Unlock()
+
+	if p.closed {
+		return
+	}
+
+	p.closed = true
+
+	close(p.resources)
+
+	for r := range p.resources {
+		r.Close()
+	}
+}
+```
+
+역시 하나 하나 뜯어보면서 보자. 먼저 `Pool` 구조체이다.
+
+```go
+type Pool struct {
+	// 고루틴이 풀을 접근할 때, 안전하게 작업하기 위한 뮤텍스
+	m sync.Mutex
+	// io.Closer 채널, 버퍼가 있는 채널로 생성 리소스 공유가 목적
+	resources chan io.Closer
+	// 함수 타입.. 풀에 리소스 요청이 들어올 때 새로운 리소스 생성
+	factory func() (io.Closer, error)
+	// 풀이 닫혀있는지 확인하는 변수
+	closed bool
+}
+```
+
+`Pool`은 여러 개의 고루틴을 안전하게 공유하기 위한 리소스 집합을 표현한다. 리소스는 모두 `io.Closer`를 구현해야 한다. 이 구조체는 4개의 필드가 있는데, `m`은 뮤텍스 변수로 고루틴이 풀을 접근할 때 레이스 컨디션으로부터 안전하기 위해서 사용된다. `resources`는 버퍼가 있는 `io.Closer` 타입의 채널로써, 리소스 공유가 목적이다. `factory`는 풀에 리소스 요청이 들어올 때 새로운 리소스를 생성한다. `closed`는  `Pool`이 닫혀있는지 확인하기 위한 변수이다.
+
+이제 `Pool`을 생성하는 `New` 함수를 보자.
+
+```go
+func New(fn func() (io.Closer, error), size uint) (*Pool, error) {
+	if size <= 0 {
+		return nil, errors.New("Pool's size too small")
+	}
+
+	return &Pool{
+		factory:   fn,
+		resources: make(chan io.Closer, size),
+	}, nil
+}
+```
+
+먼저 매개 변수로, 입력은 x, 반환 타입이 `(io.Closer, error)` 인 함수 타입인 `fn`, 풀의 사이즈를 나타내는 `size`를 받는다. `size`가 0보다 작거나 같으면, 에러이다. 정상 입력이 되면, `factory`에 `fn`을, `resources`를 `io.Closer` 타입의 채널을 `size`만큼 할당해서 초기화한다.
+
+이제 리소스를 획득하는 `Acquire` 메서드를 살펴보자.
+
+```go
+func (p *Pool) Acquire() (io.Closer, error) {
+	select {
+	case r, ok := <-p.resources:
+		log.Println("Resource acquire:", "Shared Resource")
+		if !ok {
+			return nil, ErrPoolClosed
+		}
+		return r, nil
+	default:
+		log.Println("Resource acquire:", "New Resource")
+		return p.factory()
+	}
+}
+```
+
+`Acquire` 메서드는 호출자가 풀에서 리소스를 획득할 수 있다. 채널에 리소스가 없으면, 새로운 리소스를 만들고 리소스가 있으면 그 리소스를 반환한다. 리소스가 만들어졌으면, 시스템에 다시 반환되어야 한다. 이 일을 하는 것이 `Release` 메서드이다.
+
+```go
+func (p *Pool) Release(r io.Closer) {
+	p.m.Lock()
+	defer p.m.Unlock()
+
+	if p.closed {
+		r.Close()
+		return
+	}
+
+	select {
+	case p.resources <- r:
+		log.Println("Resource Return: ", "Returned Resource Queue")
+	default:
+		log.Println("Resource Return: ", "Release Resource")
+		r.Close()
+	}
+}
+```
+
+이 메서드에서 사용하는 뮤텍스의 일은 크게 2가지이다.
+
+1. `closed` 플래그를 읽을 때, `Close` 메서드가 이 플래그를 설정할 때 생기는 레이스 컨디션을 방지한다.
+2. 닫힌 채널에 리소스를 돌려보내면 패닉이 발생한다. 이를 방지한다.
+
+만약 풀이 닫혔을 경우는 해당 리소스를 아예 해제한다. 이제 풀을 아예 닫아버리는 `Close` 메서드를 보자.
+
+```go
+func (p *Pool) Close() {
+	p.m.Lock()
+	defer p.m.Unlock()
+
+	if p.closed {
+		return
+	}
+
+	p.closed = true
+
+	close(p.resources)
+
+	for r := range p.resources {
+		r.Close()
+	}
+}
+```
+
+여기서는 풀을 닫는다. `closed` 플래그를 바꾸고 `resources` 채널을 닫아버린다. 또한 `resources`에 있는 모든 리소스들을 닫아버린다. 여기서도 역시 뮤텍스 변수를 사용하여 경쟁 상태를 막는다. 이제 이를 활용하는 프로그램을 살펴보자.
+
+```go
+package main
+
+import (
+	"io"
+	"log"
+	"math/rand"
+	"sync"
+	"sync/atomic"
+	"time"
+
+	"github.com/gurumee92/go-in-action/ch07/pool"
+)
+
+const (
+	maxGoroutines   = 25
+	pooledResources = 2
+)
+
+type dbConnection struct {
+	ID int32
+}
+
+func (conn *dbConnection) Close() error {
+	log.Println("Close: Database Connection ", conn.ID)
+	return nil
+}
+
+var idCounter int32
+
+func createConnection() (io.Closer, error) {
+	id := atomic.AddInt32(&idCounter, 1)
+	log.Println("Create: New Database Connection ", id)
+	return &dbConnection{id}, nil
+}
+
+func main() {
+	var wg sync.WaitGroup
+	wg.Add(maxGoroutines)
+
+	p, err := pool.New(createConnection, pooledResources)
+	if err != nil {
+		log.Println(err)
+	}
+
+	for query := 0; query < maxGoroutines; query++ {
+		go func(q int) {
+			performQueries(q, p)
+			wg.Done()
+		}(query)
+	}
+
+	wg.Wait()
+	log.Println("Program is done")
+	p.Close()
+}
+
+func performQueries(query int, p *pool.Pool) {
+	conn, err := p.Acquire()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	defer p.Release(conn)
+
+	time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
+	log.Printf("Query : QID[%d] CID[%d]\n", query, conn.(*dbConnection).ID)
+}
+```
+
+역시 하나하나 살펴보자.
+
+```go
+type dbConnection struct {
+	ID int32
+}
+
+func (conn *dbConnection) Close() error {
+	log.Println("Close: Database Connection ", conn.ID)
+	return nil
+}
+```
+
+먼저 데이터베이스 커넥션을 표현하기 위한 구조체와 해당 구조체의 `Close` 메서드이다. 
+
+
+```go
+var idCounter int32
+
+func createConnection() (io.Closer, error) {
+	id := atomic.AddInt32(&idCounter, 1)
+	log.Println("Create: New Database Connection ", id)
+	return &dbConnection{id}, nil
+}
+```
+
+위의 코드는 고유한 ID를 만들기 위한 글로벌 변수와, 팩토리 함수이다. 이제 본격적인 메인 함수를 보자.
+
+```go
+func main() {
+	var wg sync.WaitGroup
+	wg.Add(maxGoroutines)
+
+	p, err := pool.New(createConnection, pooledResources)
+	if err != nil {
+		log.Println(err)
+	}
+
+	for query := 0; query < maxGoroutines; query++ {
+		go func(q int) {
+			performQueries(q, p)
+			wg.Done()
+		}(query)
+	}
+
+	wg.Wait()
+	log.Println("Program is done")
+	p.Close()
+}
+```
+
+먼저 고루틴 개수만큼 `sync.WaitGroup` 을 초기화한다. 그 후 `Pool`을 생헝한다. 이 때, 버퍼의 크기는 2, `dbConnection`을 만드는 팩토리 함수를 매개 변수로 전달한다. 그 후 원하는 개수만큼 고루틴을 생성한다.
+
+고루틴에 싣는 `performQueries`를 보자.
+
+```go
+func performQueries(query int, p *pool.Pool) {
+	conn, err := p.Acquire()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	defer p.Release(conn)
+
+	time.Sleep(time.Duration(rand.Intn(1000)) * time.Millisecond)
+	log.Printf("Query : QID[%d] CID[%d]\n", query, conn.(*dbConnection).ID)
+}
+```
+
+풀에서 리소스를 획득하고, 이 함수가 끝나는 시점에 리소스를 해제한다. 여기서 일부러 슬립을 걸어준다. 쿼리가 실행되는 것을 흉내내는 것이다. 이제 애플리케이션을 실행해보자.
+
+```
+2020/09/23 21:57:26 Resource acquire: New Resource
+2020/09/23 21:57:26 Create: New Database Connection  1
+2020/09/23 21:57:26 Resource acquire: New Resource
+...
+2020/09/23 21:57:26 Query : QID[10] CID[24]
+2020/09/23 21:57:26 Resource Return:  Returned Resource Queue
+...
+2020/09/23 21:57:27 Program is done
+2020/09/23 21:57:27 Close: Database Connection  24
+2020/09/23 21:57:27 Close: Database Connection  4
+```
+
+먼저 리소스 획득과 생성되는 것을 볼 수 있다. 25개가 만들어지면, Query가 실행 및 반환되는 것을 확인할 수 있다. 또한, 프로그램을 종료할 때 모든 리소스가 한꺼번에 반환되는 것을 볼 수 있다.
+
 
 ## 작업 처리 고루틴 풀 생성하기 Worker
