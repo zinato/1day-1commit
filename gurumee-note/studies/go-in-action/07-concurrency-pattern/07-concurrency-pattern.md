@@ -611,3 +611,220 @@ func performQueries(query int, p *pool.Pool) {
 
 
 ## 작업 처리 고루틴 풀 생성하기 Worker
+
+이 패턴은 버퍼가 없는 채널을 이용하여, 원하는 개수만큼의 작업을 동시적으로 실행할 수 있는 고루틴 풀을 생성한다. 이 때는 크기가 있는 버퍼보다, 크기가 없는 버퍼를 사용한다. 그래야, 특정 작업 유실 없이 모든 작업을 동시적으로 실행할 수 있다. 코드를 보자.
+
+```go
+package work
+
+import "sync"
+
+type Worker interface {
+	Task()
+}
+
+type Pool struct {
+	work chan Worker
+	wg   sync.WaitGroup
+}
+
+func New(maxGoroutines int) *Pool {
+	p := Pool{
+		work: make(chan Worker),
+	}
+	p.wg.Add(maxGoroutines)
+
+	for i := 0; i < maxGoroutines; i++ {
+		go func() {
+			for w := range p.work {
+				w.Task()
+			}
+			p.wg.Done()
+		}()
+	}
+
+	return &p
+}
+
+func (p *Pool) Run(w Worker) {
+	p.work <- w
+}
+
+func (p *Pool) Shutdown() {
+	close(p.work)
+	p.wg.Wait()
+}
+```
+
+하나 하나 뜯어보자.
+
+```go
+type Worker interface {
+	Task()
+}
+
+type Pool struct {
+	work chan Worker
+	wg   sync.WaitGroup
+}
+```
+
+`Worker`는 태스크를 실행하는 인터페이스이다. `Pool`은 `Worker` 타입의 크기가 없는 버퍼를 갖는 채널을 가지고 있다. 또한, 동시에 실행되는 개수를 조절하기 위하여 `sync.WaitGroup`을 사용한다. 이제 이 `Pool`을 생성하는 `New` 함수를 살펴보자.
+
+```go
+func New(maxGoroutines int) *Pool {
+	p := Pool{
+		work: make(chan Worker),
+	}
+	p.wg.Add(maxGoroutines)
+
+	for i := 0; i < maxGoroutines; i++ {
+		go func() {
+			for w := range p.work {
+				w.Task()
+			}
+			p.wg.Done()
+		}()
+	}
+
+	return &p
+}
+```
+
+일정한 개수의 고루틴을 생성하도록 작성된 작업 풀을 생성한다. 생성할 고루틴의 개수를 매개 변수로 전달되며, Pool 타입을 만드는 것을 볼 수 있다.
+
+```go
+for i := 0; i < maxGoroutines; i++ {
+	go func() {
+		for w := range p.work {
+			w.Task()
+		}
+		p.wg.Done()
+	}()
+}
+```
+
+이 코드는 풀의 `work` 채널에서 `Worker` 인터페이스 값을 받는 한 계속 반복문을 실행한다. 루프 내에서 채널에서 받은 값에 대해 `Task`를 호출한다. 채널이 닫히면, 반복문의 실행이 종료되고, `WaitGroup`의 `Done` 메서드를 호출한 후, 고루틴 실행을 종료한다.
+
+```go
+func (p *Pool) Run(w Worker) {
+	p.work <- w
+}
+```
+
+이 메서드는 풀에 새로운 작업을 추가하는 코드이다. 풀의 `work` 채널의 매개 변수 `Worker`를 전달한다.
+
+```go
+func (p *Pool) Shutdown() {
+	close(p.work)
+	p.wg.Wait()
+}
+```
+
+이 메서드는 풀의 자원들을 반환한다. `work` 채널을 닫고 닫힐 때까지 `WaitGroup.Wait`를 호출하여 대기한다. 이제 메인 코드를 보자.
+
+```go
+package main
+
+import (
+	"log"
+	"sync"
+	"time"
+
+	"github.com/gurumee92/go-in-action/ch07/work"
+)
+
+var names = []string{
+	"steve",
+	"bob",
+	"mary",
+	"therese",
+	"jason",
+}
+
+type namePrinter struct {
+	name string
+}
+
+func (p *namePrinter) Task() {
+	log.Println(p.name)
+	time.Sleep(time.Second)
+}
+
+func main() {
+	p := work.New(10)
+
+	var wg sync.WaitGroup
+	wg.Add(100 * len(names))
+
+	for i := 0; i < 100; i++ {
+		for _, name := range names {
+			np := namePrinter{
+				name: name,
+			}
+
+			go func() {
+				p.Run(&np)
+				wg.Done()
+			}()
+		}
+	}
+
+	wg.Wait()
+	p.Shutdown()
+}
+```
+
+또 코드를 하나하나 보자.
+
+```go
+var names = []string{
+	"steve",
+	"bob",
+	"mary",
+	"therese",
+	"jason",
+}
+```
+
+`names`는 출력할 이름들이 들어있다. 
+
+```go
+type namePrinter struct {
+	name string
+}
+
+func (p *namePrinter) Task() {
+	log.Println(p.name)
+	time.Sleep(time.Second)
+}
+```
+
+이 이름들을 `namePrinter`라는 구조체에 담는다. `namePrinter`는 `Worker` 인터페이스를 구현하기 때문에 `Task` 메서드를 가지고 있다. 그냥 이름을 출력하고 1초 정도 대기한다.
+
+```go
+func main() {
+	p := work.New(10)
+
+	var wg sync.WaitGroup
+	wg.Add(100 * len(names))
+
+	for i := 0; i < 100; i++ {
+		for _, name := range names {
+			np := namePrinter{
+				name: name,
+			}
+
+			go func() {
+				p.Run(&np)
+				wg.Done()
+			}()
+		}
+	}
+
+	wg.Wait()
+	p.Shutdown()
+}
+```
+
+먼저 10은 동시에 실행될 고루틴의 개수를 지정한다. 그리고 이제 이름 개수 * 100을 `WaitGroup`을 초기화한다. 100번을 반복하면서, `names` 에 들어있는 이름을 필드로 갖는 `namePrinter`의 `Task`를 고루틴에 실어 보내며, 이는 `Pool`에 들어간다. 총 500번의 작업이 생성되는데 10번씩 동시에 출력된다. 그래서 50초면 작업이 끝나는 것을 확인할 수 있다.
