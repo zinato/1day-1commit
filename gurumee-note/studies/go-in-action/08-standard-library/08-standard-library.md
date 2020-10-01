@@ -264,3 +264,43 @@ fmt.Println(string(pretty))
 
 
 ## 입력과 출력
+
+입력과 출력을 담당하는 것은 `io` 패키지이다. 알아둘 인터페이스는 `io.Reader`와 `io.Writer`가 있다. 책에서는 `io.Reader`를 구현하기 위한 4가지 규칙을 언급하고 있다. 근데, 나는 딱히 쓸 일은 없을 것 같다. 바로 예제나 구현해보자.
+
+```go
+package main
+
+import (
+	"bytes"
+	"fmt"
+	"os"
+)
+
+func main() {
+	var b bytes.Buffer
+	b.Write([]byte("안녕하세요."))
+	fmt.Fprintln(&b, "Golang!")
+	b.WriteTo(os.Stdout)
+}
+```
+
+위의 코드는 다음과 같다.
+
+```go
+var b bytes.Buffer
+b.Write([]byte("안녕하세요."))
+```
+
+먼저 `Buffer`에 값을 생성한 후, 문자열을 저장한다. 
+
+```go
+fmt.Fprintln(&b, "Golang!")
+```
+
+그리고 버퍼에 문자열을 결합하기 위해 `Fprintln`을 쓴다. 이 때, 첫 번째 매개변수에 `io.Writer`가 필요하다. 그래서, `bytes.Buffer`를 넘겨준다.
+
+```go
+b.WriteTo(os.Stdout)
+```
+
+그리고 해당 버퍼의 값들을 표준 출력에 출력시킨다. 이런 구조이다. 사실, `Go` 프로그래밍 할 때 숨 쉬듯 쓰고 있어서 예제의 의미를 잘 모르겠다. 하하.. 뭐 그 다음 예제로 `curl` 만드는 코드가 있는데 별의미가 없어 보인다.
