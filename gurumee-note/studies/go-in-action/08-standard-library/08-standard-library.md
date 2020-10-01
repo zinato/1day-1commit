@@ -123,4 +123,144 @@ Error: 2020/10/01 21:54:03 example_log_02.go:34: 에러 로그 메시지
 
 ## 인코딩과 디코딩
 
+현대의 웹 개발 시, `API`와 `APP`을 분리한다. 뭐 더 나눠볼 순 있겠지만, 크게 이 2가지로 나눠보자. 이 때 동신은 무엇으로 할까? 보통 쉽게 떠올리는 것이 `JSON`이다. 예전엔, (현대에도 많이 사용하지만) `XML`도 사용했었다. `encoding` 패키지는 `JSON`, `XML`등의 데이터를 파싱하는데, 그 목적이 있다.
+
+다음 프로그램을 만들어보자.
+
+```go
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+)
+
+type Post struct {
+	Id            int    `json:"id"`
+	Title         string `json:"title"`
+	Points        int    `json:"points"`
+	User          string `json:"user"`
+	Time          int    `json:"time"`
+	TimeAgo       string `json:"time_ago"`
+	CommentsCount int    `json:"comments_count"`
+	Type          string `json:"type"`
+	Url           string `json:"url"`
+	Domain        string `json:"domain"`
+}
+
+func main() {
+	uri := "https://api.hnpwa.com/v0/news/1.json"
+	resp, err := http.Get(uri)
+
+	if err != nil {
+		log.Fatalln("Error: ", err)
+	}
+
+	defer resp.Body.Close()
+
+	var posts []Post
+	err = json.NewDecoder(resp.Body).Decode(&posts)
+
+	if err != nil {
+		log.Fatalln("Error: ", err)
+	}
+
+	pretty, err := json.MarshalIndent(posts, "", "    ")
+
+	if err != nil {
+		log.Fatalln("Error: ", err)
+	}
+
+	fmt.Println(string(pretty))
+}
+```
+
+"https://api.hnpwa.com/v0/news/1.json" API에서 제공하는 데이터의 형태는 다음과 같다.
+
+```
+[
+    {
+        id: 24649992,
+        title: "Programming Language notation is a Barrier to Entry",
+        points: 22,
+        user: "seg_lol",
+        time: 1601554352,
+        time_ago: "an hour ago",
+        comments_count: 23,
+        type: "link",
+        url: "https://blog.sigplan.org/2020/09/29/pl-notation-is-a-barrier-to-entry/",
+        domain: "blog.sigplan.org"
+    },
+    // ....
+]
+```
+
+이 JSON 객체를 표현한 것이 바로 `Post`이다.
+
+```go
+type Post struct {
+	Id            int    `json:"id"`
+	Title         string `json:"title"`
+	Points        int    `json:"points"`
+	User          string `json:"user"`
+	Time          int    `json:"time"`
+	TimeAgo       string `json:"time_ago"`
+	CommentsCount int    `json:"comments_count"`
+	Type          string `json:"type"`
+	Url           string `json:"url"`
+	Domain        string `json:"domain"`
+}
+```
+
+`json:"JSON 필드 이름"`을 지정하면 된다. 이제 디코딩, 인코딩 부분인데, 먼저 디코딩 부분이다.
+
+```go
+var posts []Post
+err = json.NewDecoder(resp.Body).Decode(&posts)
+
+if err != nil {
+    log.Fatalln("Error: ", err)
+}
+```
+
+먼저 디코딩은 `JSON` 객체를 실제 `Post` 같은 우리가 사용할 구조체를 옮기는 작업이라고 생각하면 편하다. 디코딩할 객체 `resp.Body`를 디코더에 넣는다. 그리고 `Decoder.Decode`의 해당 디코딩해서 값을 저장할 객체 `posts`의 주소를 넣어준다. 응답 `JSON`이 `Post` 리스트이기 때문에, `Post` 슬라이스를 넣어주면 된다.
+
+그 다음 인코딩이다. 디코딩의 반대이다. 프로그램 객체를 `JSON` 객체로 바꿔준다. 다음은 `JSON` 객체를 이쁘게 출력하는 방법이다.
+
+```go
+pretty, err := json.MarshalIndent(posts, "", "    ")
+
+if err != nil {
+    log.Fatalln("Error: ", err)
+}
+
+fmt.Println(string(pretty))
+```
+
+실제 프로그램을 실행하면 다음의 결과를 얻을 수 있다.
+
+```bash
+[
+    // ...
+    ,
+    {
+        "id": 24638438,
+        "title": "Gitter is joining Matrix",
+        "points": 642,
+        "user": "BubuIIC",
+        "time": 1601472107,
+        "time_ago": "a day ago",
+        "comments_count": 108,
+        "type": "link",
+        "url": "https://matrix.org/blog/2020/09/30/welcoming-gitter-to-matrix",
+        "domain": "matrix.org"
+    }
+]
+```
+
+알아둘 점은 `JSON` 안에 `JSON`이 겹친다면, 구초제도 겹치는 구조로 선언하면 된다. 또한, 유연성을 갖추기 위해서, `map[string]interface{}`로 선언해야 할 때도 있다.
+
+
 ## 입력과 출력
