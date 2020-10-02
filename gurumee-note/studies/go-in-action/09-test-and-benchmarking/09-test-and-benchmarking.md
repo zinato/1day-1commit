@@ -19,10 +19,9 @@ import (
 	"testing"
 )
 
-const checkMark = "\u2713"
-const ballotX = "\u2717"
-
 func TestDownload(t *testing.T) {
+	const checkMark = "\u2713"
+	const ballotX = "\u2717"
 	url := "https://api.hnpwa.com/v0/news/1.json"
 	statusCode := 200
 
@@ -132,11 +131,10 @@ import (
 	"testing"
 )
 
-const checkMark = "\u2713"
-const ballotX = "\u2717"
-
 func TestDownload(t *testing.T) {
 	// given
+	const checkMark = "\u2713"
+	const ballotX = "\u2717"
 	params := []struct {
 		url        string
 		statusCode int
@@ -201,6 +199,128 @@ ok      github.com/gurumee92/go-in-action/ch09  5.431s
 각 URL에 맞는 상태코드가 떨어지는 것을 확인할 수 있다.
 
 
-## 목 테스트와 엔드포인트 테스트
+## 목 테스트
 
-이번엔 간단한 애플리케이션을 만들면서, `Mock Test`와 `Endpoint Test`를 알아보도록 하자.
+목 테스트는 단위 테스트할 수 있게, 가짜 결과를 만들어내는 목 객체를 만들어서 테스트하는 방법이다. 현재 위의 테스트 코드가 실패할 경우는 언제일까? 바로 인터넷이 막혀있을 때다. 뭐 보통 이럴 땐 없겠지만, 실제 개발에서는 다른 컴포넌트가 개발이 완료되지 않았을 때 내가 그 컴포넌트를 이용하는 또 다른 컴포넌트를 개발할 때가 있다. 이 경우에 쓸 수 있다. 해당 컴포넌트가 결과값이 이럴 것이다만 형태를 갖춰놓았다면, 이 결과를 만들어내는 가짜 객체를 생성하면 된다.
+
+바로 코드를 살펴보자.
+
+```go
+package ch09
+
+import (
+	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"testing"
+)
+
+var json = `
+	[
+		{
+			id: 24661126,
+			title: "Flatpak: A security nightmare – two years later",
+			points: 90,
+			user: "krimeo",
+			time: 1601634959,
+			time_ago: "an hour ago",
+			comments_count: 50,
+			type: "link",
+			url: "https://www.flatkill.org/2020/",
+			domain: "flatkill.org"
+		},
+	]
+`
+
+func mockServer() *httptest.Server {
+	f := func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintln(w, json)
+	}
+	return httptest.NewServer(http.HandlerFunc(f))
+}
+
+func TestMockDownload(t *testing.T) {
+	// given
+	const checkMark = "\u2713"
+	const ballotX = "\u2717"
+	server := mockServer()
+	statusCode := 200
+
+	t.Log("컨텐츠 다운로드 시작")
+	t.Logf("\tURL \"%s\" check status code \"%d\"", server.URL, statusCode)
+	// when
+	resp, err := http.Get(server.URL)
+
+	if err != nil {
+		t.Fatal("\t\t HTTP GET Check", ballotX, err)
+	}
+
+	t.Log("\t\t HTTP GET Check", checkMark)
+	defer resp.Body.Close()
+
+	// then
+	if resp.StatusCode == statusCode {
+		t.Logf("\t\t Status Code Check \"%d\": \"%v\"", statusCode, checkMark)
+	} else {
+		t.Errorf("\t\t Status Code Check \"%d\": \"%v\" \"%v\"", statusCode, ballotX, resp.StatusCode)
+	}
+}
+```
+
+아까와 코드는 거의 동일하다. 대신 `mockServer` 함수로 만든 `server`의 URL로 바꿔쓰고 있다. 이제 `json`과 `mockServer` 함수 부분을 보자.
+
+```go
+var json = `
+	[
+		{
+			id: 24661126,
+			title: "Flatpak: A security nightmare – two years later",
+			points: 90,
+			user: "krimeo",
+			time: 1601634959,
+			time_ago: "an hour ago",
+			comments_count: 50,
+			type: "link",
+			url: "https://www.flatkill.org/2020/",
+			domain: "flatkill.org"
+		},
+	]
+`
+
+func mockServer() *httptest.Server {
+	f := func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(200)
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprintln(w, json)
+	}
+	return httptest.NewServer(http.HandlerFunc(f))
+}
+```
+
+`mockServer`는 HTTP 요청 시, 서버의 응답을 대신하는 객체를 만들어준다. 이 서버는 요청 마다, `json`을 결과로 내보내준다. 그래서 해당 테스트 코드를 돌려보면 다음의 결과를 얻을 수 있다.
+
+```bash
+$ go test -v ./ch09/example_09_02_test.go
+=== RUN   TestMockDownload
+    TestMockDownload: example_09_02_test.go:43: 컨텐츠 다운로드 시작
+    TestMockDownload: example_09_02_test.go:44:         URL "http://127.0.0.1:51568" check status code "200"
+    TestMockDownload: example_09_02_test.go:52:                  HTTP GET Check ✓
+    TestMockDownload: example_09_02_test.go:57:                  Status Code Check "200": "✓"
+--- PASS: TestMockDownload (0.00s)
+PASS
+ok      command-line-arguments  0.491s
+```
+
+목 객체라 URL이 마음대로 잡힌 것을 확인할 수 있다. `목 테스트`를 이용하면, 개발되지 않은 컴포넌트라도 내가 원하는 컴포넌트의 유닛테스트가 가능하다. 그러나 단점도 존재한다. 만약, 해당 컴포넌트의 결과가 합의되지 않았거나 중간에 변경된 경우 이 테스트는 쓸모 없는 테스트가 되버린다. 
+
+그래서 `통합 테스트`라는 것이 존재한다. `단위 테스트`들을 전체적으로 연결해서 서비스가 동작하는지 테스트하는 것이다. 이 때 `목 테스트`를 쓰는 `단위 테스트`가 있다면, 목 객체를 실제 객체로 바꿔주어야 한다.
+
+> 책에서는 엔드포인트 테스트와 문서화를 다루고 있다. 나와는 별 상관이 없어 보여서 생략한다.
+
+
+## 벤치 마킹
+
+
+
