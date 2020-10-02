@@ -322,5 +322,123 @@ ok      command-line-arguments  0.491s
 
 ## 벤치 마킹
 
+`벤치 마킹`이란 코드의 성능을 테스트하는 것이다. 예제 코드를 바로 살펴보자.
 
+```go
+package ch09
 
+import (
+	"fmt"
+	"testing"
+)
+
+func BenchmarkSprintf(b *testing.B) {
+	number := 10
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		fmt.Sprintf("%d", number)
+	}
+}
+```
+
+벤치마크 함수는 `Benchmark`로 시작하며, `testing.B` 타입의 포인터 매개 변수를 사용한다. 또한, 성능을 측정하려면, 일정 시간 동안 반복해서 코드를 실행해야 한다. 그것이 바로 이 코드이다.
+
+```go
+for i := 0; i < b.N; i++ {
+	fmt.Sprintf("%d", number)
+}
+```
+
+즉 `fmt.Sprintf`를 반복해서 실행해서 성능을 측정하는 것이다. 터미널에 다음을 입력한다.
+
+```bash
+$ go test -v ./ch09 -run="none" -bench="BenchmarkSprintf"
+goos: darwin
+goarch: amd64
+pkg: github.com/gurumee92/go-in-action/ch09
+BenchmarkSprintf
+BenchmarkSprintf-12     15074367                79.2 ns/op
+PASS
+ok      github.com/gurumee92/go-in-action/ch09  1.773s
+```
+
+`-run="none"` 옵션은 `*_test.go` 파일의 테스트 함수들을 건너뛰는 것이다. 또한 `-bench="BenchmarkSprintf"` 해당 패키지의 벤치마킹 함수를 실행한다. 결과를 조금 더 자세히 보자.
+
+```bash
+# ...
+BenchmarkSprintf-12     15074367                79.2 ns/op
+# ...
+```
+
+여기서 두 번째는 반복하여 실행한 횟수이다. 그리고 함수 호출 당 "79.2 ns"가 걸렸다는 것이다. 실행 시간을 조절하고 싶다면, `-benchtime=<시간>`을 주면 된다. 이런 식으로 말이다.
+
+```bash
+$ go test -v ./ch09 -run="none" -bench="BenchmarkSprintf" -benchtime=3s
+goos: darwin
+goarch: amd64
+pkg: github.com/gurumee92/go-in-action/ch09
+BenchmarkSprintf
+BenchmarkSprintf-12     43850120                74.7 ns/op
+PASS
+ok      github.com/gurumee92/go-in-action/ch09  3.853s
+```
+
+여러 함수를 벤치마킹하기 위해서 함수 두 개를 더 만들어보자.
+
+```go
+func BenchmarkFormat(b *testing.B) {
+	number := int64(10)
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		strconv.FormatInt(number, 10)
+	}
+}
+
+func BenchmarkItoa(b *testing.B) {
+	number := 10
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		strconv.Itoa(number)
+	}
+}
+```
+
+이제 터미널에 다음을 입력한다.
+
+```bash
+$ go test -v ./ch09 -run="none" -bench=. -benchtime=3s
+goos: darwin
+goarch: amd64
+pkg: github.com/gurumee92/go-in-action/ch09
+BenchmarkSprintf
+BenchmarkSprintf-12     43709722                75.9 ns/op
+BenchmarkFormat
+BenchmarkFormat-12      1000000000               2.58 ns/op
+BenchmarkItoa
+BenchmarkItoa-12        1000000000               2.56 ns/op
+PASS
+ok      github.com/gurumee92/go-in-action/ch09  9.225s
+```
+
+여기서는 `Itoa`가 가장 빠르고 그 다음 `Format` 그리고 `Sprintf` 순으로 속도가 측정되었다. 메모리 관련해서도 보고 싶다면, `-benchmem` 옵션을 사용하면 된다.
+
+```bash
+$ go test -v ./ch09 -run="none" -bench=. -benchtime=3s -benchmem
+goos: darwin
+goarch: amd64
+pkg: github.com/gurumee92/go-in-action/ch09
+BenchmarkSprintf
+# 벤치마킹 함수           벤치 마킹 횟수            함수 호출 당 속도       함수 호출 당 바이트 함수 호출당 메모리 할당 횟수
+BenchmarkSprintf-12     42104004                76.8 ns/op            16 B/op          2 allocs/op
+BenchmarkFormat
+BenchmarkFormat-12      1000000000               2.58 ns/op            0 B/op          0 allocs/op
+BenchmarkItoa
+BenchmarkItoa-12        1000000000               2.55 ns/op            0 B/op          0 allocs/op
+PASS
+ok      github.com/gurumee92/go-in-action/ch09  9.392s
+```
+
+시간 뒤에 나오는 것은 함수 호출 당 "필요한 바이트 크기", 마지막으로 나오는 것은 함수 호출 당 "힙 메모리 할당 횟수"를 의미한다.
