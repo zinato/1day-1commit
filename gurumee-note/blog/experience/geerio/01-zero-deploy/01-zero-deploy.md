@@ -16,8 +16,8 @@
 따라서, 이 문서를 기반으로 따라하기 위해서는 다음이 필요하다.
 
 1. `Gradle` 기반의 스프링 부트 앱
-2. 개인 도커 레지스트리
-3. GCP의 GCE, AWS의 EC2 같은 클라우드 서버 인스턴스 1개 
+2. `Google Container Registry` 등의 개인 도커 레지스트리
+3. `GCP`의 `GCE` 같은 클라우드 서버 인스턴스 1개 
 
 **참고**
 
@@ -56,44 +56,20 @@ EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "/application.jar"]
 ```
 
-그리고 로컬에서, 이미지가 잘 작동하는지 테스트하기 위해서, `docker-compose.yml`을 작성했다.
-
-```yml
-version: '3.1'
-services:
-  geerio-app:
-    # 빌드할 Dockerfile 경로
-    build: ./
-    # 포트 매핑 로컬 포트:컨테이너 포트
-    ports:
-        - "8080:8080"
-```
-
-따라서 프로젝트 루트 디렉토리의 구조는 다음과 같아진다.
-
-```
-├── Dockerfile
-├── README.md
-├── build
-├── build.gradle
-├── docker-compose.yml
-├── gradle
-├── gradlew
-├── gradlew.bat
-├── settings.gradle
-└── src
-```
-
-이제 로컬 환경에서, 도커 이미지가 잘 동작하는지 확인해보자.
+터미널에 다음을 입력하여, 도커 이미지를 생성한다.
 
 ```bash
 $ pwd
 # 프로젝트 루트 디렉토리
 /Users/gurumee/Workspaces/geerio
 
-# 이미지 빌드 및 컨테이너 실행
-$ docker-compose up --build
-...
+$ docker build --tag geerio-app:0.1 .
+```
+
+이제 로컬 환경에서, 도커 이미지가 잘 동작하는지 확인해보자.
+
+```bash
+$ docker run -p 8080:8080 geerio-app:0.1
 ```
 
 이후 다른 터미널을 열어 다음을 입력해본다.
@@ -122,32 +98,34 @@ $ curl -XGET http://localhost:8080
 
 ```bash
 $ docker images
-REPOSITORY          TAG                 IMAGE ID            CREATED             SIZE
-geerio_geerio-app   latest              cf5734ae3bdf        32 seconds ago      717MB
-openjdk             8-jdk-alpine        a3562aa0b991        17 months ago       105MB
+REPOSITORY   TAG                 IMAGE ID            CREATED             SIZE
+geerio-app   0.1                 cf5734ae3bdf        32 seconds ago      717MB
+openjdk      8-jdk-alpine        a3562aa0b991        17 months ago       105MB
 ```
 
-자, 이제 개인 레지스트리에 이미지를 올려보자. 먼저 도커 레지스트리에 이미지를 푸쉬하기 위해선 태그 작업이 필요하다.
+자, 이제 개인 레지스트리에 이미지를 올려보자. 먼저 도커 레지스트리에 이미지를 푸쉬하기 위해선 태그 작업이 필요하다. 
+
+> 제 개인 도커 레지스트리 주소는 "gcr.io/geerio/"입니다. 그러나, 오로지 저만 접근할 수 있게 설정해두었기 때문에, 여러분은 접속할 수 없습니다. 개인 도커 레지스트리를 이용하셔야 합니다.
 
 ```bash
 # docker tag <로컬이미지:태그> <레지스트리/이미지이름:태그>
-$ docker tag geerio_geerio-app:latest geerio-registry.io/geerio-app:0.1
+$ docker tag geerio-app:0.1 gcr.io/geerio/geerio-app:0.1
 ```
 
 다시 이미지 목록을 확인해보자.
 
 ```bash
 $ docker images
-REPOSITORY                       TAG                 IMAGE ID            CREATED             SIZE
-geerio_geerio-app                latest              cf5734ae3bdf        4 minutes ago       717MB
-geerio-registry.io/geerio-app    0.1                 cf5734ae3bdf        4 minutes ago       717MB
-openjdk                          8-jdk-alpine        a3562aa0b991        17 months ago       105MB
+REPOSITORY                 TAG                 IMAGE ID            CREATED             SIZE
+geerio-app                 0.1                 b50b51cb46c5        7 minutes ago       717MB
+gcr.io/geerio/geerio-app   0.1                 b50b51cb46c5        7 minutes ago       717MB
+openjdk                    8-jdk-alpine        a3562aa0b991        17 months ago       105MB
 ```
 
 자 이제 이미지를 Push 한다.
 
 ```bash
-$ docker push geerio-registry.io/geerio-app:0.1 
+$ docker push gcr.io/geerio/geerio-app:0.1 
 ```
 
 이제 이미지가 레지스트리에 잘 저장되었는지 확인하기 위해서 로컬의 도커 이미지를 모두 삭제한 뒤, 해당 레지스트리의 이미지를 기반으로 컨테이너를 실행해보겠다.
@@ -157,12 +135,10 @@ $ docker push geerio-registry.io/geerio-app:0.1
 $ docker rmi -f $(docker images -q)
 
 # 레지스트리에서 이미지 pull한 후 컨테이너 실행
-$ docker run -p 8080:8080 geerio-registry.io/geerio-app:0.1
+$ docker run -p 8080:8080 gcr.io/geerio/geerio-app:0.1
 ```
 
-마지막으로 `레지스트리 웹 UI`에서 그 결과를 확인해보자.
-
-> 웹 UI를 함께 구축하신 분들만 확인할 수 있습니다.
+`Google Container Registry`를 이용한다면, `GCR` 메인 페이지에서 이미지가 올라간 것을 확인할 수 있다.
 
 ![01](./01.png)
 
@@ -184,7 +160,7 @@ $ gcloud compute ssh geerio-instance-01
 
 ```bash
 # docker run -p <개방된 포트:컨테이너 포트> <레지스트리/이미지:태그>
-$ docker run -p 80:8080 geerio-registry.io/geerio-app:0.1
+$ docker run -p 80:8080 gcr.io/geerio/geerio-app:0.1
 ```
 
 일단, 내 `GCE` 인스턴스는 "80"번 포트가 열려있다. 따라서, 80번 포트에 아까 만든 이미지 안에서 EXPOSE 한 "8080"번 포트를 매핑시켰다. 실제 `geerio-instance-01`의 공개 DNS인 "http://www.geerio.p-e.kr/"를 접속해보면 다음 화면이 뜨는 것을 알 수 있다.
@@ -260,12 +236,12 @@ services:
             - 443:443
     app-01: 
         container_name: app-01
-        image: "geerio-registry.io/geerio-app:0.1" 
+        image: "gcr.io/geerio/geerio-app:0.1" 
         ports: 
             - 8080:8080
     app-02: 
         container_name: app-02
-        image: "geerio-registry.io/geerio-app:0.1" 
+        image: "gcr.io/geerio/geerio-app:0.1" 
         ports: 
             - 8081:8080
 ```
@@ -277,10 +253,10 @@ services:
 $ docker-compose up --build -d
 
 $ docker ps
-CONTAINER ID        IMAGE                               COMMAND                  CREATED             STATUS              PORTS                                      NAMES
-dcae59158cff        geerio-registry.io/geerio-app:0.1   "java -jar /applicat…"   11 minutes ago      Up 11 minutes       0.0.0.0:8081->8080/tcp                     app-02
-9a06053fbc48        geerio-registry.io/geerio-app:0.1   "java -jar /applicat…"   11 minutes ago      Up 11 minutes       0.0.0.0:8080->8080/tcp                     app-01
-b284d25dc935        nginx:alpine                        "/docker-entrypoint.…"   11 minutes ago      Up 11 minutes       0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp   nginx
+CONTAINER ID        IMAGE                          COMMAND                  CREATED             STATUS              PORTS                                      NAMES
+5ba5e7643600        gcr.io/geerio/geerio-app:0.1   "java -jar /applicat…"   4 seconds ago       Up 2 seconds        0.0.0.0:8081->8080/tcp                     app-02
+bb149fe3a117        gcr.io/geerio/geerio-app:0.1   "java -jar /applicat…"   4 seconds ago       Up 2 seconds        0.0.0.0:8080->8080/tcp                     app-01
+8df0359dc92c        nginx:alpine                   "/docker-entrypoint.…"   4 seconds ago       Up 2 seconds        0.0.0.0:80->80/tcp, 0.0.0.0:443->443/tcp   nginx
 ```
 
 자 이제 다시 "http://www.geerio.p-e.kr/"로 접속해보자. 역시 다음 화면이 뜬다.
@@ -312,6 +288,5 @@ $ docker-compose start app-01 app-02
 몇 초 후 다시 브라우저로 접속하면, 다시 "Hello"가 우리를 반겨준다.
 
 ![02](./02.png)
-
 
 
