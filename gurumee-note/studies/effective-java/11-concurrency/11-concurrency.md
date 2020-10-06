@@ -290,6 +290,112 @@ public class ObservableSet<E> extends InstrumentHashSet<E> {
 
 ## wait와 notify보다는 동시성 유틸리티를 애용하라
 
+자바5 에서는 고수준의 동시성 유틸리티가 도입되었다. 그래서 이전에 쓰이던 `wait-notify` 방식은 매우 어려우니 지양하라고 책은 권고하고 있다. 자바 동시성 유틸리티, `java.util.concurrent`는 크게 3가지로 나눌 수 있다.
+
+1. Executor Framework - 실행자 프레임워크
+2. Concurrent Collection - 동시성 컬렉션
+3. Synchronizer - 동기화 장치
+
+이전 아이템이서, `Executor Framework`를 살펴봤었다. 이 절에서는 `Concurrent Collection`과 `Synchronizer`에 대해서 살펴 보도록 한다. 
+
+`Concurrent Collection`은 `List`, `Queue`, `Map` 같은 표준 컬렉션 인터페이스에 동시성 처리를 구현하여 만든 고성능 컬렉션이다. 내부에서 동시성 처리를 하기 때문에, 동시성 컬렉션에서 동시성을 무력화하는 것은 불가능하고 외부에서 락을 추가로 사용하면 오히려 속도가 느려진다. 여기서 "동시성 컬렉션이 동시성을 무력화하지 못한다"라는 말은 여러 메서드를 원자적으로 묶어 호출할 수 없다는 말이다.
+
+다음은 `ConcurrentMap`을 사용하는 예제 코드이다.
+
+```java
+public class ConcurrentMapExample {
+    private static final ConcurrentMap<String, String> map = new ConcurrentHashMap<>();
+
+    public String intern(String s) {
+        String result = map.get(s);
+
+        if (result == null) {
+            result = map.putIfAbsent(s, s);
+
+            if (result == null) {
+                result = s;
+            }
+        }
+
+        return result;
+    }
+}
+```
+
+실제 테스트해보진 않았지만, `String.intern`보다 빠르다고 한다. 
+
+    참고!
+    `String.intern` 메소드 내부에 동시성을 처리하는 로직이 들어서 느리고 메모리 누수가 있다고 한다.
+
+또한, 동시성 컬렉션 이전에 동기화한 컬렉션들이 있다. `Collections.synchronizedMap`이 대표적인 예인데, 이제는 `Concurrent Collection`들을 사용하자. 성능이 훨씬 우수하다.
+
+`Synchronizer`는 스레드가 다른 스레드를 기다릴 수 있게 하여, 서로 작업을 조율한다. 가장 자주 쓰이는 동기화 장치는 `CountDownLatch`, `Semaphore`, 가장 강력한 동기화 장치는 `Phaser`, 그리고 `CyclicBarrier`, `Exchanger` 등이 있다. 책에서는 `CountDownLatch`에 대해서 다룬다.
+
+`CountDownLatch`는 "일회성 장벽"으로써 하나 이상의 스레드가 다른 하나 이상의 스레드 작업이 끝날 때까지 기다리게 하는 것을 강제한다. 다음 예를 살펴보자.
+
+```java
+public class CountDownLatchExample {
+    public static long time (Executor executor, int concurrency, Runnable action) throws InterruptedException {
+        CountDownLatch ready = new CountDownLatch(concurrency); // 동시에 실행할 대수
+        CountDownLatch start = new CountDownLatch(1);
+        CountDownLatch done = new CountDownLatch(concurrency);
+
+        for (int i=0; i<concurrency; i++) {
+            executor.execute(() -> {
+                // 스레드가 실행될 때마다 개수 셈.
+                ready.countDown();
+
+                try {
+                    // wait all worker thread ready
+                    start.await();
+                    action.run();
+                } catch(InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                } finally {
+                    System.out.println("DONE");
+                    // 스레드가 끝날 때마다 개수 셈
+                    done.countDown();
+                }
+            });
+        }
+
+        ready.await();
+        long startNanos = System.nanoTime();
+        start.countDown();
+        done.await();
+        return System.nanoTime() - startNanos;
+    }
+
+    public static void main(String[] args) throws InterruptedException {
+        ExecutorService service = Executors.newFixedThreadPool(10);
+        long t = time(service, 10, () -> {
+            System.out.println("HOO~!");
+        });
+        System.out.println(t);
+        service.shutdown();
+    }
+}
+```
+
+굉장히 간단하다. 쓰레드 개수만큼 세는 것이 포인트인 것 같다. 만약, `Executors.newFixedThreadPool`의 매개 변수 nThreads보다 `time`의 매개 변수 concurrency가 더 크다면, 데드락 상황이 벌어져서, 프로그램은 종료하지 않는다. 즉 "nThreads >= concurrency"를 맞춰주어야 한다. (어찌 보면 당연한 얘기)
+
+이 예제는 `CyclicBarrier` 혹은 `Phaser`를 사용하면 훨씬 코드가 명료해진다. 하지만 이해하기는 상대적으로 어렵다. 
+
+이번에는 기존 `wait-notify` 구조에 대해서 간단하게 살펴보자. 다음 규칙에 맞게 짜라.
+
+1. wait 메소드는 대기 반복문(wait loop) 관용구를 사용하라. 반복문 밖에선 사용하지 마라.
+2. 대기 조건을 검사하여 조건이 충족하지 않았다면 다시 대기하게 하라.
+
+그러나 다시 대기하게 해도 몇 가지 상황에 의해서 스레드가 깨어날 수도 있다.
+
+* 스레드가 notify를 호출한 다음 대기 중이던 스레드가 깨어나는 사이에 다른 스레드가 락을 얻을 얻을 때 -> 그 락이 보호하는 상태를 변경한다.
+* 조건이 만족되지 않았음에도, 다른 스레드가 notify를 호출할 때
+* 깨우는 스레드가 지나치게 관대할 때 -> notifyAll을 통해 모두 깨어날 수도 있다.
+* 허위각성 시
+
+걍 레거시 아니면 `java.util.concurrent` 쓰자..
+
+
 ## 스레드 안정성 수준을 문서화하라
 
 ## 지연 초기화는 신중히 사용하라
