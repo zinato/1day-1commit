@@ -398,6 +398,28 @@ public class CountDownLatchExample {
 
 ## 스레드 안정성 수준을 문서화하라
 
+스레드 안정성 수준을 문서화하는 것은 좋다. (할 수 있나..?) 문서에서 `synchronized` 한정자가 보인다고 하더라도, 스레드에 안전하다고 확신할 수 없다. 메서드 선언에 `synchronized` 한정자를 선언할지는 구현 이슈일 뿐 API에 속하지 않는다. 멀티 스레드 환경에서 API가 안전하게 사용하게 하려면 클래스가 지원하는 스레드 안정성 수준을 정확히 명시해주어야 한다. 다음은 스레드 안정성이 높은 순으로 나열한 것이다.
+
+| 순위 | 내용 | 설명 | 예 |
+| :-- | :-- | :-- | :-- |
+| 1 | 불변성 객체, Immutable | 상수와 같아서, 외부 동기화가 필요 없다. | Long, String, BigInteger |
+| 2 | 무조건적 스레드 안전한 객체, Unconditionally Thread-safe | 내부에서 충실히 동기화하여 별도 외부 동기화 작업 필요x | AtomicLong, ConcurrentHashMap |
+| 3 | 조건부 스레드 안전, Conditionally Thread-safe | 일부 메서드는 동시에 사용하려면 외부 동기화가 필요 | Collections.sychronized 래퍼 메서드가 반환하는 컬렉션 |
+| 4 | 스레드 안전하지 않음, Not Thead-safe | 각 메서드 호출을 클라이언트가 외부 동기화 메커니즘으로 감싸야 함. | ArrayList, HashMap |
+| 5 | 스레드 절대적, Thread-Hostile | 모든 메서드 호출을 동기화로 감싸더라도 멀티 스레드 환경에서 안전하지 않음 | 이건 개발자가 멍청하게 만들 때 |
+
+이런 애노테이션으로 함께 문서화할 수 있다. 
+
+* Immutable
+* ThreadSafe
+* NotThreadSafe
+
+
+    참고!
+    `lock` 필드는 항상 final로 선언하라. 락 필드의 변경 가능성을 최소화해야 한다.
+
+
+
 ## 지연 초기화는 신중히 사용하라
 
 ## 프로그램의 동작을 스레드 스케줄러에 기대지 말라
