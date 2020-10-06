@@ -422,4 +422,43 @@ public class CountDownLatchExample {
 
 ## 지연 초기화는 신중히 사용하라
 
+지연 초기화는 해당 필드가 필요할 때까지 초기화를 늦추는 기법이다. 주로 최적화 용도에 쓰인다. 그러나 양날의 검이다. 초기화 비용은 줄지만 지연 초기화한 필드에 접근하는 비용은 커지기 때문이다.
+
+그럼에도 지연 초기화가 필요할 때가 있다. 바로 클래스의 인스턴스 중 그 필드를 사용하는 인스턴스의 비율이 낮은 반면, 그 필드를 초기화하는 비용이 클 때이다. 그러나 지연 초기화는 멀티 스레드 환경에서는 정말이지 고통스러운 작업이다. **대부분의 상황에서 일반적인 초기화가 지연 초기화보다 낫다.** 성능 때문에, 어쩔 수 없이 지연 초기화를 해야 한다면, 다음의 지시 사항을 따르자.
+
+* 정적 필드를 지연 초기화할 땐 `지연 초기화 홀더 클래스(Lazy Initialization Holder Class) 관용구`를 사용하자.
+    ```java
+    private static final FieldHolder {
+        static final FieldType field = computeFieldValue();
+    }
+
+    private static FieldType getField() { return FieldHolder.field; }
+    ```
+* 인스턴스 필드를 지연 초기화할 땐 `이중 검사(Double Check) 관용구`를 사용하라
+    ```java
+    private volatile FieldType field;
+
+    private FieldType getField() {
+        FieldType result = field;
+
+        if (result != null) {
+            return result;
+        }
+
+        synchronized(this) {
+            if (result != null) {
+                return computeFieldValue();
+            }
+            return field;
+        }
+    }
+    ```
+
+이중 검사 관용구에는 몇 가지 변형이 있는데, 이 중 단일 검사만 알아보자. 만약 인스턴스 필드가 여러 번 반복해도 된다면, 앞에 null 체크 문을 제거할 수 있다. 또한 `long`, `double`을 제외한 다른 기본 타입이라면, `volatile` 타입을 쓸 필요는 없다.
+
+근데 앵간하면, 지연 초기화는 쓰지 않길 바란다.
+
+
 ## 프로그램의 동작을 스레드 스케줄러에 기대지 말라
+
+프로그램 동작을 스레드 스케줄러에 기대게 되면, 다른 플랫폼에 이식하기 어렵다고 한다. 이식성을 좋게 하려면, **스레드의 평균 수를 프로세스 수보다 지나치게 많도록 하는 것이다.** `java.util.concurrent`를 최대한 쓰고 가능하면, `Thread.yield`는 쓰지 마라. 이식성이 깨지게 되고, 테스트할 방법이 사라진다.
