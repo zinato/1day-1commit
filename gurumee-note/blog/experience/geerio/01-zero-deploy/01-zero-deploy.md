@@ -36,33 +36,29 @@
 일단 나는 첫 번째 방식을 선택했다. 왜냐하면 내가 아는 지식으로, 빠르게 진행할 수 있기 때문이었다. 프로젝트 루트에 `Dockerfile`을 다음과 같이 작성하였다.
 
 ```Dockerfile
+# 컨테이너 실행 시, "java -jar /application.jar"로 실행
+ENTRYPOINT ["java", "-jar", "/application.jar"]
 # Docker Hub에서 java 8 기반의 도커 이미지를 pull
 FROM openjdk:8-jdk-alpine
-
-# 현재 프로젝트 루트 디렉토리를, 도커 이미지 "/app"에 복사
-COPY . /app
-# 도커 이미지에서, 해당 명령어 실행
-# /app 이동 후, gradlew 실행 권한 생성 그 후 "gradlew build" 실행
-# 컨테이너에서 프로젝트 빌드가 일어남.
-RUN cd /app && chmod +x gradlew && ./gradlew build
-
 # 빌드된 실행 가능한 jar를, 컨테이너 "/"에 "application.jar"라는 이름으로 복사
-RUN cp /app/build/libs/*.jar /application.jar
-
+COPY ./build/libs/*.jar /application.jar
 # 포트 노출
 EXPOSE 8080
-
-# 컨테이너 실행 시, "java -jar /application.jar"로 실행
+# 컨테이너 실행 시, 컨테이너 내부에서 "java -jar /application.jar"로 실행
 ENTRYPOINT ["java", "-jar", "/application.jar"]
 ```
 
-터미널에 다음을 입력하여, 도커 이미지를 생성한다.
+터미널에 다음을 입력하여, 도커 이미지를 생성한다. 이 때 `./build/libs/` 경로에 실행 가능한 `jar`파일을 위해서 먼저 `Gradle`로 빌드를 먼저 수행해 주어야 한다.
 
 ```bash
 $ pwd
 # 프로젝트 루트 디렉토리
 /Users/gurumee/Workspaces/geerio
 
+# 자바 애플리케이션 빌드
+$ ./graldew build
+
+# 도커 이미지 생성
 $ docker build --tag geerio-app:0.1 .
 ```
 
