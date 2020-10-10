@@ -1,18 +1,13 @@
 import java.util.Arrays;
 
 public class Solution01 {
-
     public String get_numbers_kth(int n, int k) {
         String T = "0123456789";
         int div = n / k;
         int mod = n % k;
-
-        if (div == 0) {
-            return "" + T.charAt(mod);
-        } else {
-            return get_numbers_kth(div, k) + T.charAt(mod);
-        }
+        return ((div == 0) ? "" : get_numbers_kth(div, k)) + T.charAt(mod);
     }
+    
     public int[] solution(int N) {
         int maxK = 0;
         int maxN = 0;
@@ -29,7 +24,6 @@ public class Solution01 {
                 maxK = k;
             }
         }
-
 
         int[] answer = {maxK, maxN};
         return answer;
