@@ -5,7 +5,7 @@ import java.util.Map;
 import java.util.PriorityQueue;
 
 
-public class Solution02 {
+public class Solution01 {
     static class Kiosk implements Comparable<Kiosk> {
         public int number;
         public LocalDateTime operatedTime;
@@ -53,7 +53,7 @@ public class Solution02 {
             } else {
                 k.operatedTime = to;
             }
-            
+
             map.put(k, map.get(k) + 1);
             pq.add(k);
         }
