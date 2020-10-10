@@ -30,19 +30,15 @@ class Solution04 {
             map.put(v, map.get(v) + 1);
         }
 
-        PriorityQueue<SimpleEntry> pq = new PriorityQueue<>();
-        map.entrySet().stream()
-                .map(entry -> new SimpleEntry(entry.getKey(), entry.getValue()))
-                .sorted()
-                .forEach(e -> pq.add(e));
-
-        int sum = map.entrySet().stream()
+        List<SimpleEntry> entries = map.entrySet().stream()
                 .map(entry -> new SimpleEntry(entry.getKey(), entry.getValue()))
                 .sorted(Comparator.reverseOrder())
+                .collect(Collectors.toList());
+        PriorityQueue<SimpleEntry> pq = new PriorityQueue<>(entries);
+        int sum = entries.stream()
                 .limit(k)
                 .map(entry -> entry.value)
                 .reduce(0, Integer::sum);
-
         int last = 0;
         String answer = "";
 
