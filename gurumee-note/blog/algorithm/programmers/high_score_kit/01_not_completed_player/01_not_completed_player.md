@@ -1,13 +1,13 @@
 # 알고리즘 문제 풀이: 완주하지 못한 선수
 
-![logo](../../../logo.png)
+![logo](../../logo.png)
 
 > 프로그래머스 > 코딩테스트 연습 > 코딩테스트 고득점 Kit > 해시 > "완주하지 못한 선수" 문제에 대한 풀이입니다.
 > 
 > 문제 링크는 [이 곳](https://programmers.co.kr/learn/courses/30/lessons/42576?language=java)에서 확인할 수 있습니다.
 
 
-## 문제 조건과 입력을 분석하기
+## 문제 분석
 
 문제 조건은 다음과 같다.
 
@@ -60,7 +60,7 @@ completion = [eden, kiki]
 
 문제 입력
 ```
-participant = [mislav, stanko, mislav, ana] # mislavrk 중복된다.
+participant = [mislav, stanko, mislav, ana] # mislav 중복된다.
 completion = [stanko, ana, mislav]
 ```
 
@@ -77,8 +77,8 @@ completion = [stanko, ana, mislav]
 | 등록 선수 이름 | 선수 숫자 | 설명 | 
 | :-- | :-- | :-- |
 | mislav | 1 | 2 -> 1애를 반환하면 된다. |
-| stanko | 0 | 1 -> 0 (completion에 이름이 존재한다.) |
-| ana | 0 | 1 -> 0 (completion에 이름이 존재한다.) |
+| stanko | 0 | 1 -> 0 |
+| ana | 0 | 1 -> 0 |
 
 표에 따르면, "mislav"를 반환하면 된다.
 
@@ -101,7 +101,9 @@ completion = [stanko, ana, mislav]
 
 ## 문제 풀이
 
-먼저 `해시 테이블`을 생성한다. 이 때, { 등록한 선수 이름 : 동명 이인의 수 } 쌍을 저장해야 한다. 즉, 문자열을 키로, 정수형을 값을 갖아야 한다. 이를 키 타입을 K, 값 타입을 V라고 할때 `new hash_table[K, V]`이 `hash_table`을 생성하는 함수라고 하자.
+먼저 `해시 테이블`을 생성한다. 이 때, { 등록한 선수 이름 : 동명 이인의 수 } 쌍을 저장해야 한다. 즉, 문자열을 키로, 정수형을 값의 쌍을 저장해야 한다. 
+
+이 때 키 타입을 K, 값 타입을 V라고 할때 `new hash_table[K, V]`이 K를 키 타입, V를 값 타입 쌍으로 저장하는 `hash_table`을 생성하는 함수라고 하자.
 
 ```
 hash_table = new hash_table[string, int]
