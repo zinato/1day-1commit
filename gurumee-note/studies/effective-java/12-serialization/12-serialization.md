@@ -31,7 +31,108 @@
 
 책에서는 또한, 상속용으로 설계된 클래스는 `Serializable`을 구현하면 안되며 인터페이스도 `Serializable`을 확장해서도 안된다.
 
+
 ## 커스텀 직렬화 형태를 고려해보라
+
+기본 직렬화 형태를 사용할 수 있는 경우가 몇 가지가 있다. 책에서는 "객체의 물리적 표현과 논리적 내용이 같다면 기본 직렬화 형태를 쓰는 것도 괜찮다"라고 말하고 있다.
+
+```java
+public class Name implements Serializable {
+    /**
+     * 성, null이 아니어야 함.
+     * @serial
+     */
+    private final String lastName;
+    /**
+     * 이름, null이 아니어야 함.
+     * @serial
+     */
+    private final String firstName;
+    /**
+     * 중간이름, null이 아니어야 함.
+     * @serial
+     */
+    private final String middleName;
+
+    public Name(String lastName, String firstName, String middleName) {
+        this.lastName = lastName;
+        this.firstName = firstName;
+        this.middleName = middleName;
+    }
+
+    // ...
+}
+```
+
+이름은 논리적으로 이름, 성 중간이름으로 3개의 문자열로 구성된다. 위의 코드는 그것을 그대로 표현하고 있다. 기본 직렬화 형태가 적합하다고 결정했더라도, 불변식 보장과 보안을 위해 `readObject` 메서드로 제공해야 할 때가 있다. 이 때, 해당 필드들은 null이 되지 않는 것을 보장해야 하는데 `Name`은 이를 정확히 따르고 있다. 이제 다른 예를 살표보자.
+
+```java
+public class StringList implements Serializable {
+    private int size = 0;
+    private Entry head = null;
+
+    private static class Entry implements Serializable {
+        String data;
+        Entry next;
+        Entry prev;
+    }
+
+    //...
+}
+```
+
+위의 경우 직렬화 형태에 적합하지 않다. 논리적으로 일련의 문자열을 표현하나, 실제 물리적으로는 이중 연결 리스트로 연결되었다. 즉 물리적 표현과 논리적 표현의 차이가 난다는 것이다. 객체의 물리적 표현과 논리적 표현의 차이가 클 때 기본 직렬화 형태를 사용하면, 크게 4가지 면에서 문제가 생긴다.
+
+1. 공개 API가 현재의 내부 표현 방식에 영원히 묶인다.
+2. 너무 많은 공간을 차지할 수 있다.
+3. 시간이 오래 걸릴 수 있다.
+4. 스택 오버플로를 일으킬 수 있다.
+
+이 경우, 어떻게 고쳐야 할까. 다음은 고친 코드의 예이다.
+
+```java
+public class StringList implements Serializable {
+    private int size = 0;
+    private Entry head = null;
+    
+    // 이제 직렬화 안됨.
+    private static class Entry {
+        String data;
+        Entry next;
+        Entry prev;
+    }
+    
+    // 문자열 추가
+    public final void add(String s) {
+        //...
+    }
+
+    /**
+     * 이 {@code StringList} 인스턴스를 직렬화한다.
+     * @serialData 이 리스트의 크기를 기록한 후 {@code int}, 이어서 모든 원소를 각각 {@code String} 해서 순서대로 기록한다.
+     */
+    private void writeObject(ObjectOutputStream s) throws IOException {
+        s.defaultWriteObject();
+        s.writeInt(size);
+
+        for (Entry e=head; e!=null; e=e.next) {
+            s.writeObject(e.data);
+        }
+    }
+
+    private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
+        s.defaultReadObject();
+        int numElements = s.readInt();
+
+        for (int i=0; i<numElements; i++) {
+            add((String) s.readObject());
+        }
+    }
+}
+```
+
+`deafultObject` 메서드를 호출하면, `transient`로 선언하지 않은 모든 인스턴스 필드가 직렬화된다. 해당 객체의 논리적인 상태와 무관할 때만 `transient`를 선언하자. 
+
 
 ## readObject 메서드는 방어적으로 작성하라
 
