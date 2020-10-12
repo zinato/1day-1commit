@@ -131,7 +131,7 @@ public class StringList implements Serializable {
 }
 ```
 
-`deafultObject` 메서드를 호출하면, `transient`로 선언하지 않은 모든 인스턴스 필드가 직렬화된다. 해당 객체의 논리적인 상태와 무관할 때만 `transient`를 선언하자. 
+`deafultObject` 메서드를 호출하면, `transient`로 선언하지 않은 모든 인스턴스 필드가 직렬화된다. 해당 객체의 논리적인 상태와 무관할 때만 `transient`를 선언하자. 만약, 직렬화를 결정했다면, 직렬화 가능 클래스 모두에 직렬 버전 UID를 명시적으로 부여한다. 구 버전으로 직렬화된 인스턴스들과의 호환성을 끊으련느 경우를 제외하고는 이 UID를 절대 수정하지 말아야 한다.
 
 
 ## readObject 메서드는 방어적으로 작성하라
