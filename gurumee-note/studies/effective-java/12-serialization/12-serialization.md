@@ -136,6 +136,28 @@ public class StringList implements Serializable {
 
 ## readObject 메서드는 방어적으로 작성하라
 
+`readObject`는 실제적으로 또 다른 public 생성자라고 봐야 한다. 책에서는 **객체를 역직렬화할 때는 클라이언트가 소유해서는 안되는 객체 참조를 갖는 필드를 모두 반드시 방어적으로 복사해야 한다.** 다음은 그 예이다.
+
+```java
+private void readObject(ObjectInputStream s) throws IOExecption, ClassNotFoundException {
+    s.defaultObject();
+
+    start = new Date(start.getTime());
+    end = new Date(end.getTime());
+
+    if (start.compareTo(end) > 0) {
+        throw new InvalidObjectException(start + "가 " + end + "보다 늦다.");
+    }
+}
+```
+
+이 때, `clone`을 쓰지 않았음을 주목하자. `readObject` 메서드를 언제 쓰면 좋을까? 판단하기 어렵다면 다음 질문을 던져보라 
+    
+    `transient` 필드를 제외한 모든 필드의 값을 매개변수로 받아 유효성 검사 없이 필으데 대입하는 public 생성자를 추가해도 괜찮은가?
+
+답이 아니라면, 커스텀 `readObject`를 만들어주어야 한다. 이 때 위처럼, 모든 유효성 검사와 방어적 복사를 수행해야 함은 물론이다. 이 때 좋은 것이 `직렬화 프록시 패턴`이다.
+
+
 ## 인스턴스 수를 통제해야 한다면 readResolve보다는 열거 타입을 사용하라
 
 ## 직렬화된 인스턴스 대신 직렬화 프록시 사용을 검토하라
