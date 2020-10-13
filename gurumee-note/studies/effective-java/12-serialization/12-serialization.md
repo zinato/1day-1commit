@@ -204,3 +204,147 @@ public enum Elvis {
 
 ## 직렬화된 인스턴스 대신 직렬화 프록시 사용을 검토하라
 
+`Serializable`을 구현하는 순간, 생성자 이외에 방법으로 인스턴스를 생성할 수 있게 된다. 즉, 버그와 보안 문제가 일어날 가능성이 높아진다. 이를 그나마 해결해줄 수 있는게, `직렬화 프록시 패턴`이다. 거창한 이름만큼 만드는 게 어렵진 않다. 이전에 구현했던 `Period` 클래스를 예로 살펴보자.
+
+```java
+public class Period {
+    private final Date start;
+    private final Date end;
+
+    public Period(Date start, Date end) {
+        this.start = start;
+        this.end = end;
+    }
+
+    public Date getStart() {
+        return new Date(start.getTime());
+    }
+
+    public Date getEnd() {
+        return new Date(end.getTime());
+    }
+}
+```
+
+먼저 이 클래스 내부에 `Proxy` 클래스를 만들어준다. 직렬화할 필드를 내부 필드로 갖는다.
+
+```java
+public class Period {
+    // ...
+    private static class SerializationProxy implements Serializable {
+        private final Date start;
+        private final Date end;
+
+        SerializationProxy(Period p) {
+            this.start = p.start;
+            this.end = p.end;
+        }
+    }
+}
+```
+
+이제 이 `Proxy` 클래스에 UID를 만들어준다.
+
+```java
+public class Period {
+    // ...
+    private static class SerializationProxy implements Serializable {
+        // ...
+        private final static long serialVersionUID = 20202020202L;
+    }
+}
+```
+
+이제 `Period` 클래스의 `writeReplace` 메소드를 구현한다.
+
+```java
+public class Period {
+    // ...
+    private static class SerializationProxy implements Serializable {
+        // ...
+    }
+
+    private Object writeReplace(){
+        return new SerializationProxy(this);
+    }
+}
+```
+
+그리고 `readObject`를 다음과 같이 구현하여 공격자의 공격을 가볍게 막을 수 있다.
+
+```java
+public class Period {
+    // ...
+    private static class SerializationProxy implements Serializable {
+        // ...
+    }
+
+    // ...
+
+    private void readObject(ObjectInputStream s) throws InvalidObjectException {
+        throw new InvalidObjectException("Need Proxy");
+    }
+}
+```
+
+그리고 프록시 클래스 안에 `readResolve`를 구현하면, 역직렬화 시 직렬화 시스템이 직렬화 프록시를 다시 바깥 클래스의 인스턴스로 변환하게 해준다. 
+
+```java
+public class Period {
+    // ...
+    private static class SerializationProxy implements Serializable {
+        // ...
+        private Object readResolve() {
+            return new Period(start, end);
+        }
+    }
+
+    // ...
+}
+```
+
+책에서는 제 3자가 확장할 수 없는 클래스를 직렬화해야 한다면, `직렬화 프록시 패턴`을 사용할 것을 권고하고 있다. 다음은 직렬화 프록시 패턴을 사용한 전체 코드이다.
+
+```java
+public class Period {
+    private final Date start;
+    private final Date end;
+
+    public Period(Date start, Date end) {
+        this.start = start;
+        this.end = end;
+    }
+
+    public Date getStart() {
+        return new Date(start.getTime());
+    }
+
+    public Date getEnd() {
+        return new Date(end.getTime());
+    }
+
+    private static class SerializationProxy implements Serializable {
+        private final Date start;
+        private final Date end;
+
+        SerializationProxy(Period p) {
+            this.start = p.start;
+            this.end = p.end;
+        }
+
+        private final static long serialVersionUID = 20202020202L;
+
+        private Object readResolve() {
+            return new Period(start, end);
+        }
+    }
+
+    private Object writeReplace(){
+        return new SerializationProxy(this);
+    }
+
+    private void readObject(ObjectInputStream s) throws InvalidObjectException {
+        throw new InvalidObjectException("Need Proxy");
+    }
+}
+```
