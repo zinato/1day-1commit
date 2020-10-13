@@ -160,4 +160,47 @@ private void readObject(ObjectInputStream s) throws IOExecption, ClassNotFoundEx
 
 ## 인스턴스 수를 통제해야 한다면 readResolve보다는 열거 타입을 사용하라
 
+싱글톤 패턴을 구현한 클래스일지라도 `Serializable`을 구현하게 되면, 더 이상 싱글톤이 아니게 된다. 아래는 이전에 구현했던 싱글톤 패턴의 예제였던 `Elvis` 클래스이다.
+
+```java
+public class Elvis implements Serializable {
+    public static final Elvis INSTANCE = new Elvis();
+
+    private Elvis() { /* ... */ }
+}
+```
+
+이렇게 했을 경우, 역직렬화를 통해서 클래스가 만들어질 때 만들어진 인스턴스가 아닌 다른 인스턴스가 만들어진다. 이 때, `readResolve` 메소드를 통해서, 싱글톤 속성을 유지할 수 있다.
+
+```java
+public class Elvis implements Serializable {
+    public static final Elvis INSTANCE = new Elvis();
+
+    private Elvis() { /* ... */ }
+
+    private Object readResolve() {
+        return INSTANCE;
+    }
+
+    // ...
+}
+```
+
+이 때, 모든 필드는 `transient`로 선언해야 한다. 선언하지 않았다면 이렇게 하더라도 클래스는 직렬화/역직렬화로부터 안전하지 않다. 잘 조작된 스트림을 이용하면, 역직렬화하는 시점에 인스턴스의 참조를 훔쳐올 수 있다. 인스턴스 수의 통제가 목적이라면, `readResolve` 메소드보다 열거 타입을 이용하면 더 효과적으로 인스턴스 개수를 통제할 수 있다.
+
+```java
+public enum Elvis {
+    INSTANCE;
+
+    private String[] favoriteSongs = { "Hound Dog", "Heartbreak Hotel" };
+    public void printFavorites() {
+        Sytsem.out.println(Arrays.toString(favoriteSongs));
+    }
+}
+```
+
+직렬화 가능 인스턴스 통제 클래스를 작성해야 할 때, 열거 타입이 표현이 불가능하다면, 결국 `readObject`를 고려할 수 밖에 없다. 이 때는 `private` 접근 수준으로 정의하도록 하자.
+
+
 ## 직렬화된 인스턴스 대신 직렬화 프록시 사용을 검토하라
+
