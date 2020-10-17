@@ -1,8 +1,8 @@
-# GCP 프로젝트에 IAM 키 생성하기
+# GCP 프로젝트에 Service Account Key 생성하기
 
 ![로고](../logo.png)
 
-> 실제 GCP를 이용하면서 정리한 내용입니다. 이 문서는 GCP에서 만든 프로젝트에 서비스 계정 외, 다른 사용자가 접속할 수 있도록 IAM 키를 생성하는 방법에 대하여 다루고 있습니다.
+> 실제 GCP를 이용하면서 정리한 내용입니다. 이 문서는 GCP에서 만든 프로젝트의 구성원 외, 다른 사용자가 접속할 수 있도록 "Service Account Key"를 생성하는 방법에 대하여 다루고 있습니다.
 
 
 ## 요구 사항
@@ -15,22 +15,26 @@
 자 `GCP` 가입과, 프로젝트 생성을 완료했다면, 시작해보자.
 
 
-## 서비스 계정과 IAM 키
+## Service Account Key란?
 
-먼저 `IAM 키`를 알기 전에 `서비스 계정`이 무엇인지 알아야 한다. 공식 문서에 따르면, 정의는 다음과 같다.
+먼저 `IAM`이란 개념을 알아야 한다. `IAM`이란 `Identity and Access Management`의 약자로 구글 공식 문서에서는 다음과 같이 정의하고 있다.
 
-    서비스 계정은 사용자가 아닌 애플리케이션 또는 가상 머신(VM) 인스턴스에서 사용하는 특별한 유형의 계정입니다. 
-    애플리케이션은 서비스 계정 자체 또는 G Suite로 승인되거나, 도메인 전체 위임을 통해 Cloud ID 사용자로 승인된 
-    API 호출을 수행하기 위해 서비스 계정을 사용합니다.
+    IAM을 사용하면 특정 Google Cloud 리소스에 대한 세부적인 액세스 권한을 부여하고 다른 리소스에 대한 액세스를 방지할 수 있습니다. 또한 IAM은 최소 권한의 보안 원칙을 적용하여 특정 리소스에 액세스하는 데 필요한 권한만 부여할 수 있게 해줍니다.
 
-쉽게 말해서, 프로젝트를 만든 "사용자"가 아니라, 사용자가 특별히 사용자의 클라우드 리소스를 접근을 허용한 "계정"이라고 보면 된다. 그리고 이 계정들은 비밀번호로 접근하는 것이 아니라, 일반적으로 `IAM 키`를 가지고 접근하게 된다.
+쉽게 말하면, `IAM`이란 `GCP` 리소스에 접근 권한을 부여하는 서비스를 뜻한다. 이 `IAM`이란 서비스를 이용하여, `Service Account Key(이하 SAK)`를 관리할 수 있다. 자세한 내용은 참고 문서 절에 "IAM 개요"를 참고하라. 그렇다면, `SAK`는 무엇일까? 이를 알기 위해선, "서비스 계정"에 대해 알고 있어야 한다. 이는 다음 문서를 참고하라.
 
-즉, `IAM 키`란 `Identity and Access 키`의 약자로, 서버 접근 권한을 가진 키로 이해하면 된다.
+* [GCP 프로젝트에 Service Account 생성하기]()
+
+구글 공식 문서에서는 `SAK`를 다음과 같이 정의하고 있다.
+
+    각 서비스 계정은 Google을 인증하는 데 사용되는 두 가지 공개/비공개 RSA 키 쌍 조합인 Google 관리 키 및 사용자 관리 키와 연결되어 있습니다.
+
+뭐 쉽게 말해서, 서비스 계정을 접근하는 키인데, 보통 JSON, P12 이 2가지 방식으로 키를 만들 수 있다. 이 `SAK`만 있으면, 해당 서비스 계정의 액세스할 수 있는 권한을 이용하여, `GCP` 내부 리소스를 액세스할 수 있다. 가령 `Github Actions`에서 `GCE` 내부로 접속하여 터미널 명령어를 내린다든가, `GKE`에 배포 명령을 실행한다든가 이러한 작업들을 할 수 있다. 이제 본격적으로 `SAK`를 만들어보자.
 
 
-## GCP 웹 콘솔로 IAM 키 관리하기
+## GCP 웹 콘솔로 SAK 관리하기
 
-`IAM 키` 생성은 여러가지 방법이 있다. 이 문서에서는 먼저 웹 브라우저를 통해서 UI로 `IAM 키`를 관리하는 것을 다룬다. 먼저 [이 곳](https://console.cloud.google.com/projectselector2/iam-admin/serviceaccounts)을 클릭하여 이동한다.
+`SAK` 생성은 여러가지 방법이 있다. 이 문서에서는 먼저 웹 브라우저를 통해서 UI로 `SAK`를 관리하는 것을 다룬다. 먼저 [이 곳](https://console.cloud.google.com/projectselector2/iam-admin/serviceaccounts)을 클릭하여 이동한다.
 
 ![01](./01.png)
 
@@ -63,13 +67,13 @@
 ![07](./07.png)
 
 
-## gcloud 도구로 IAM 키 관리하기
+## gcloud 도구로 SAK 관리하기
 
 > 참고!
 > 
 > 이 절은 로컬 머신에 gcloud 도구가 설치되어 있어야 진행이 가능합니다.
 
-이번에는 `gcloud`도구로 더 쉽게 `IAM 키`를 생성하고 삭제해보자. 먼저 키를 생성해본다. 터미널을 열고 다음을 입력한다.
+이번에는 `gcloud`도구로 더 쉽게 `SAK`를 생성하고 삭제해보자. 먼저 키를 생성해본다. 터미널을 열고 다음을 입력한다.
 
 ```bash
 # gcloud iam service-accounts keys create ~/key.json --iam-account <서비스 계정 이름>@<프로젝트 id>.iam.gserviceaccount.com
@@ -102,5 +106,5 @@ deleted key [ee928fa0c8957000117235236fa2e9d1e3f157d0] for service account [test
 
 ## 참고 문서
 
-* [GCP 공식 문서 - 서비스 계정](https://cloud.google.com/iam/docs/service-accounts?hl=ko)
+* [GCP 공식 문서 - IAM 개요](https://cloud.google.com/iam/docs/overview?hl=ko)
 * [GCP 공식 문서 - 서비스 계정 키 생성 및 관리](https://cloud.google.com/iam/docs/creating-managing-service-account-keys?hl=ko#iam-service-account-keys-create-console)
