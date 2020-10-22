@@ -1,4 +1,4 @@
-# 야! 너도 TICK 할 수 있어 (1) - TICKscript 소개
+# 야! 너두 TICK 할 수 있어 (1) - TICKscript 소개
 
 ![logo](../logo.png)
 
