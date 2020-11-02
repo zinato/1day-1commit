@@ -73,7 +73,7 @@ ssh -i "<pem 파일 이름>" <ec2 인스턴스 public dns>
 그래서 `connect.sh`만 실행시키면, 서버에 접속할 수 있다.
 
 ```bash
-source connect.sh
+$ source connect.sh
 Last login: Mon Nov  2 06:43:27 2020 from 175.126.171.166
 
        __|  __|_  )
