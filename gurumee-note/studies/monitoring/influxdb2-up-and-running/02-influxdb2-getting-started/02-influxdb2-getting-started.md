@@ -313,3 +313,11 @@ $ sudo systemctl restart telegraf
 다음 대시보드가 보이면 성공이다.
 
 ![14](./14.png)
+
+
+## 참고
+
+- [InfluxDB 2.0 공식 문서 - Get started with InfluxDB](https://docs.influxdata.com/influxdb/v2.0/get-started/)
+- [InfluxDB 2.0 공식 문서 - Automatically configure Telegraf](https://docs.influxdata.com/influxdb/v2.0/write-data/no-code/use-telegraf/auto-config/)
+- [InfluxDB 1.7, 2.0 설치 방법](https://devconnected.com/how-to-install-influxdb-on-ubuntu-debian-in-2019/)
+- [AWS Amazon Linux에 Telegraf 설치 시, 패키지 매니저 업데이트 방법](http://blog.naver.com/PostView.nhn?blogId=jsf3rd&logNo=220719782584)
