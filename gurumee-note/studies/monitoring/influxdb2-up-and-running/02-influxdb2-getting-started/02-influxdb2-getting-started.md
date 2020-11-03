@@ -194,9 +194,15 @@ $ sudo systemctl status telegraf
 
 ![11](./11.png)
 
-이제 하단에 "Finish" 버튼을 누른다. 이제 "Data" > "Tokens"로 이동해보면, `Telegraf`용 토큰이 생긴 것을 확인할 수 있다.
+이제 하단에 "Finish" 버튼을 누른다. 
 
 ![12](./12.png)
+
+이제 "Data" > "Telegraf"에 위와 같이 설정 목록이 추가된 것을 확인할 수 있다. 이를 클릭하면 `Telegraf`에 수정할 설정들을 확인할 수 있다.
+
+![13](./13.png)
+
+또한 "Data" > "Tokens"로 이동해보면, `Telegraf`용 토큰이 생긴 것을 확인할 수 있다.
 
 이제 "sudo"권한으로 `/etc/telegraf/telegraf.conf`를 다음과 같이 수정한다.
 
@@ -296,10 +302,6 @@ $ sudo systemctl status telegraf
 [[inputs.system]]
 ```
 
-> 참고!
-> 
-> 위 설정은, "Data" > "Telegraf"에서 확인할 수 있습니다. 
-
 그 후 `Telegraf`를 재실행하면 된다.
 
 ```bash
@@ -308,11 +310,13 @@ $ sudo systemctl restart telegraf
 
 이제 몇 초 후 웹 페이지에서 "Boards" > "System"를 누른다.
 
-![13](./13.png)
+![14](./14.png)
 
 다음 대시보드가 보이면 성공이다.
 
-![14](./14.png)
+![15](./15.png)
+
+끝났다. `EC2` 인스턴스 시스템 메트릭을 모니터링하는 시스템을 구축하였다!! 
 
 
 ## 참고
