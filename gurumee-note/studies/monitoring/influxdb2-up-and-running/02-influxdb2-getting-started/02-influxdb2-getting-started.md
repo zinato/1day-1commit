@@ -129,9 +129,187 @@ $ sudo systemctl status influxdb2
 ![05](./05.png)
 
 그럼 다음 화면이 뜬다. 이렇게 해서 `InfluxDB 2.0` 설정이 끝났다. 
+
  
 ## Telegraf 설치
 
-이제 머신에 `Telegraf`를 설치하여 시스템 메트릭을 수집하여 `InfluxDB 2.0`에 저장해 볼 것이다.
+이제 머신에 `Telegraf`를 설치하여 시스템 메트릭을 수집하여 `InfluxDB 2.0`에 저장해 볼 것이다. 먼저 `Telegraf`를 설치한다. 이번엔 패키지 매니저 기반으로 설치한다. 이 때, 패키지 매니저가 최신 `telegraf`를 설치할 수 있도록, `/etc/yum.repos.d/` 밑에 `influxdb.repo`를 만들어주어야 한다. 터미널에 다음을 입력한다.
+
+```bash
+# /etc/yum.repos.d/ 밑에 influxdb.repo 생성
+$ cat <<EOF | sudo tee /etc/yum.repos.d/influxdb.repo
+[influxdb]
+name = InfluxDB Repository - RHEL $releasever
+baseurl = https://repos.influxdata.com/rhel/7/\$basearch/stable
+enabled = 1
+gpgcheck = 1
+gpgkey = https://repos.influxdata.com/influxdb.key
+retries = 7
+skip_if_unavailable = 1
+keepcache = 0
+timeout = 5.0
+EOF
+
+# telegraf 설치
+$ sudo yum install telegraf
+...
+
+# telegraf 실행
+$ sudo systemctl start telegraf
+$ sudo systemctl status telegraf
+● telegraf.service - The plugin-driven server agent for reporting metrics into InfluxDB
+   Loaded: loaded (/usr/lib/systemd/system/telegraf.service; enabled; vendor preset: disabled)
+   Active: active (running) since 화 2020-11-03 06:51:45 UTC; 7s ago
+     Docs: https://github.com/influxdata/telegraf
+ Main PID: 16687 (telegraf)
+   CGroup: /system.slice/telegraf.service
+           └─16687 /usr/bin/telegraf -config /etc/telegraf/telegraf.conf -config-directory /etc/telegraf/telegraf.d
+...
+```
+
 
 ## InfluxDB 2.0 - Telegraf 연동
+
+이제 `InfluxDB 2.0`과 `Telegraf`를 연동시켜보자. `InfluxDB 2.0`을 웹 브라우저를 통해서 접속한다. 
+
+![06](./06.png)
+
+로그인하게 되면, 첫 화면인데, "Load your data"를 클릭한다.
+
+![07](./07.png)
+
+그 다음, "Telegraf"를 클릭한다.
+
+![08](./08.png)
+
+위의 화면에서, "Create Configuration"을 클릭한다.
+
+![09](./09.png)
+
+그럼 위의 모달 창이 뜬다. 그러면, "System"을 클릭한다. 그럼 하단에 "Continue" 버튼이 활성화된다. 이 버튼을 클릭한다.
+
+![10](./10.png)
+
+위의 화면에서 입력 창에 적절한 값을 주고 "Create and Verify" 버튼을 클릭한다.
+
+![11](./11.png)
+
+이제 하단에 "Finish" 버튼을 누른다. 이제 "Data" > "Tokens"로 이동해보면, `Telegraf`용 토큰이 생긴 것을 확인할 수 있다.
+
+![12](./12.png)
+
+이제 "sudo"권한으로 `/etc/telegraf/telegraf.conf`를 다음과 같이 수정한다.
+
+
+```conf
+# Configuration for telegraf agent
+[agent]
+  ## Default data collection interval for all inputs
+  interval = "10s"
+  ## Rounds collection interval to 'interval'
+  ## ie, if interval="10s" then always collect on :00, :10, :20, etc.
+  round_interval = true
+
+  ## Telegraf will send metrics to outputs in batches of at most
+  ## metric_batch_size metrics.
+  ## This controls the size of writes that Telegraf sends to output plugins.
+  metric_batch_size = 1000
+
+  ## For failed writes, telegraf will cache metric_buffer_limit metrics for each
+  ## output, and will flush this buffer on a successful write. Oldest metrics
+  ## are dropped first when this buffer fills.
+  ## This buffer only fills when writes fail to output plugin(s).
+  metric_buffer_limit = 10000
+
+  ## Collection jitter is used to jitter the collection by a random amount.
+  ## Each plugin will sleep for a random time within jitter before collecting.
+  ## This can be used to avoid many plugins querying things like sysfs at the
+  ## same time, which can have a measurable effect on the system.
+  collection_jitter = "0s"
+
+  ## Default flushing interval for all outputs. Maximum flush_interval will be
+  ## flush_interval + flush_jitter
+  flush_interval = "10s"
+  ## Jitter the flush interval by a random amount. This is primarily to avoid
+  ## large write spikes for users running a large number of telegraf instances.
+  ## ie, a jitter of 5s and interval 10s means flushes will happen every 10-15s
+  flush_jitter = "0s"
+
+  ## By default or when set to "0s", precision will be set to the same
+  ## timestamp order as the collection interval, with the maximum being 1s.
+  ##   ie, when interval = "10s", precision will be "1s"
+  ##       when interval = "250ms", precision will be "1ms"
+  ## Precision will NOT be used for service inputs. It is up to each individual
+  ## service input to set the timestamp at the appropriate precision.
+  ## Valid time units are "ns", "us" (or "µs"), "ms", "s".
+  precision = ""
+
+  ## Logging configuration:
+  ## Run telegraf with debug log messages.
+  debug = false
+  ## Run telegraf in quiet mode (error log messages only).
+  quiet = false
+  ## Specify the log file name. The empty string means to log to stderr.
+  logfile = ""
+
+  ## Override default hostname, if empty use os.Hostname()
+  hostname = ""
+  ## If set to true, do no set the "host" tag in the telegraf agent.
+  omit_hostname = false
+[[outputs.influxdb_v2]]	
+  ## The URLs of the InfluxDB cluster nodes.
+  ##
+  ## Multiple URLs can be specified for a single cluster, only ONE of the
+  ## urls will be written to each interval.
+  ## urls exp: http://127.0.0.1:8086
+  urls = ["http://localhost:8086"]
+
+  ## Token for authentication.
+  # 이것은 "Data > TOKENS"에서 확인했던 토큰으로 업데이트 해준다.
+  token = "$INFLUX_TOKEN"
+
+  ## Organization is the name of the organization you wish to write to; must exist.
+  organization = "11st-team-infra-platform"
+
+  ## Destination bucket to write into.
+  bucket = "data"
+[[inputs.cpu]]
+  ## Whether to report per-cpu stats or not
+  percpu = true
+  ## Whether to report total system cpu stats or not
+  totalcpu = true
+  ## If true, collect raw CPU time metrics.
+  collect_cpu_time = false
+  ## If true, compute and report the sum of all non-idle CPU states.
+  report_active = false
+[[inputs.disk]]
+  ## By default stats will be gathered for all mount points.
+  ## Set mount_points will restrict the stats to only the specified mount points.
+  # mount_points = ["/"]
+  ## Ignore mount points by filesystem type.
+  ignore_fs = ["tmpfs", "devtmpfs", "devfs", "overlay", "aufs", "squashfs"]
+[[inputs.diskio]]
+[[inputs.mem]]
+[[inputs.net]]
+[[inputs.processes]]
+[[inputs.swap]]
+[[inputs.system]]
+```
+
+> 참고!
+> 
+> 위 설정은, "Data" > "Telegraf"에서 확인할 수 있습니다. 
+
+그 후 `Telegraf`를 재실행하면 된다.
+
+```bash
+$ sudo systemctl restart telegraf
+```
+
+이제 몇 초 후 웹 페이지에서 "Boards" > "System"를 누른다.
+
+![13](./13.png)
+
+다음 대시보드가 보이면 성공이다.
+
+![14](./14.png)
