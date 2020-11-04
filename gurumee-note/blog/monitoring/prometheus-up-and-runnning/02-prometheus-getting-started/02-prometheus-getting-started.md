@@ -16,7 +16,7 @@
 
 ## 프로메테우스 설치
 
-`Promethues`는 [이 곳](https://prometheus.io/download/)에서 단일 파일로 설치할 수 있다. 터미널에 다음을 입력한다.
+`Promethues`는 [공식 홈페이지](https://prometheus.io/download/)에서 단일 파일로 설치할 수 있다. 터미널에 다음을 입력한다.
 
 ```bash
 $ pwd
@@ -140,5 +140,101 @@ scrape_configs:
 
 
 ## 노드 익스포터 설치 및 프로메테우스 연동
+
+노드 익스포터를 통해서 리눅스, 유닉스 계열의 시스템에서 커널이나 머신 레벨의 메트릭을 수집할 수 있다. 이를 설치하고 프로메테우스와 연동하여, 메트릭들을 확인해보자.
+
+역시, [공식 홈페이지](https://prometheus.io/download/)에서 다운로드할 수 있다. 터미널에 다음을 입력한다.
+
+```bash
+# 다시 apps로 이동
+$ cd ~/apps
+
+# 노드 익스포터 바이너리 파일이 있는 압축 파일 설치
+$ wget https://github.com/prometheus/node_exporter/releases/download/v1.0.1/node_exporter-1.0.1.linux-amd64.tar.gz
+
+# 압축 파일 해제
+$ tar zxvf node_exporter-1.0.1.linux-amd64.tar.gz
+
+# 좀 더 쉽게 접근을 위해 디렉토리 이름 변경
+$ mv node_exporter-1.0.1.linux-amd64 node_exporter
+
+# 노드 익스포터 실행
+$ ./node_exporter/node_exporter
+...
+```
+
+실행되는 것을 확인하고 다시 종료하자. 서비스로 등록하자. `vim` 에디터로 파일을 생성하자.
+
+```bash
+$ sudo vim /etc/systemd/system/node-exporter.service
+```
+
+이제 아까 전과 같은 요령으로 다음을 입력하자.
+
+```
+Description=Node Exporter
+
+[Service]
+Restart=on-failure
+
+#Change this line if you download the
+#Prometheus on different path user
+ExecStart=/home/ec2-user/apps/node_exporter/node_exporter
+
+[Install]
+WantedBy=multi-user.target
+```
+
+그 후 터미널에 다음을 입력한다.
+
+```bash
+# 서비스 데몬 리로드
+$ sudo systemctl daemon-reload
+
+# 노드 익스포터 서비스 시작
+$ sudo systemctl start node-exporter
+
+# 노드 익스포터 서비스 상태 확인
+$ sudo systemctl status node-exporter
+● node-exporter.service
+   Loaded: loaded (/etc/systemd/system/node-exporter.service; disabled; vendor preset: disabled)
+   Active: active (running) since 수 2020-11-04 09:38:13 UTC; 9s ago
+...
+```
+
+이제 프로메테우스와 노드 익스포터를 연동한다. `apps/prometheus/promethues.yml`을 `vim` 에디터로 연다.
+
+```bash
+$ cd ~/apps
+
+$ vim prometheus/prometheus.yml
+```
+
+그 후 맨 밑에 다음을 추가한다.
+
+```yml
+# 이전과 동일
+  - job_name: 'node_exporter'
+    static_configs:
+    - targets:
+        - localhost:9100
+```
+
+그 다음 프로메테우스 서비스를 다시 시작한다.
+
+```bash
+$ sudo systemctl restart prometheus
+```
+
+이제 다시 프로메테우스 UI에 접속한 후, "UP"을 입력해보자.
+
+![06](./06.png)
+
+그럼 위 화면처럼, 인스턴스가 하나 추가된 것을 확인할 수 있다. 여러 개의 잡 중 하나를 선택하려면 이런 식으로 칠 수 있다.
+
+```
+up{job="node_exporter"}
+```
+
 
 ## 알림 매니저 설치 및 프로메테우스, 슬랙 연동
