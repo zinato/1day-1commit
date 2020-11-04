@@ -3,5 +3,6 @@
 ![로고](./logo.png)
 
 ## 목차
-1. InfluxDB 2.0란 무엇인가?
-2. InfluxDB 2.0 시작하기
+
+01. InfluxDB 2.0란 무엇인가?
+02. InfluxDB 2.0 시작하기
