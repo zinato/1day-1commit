@@ -1,6 +1,6 @@
 # Prometheus Up & Running 공부하기
 
-01. 프로메테우스란 무엇인가
+01. [프로메테우스란 무엇인가](./01-what-is-prometheus/01-what-is-prometheus.md)
 02. 프로메테우스 시작하기
 03. 계측
 04. 메트릭 게시
