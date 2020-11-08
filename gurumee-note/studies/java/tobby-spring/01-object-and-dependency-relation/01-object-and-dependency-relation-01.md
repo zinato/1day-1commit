@@ -411,7 +411,7 @@ class UserDaoTest {
 
 먼저 리팩토링을 했으니 main 코드가 잘 동작하는지 확인하고 넘어간다. 위처럼 `UserDao` 생성자 파라미터로 `ConnectionMaker`를 받음으로써 `UserDao`는 `ConnectionMaker`의 구현 클래스를 몰라도 된다. 또한, `UserDaoTest`는 각 클래스간 관계를 맺게 하기 위한 코드가 있다. 이를 "외부에서 주입한다"라고 말할 수 있다.  
 
-이제 `UserDao`는 어떤 구현 클래스건 `Connection`을 반환하는 `makeConnection` 메소드를 구현하기만 한다면, 이를 사용할 수 있다. 뭐, main 코드에서 `ConnectionMaker`의 구현 클래스를 생성해서 관계를 맺어줘야 한다라는 점은 있지만 이전보다 훨씬 더 유연한 코드를 작성할 수 있게 되었다. 그림으로 표현하면 이렇게 되겠지
+이제 `UserDao`는 어떤 구현 클래스건 `Connection`을 반환하는 `makeConnection` 메소드를 구현하기만 한다면, 이를 사용할 수 있다. 뭐, main 코드에서 `ConnectionMaker`의 구현 클래스를 생성해서 관계를 맺어줘야 한다라는 점은 있지만 이전보다 훨씬 더 유연한 코드를 작성할 수 있게 되었다. 그림으로 표현하면 이렇게 되겠지(DConnectionMaker가 SimpleConnectionMaker라고 보면 된다.)
 
 ![05](./05.png)
 
@@ -425,10 +425,161 @@ class UserDaoTest {
 * [SOLID 원칙](https://johngrib.github.io/wiki/SOLID/)
   
 
-
 ## IoC와 스프링 IoC
 
+### IoC가 뭔데?
+
+먼저 `IoC`가 무엇일까? "Inversion of Control"의 약자로 직역하면 "제어의 역전"이다. 뭐 간단히 설명하면, 메소드/객체의 호출 작업을 개발자가 결정하는 것이 아니라 **외부에서 결정하는 것**이라고 말할 수 있다. 
+
+이를 위해 **팩토리**를 만들기도 한다. 팩토리란 객체의 생성 방법을 결정하고 그렇게 만들어진 오브젝트를 돌려주는 녀석이다. 이는 이전 절에서 언급했던 "xxx 팩토리 메서드 패턴"과는 다르니 혼동하지 말자.
+
+먼저 `DaoFactory`를 다음과 같이 만들자.
+
+```java
+public class DaoFactory {
+    public UserDao userDao() {
+        ConnectionMaker connectionMaker = new SimpleConnectionMaker();
+        UserDao userDao = new UserDao(connectionMaker);
+        return userDao;
+    }
+}
+```
+
+이 팩토리를 이용한다면, `UserDao`는 `SimpleConnectionMaker`를 이용해서 DB 연결을 한다. 이 팩토리를 참조하는 모든 클라이언트는 그 `UserDao`를 이용하게 된다. 이제, 클라이언트인 `UserDaoTest`를 다음과 같이 수정한다.
+
+```java
+class UserDaoTest {
+    public static void main(String[] args) throws SQLException, ClassNotFoundException {
+        UserDao dao = new DaoFactory().userDao();
+
+        // ...
+    }
+}
+```
+
+리팩토링을 했으니 다시 테스트 코드를 돌려보자. 정상적으로 동작하면 넘어가자. 현재까지 설계도는 다음과 같아진다.
+
+![06](./06.png)
+
+팩토리의 장점은, 각 클래스간 관계를 맺을 때 매우 쉽게 만들 수 있다는 것이다. 여러 DAO를 생성해야 한다고 해보자.
+
+```java
+public class DaoFactory {
+    public UserDao userDao() {
+        return new UserDao(new SimpleConnectionMaker());
+    }
+
+    public AccountDao accountDao() {
+        return new AccountDao(new SimpleConnectionMaker());
+    }
+
+    public MessageDao messageDao() {
+        return new MessageDao(new SimpleConnectionMaker());
+    }
+}
+```
+
+이렇게 DAO 객체를 생성할 때, `new SimpleConnectionMaker()`가 중복되는데, 이 코드 역시 다음과 같이 중복을 제거할 수도 있다.
+
+```java
+public class DaoFactory {
+    public UserDao userDao() {
+        return new UserDao(connectionMaker());
+    }
+
+    public AccountDao accountDao() {
+        return new AccountDao(connectionMaker());
+    }
+
+    public MessageDao messageDao() {
+        return new MessageDao(connectionMaker());
+    }
+
+    public SimpleConnectionMaker connectionMaker() {
+        return new SimpleConnectionMaker();
+    }
+}
+```
+
+우리가 작성한 `UserDao`와 `DaoFactory`는 `IoC`의 개념이 잘 정립되어 있다. 원래 `ConnectionMaker` 구현 클래스를 만들고 사용하는 이른 바, 제어권은 `UserDao`에게 있었으나 현재는 `DaoFacotry`에게 위임되었다. 또한 `UserDao` 본인 역시 팩토리에게 생성된다. 이것이 바로 제어의 역전이다. 스프링 프레임워크는 이 `IoC`를 극한까지 쓰는 프레임워크라고 책에서는 소개하고 있다.
+
+참고적으로, 라이브러리와 프레임워크의 차이를 짚고 넘어가자. 라이브러리는 코드의 흐름이 개발자에게 있다. 코드에서 라이브러리에 필요한 부분을 적재적소에 호출한다. 반면 프레임워크는 코드의 흐름이 프레임워크에게 있다. 개발자는 프레임워크 코드 흐름에 맞춰 필요 부분만 작성한다라고 보면 된다.
+
+### 스프링 IoC
+
+이제 `스프링 프레임워크`를 써보자. `스프링 프레임워크`에서 `IoC` 개념을 구현한 것이 `ApplicationContext`라는 클래스이다. 이를 사용해보자. 먼저, `DaoFactory`와 `UserDao`를 스프링 IoC 컨테이너가 관리하는 "스프링 빈"으로 만들어주어야 한다. 코드를 다음과 같이 수정한다.
+
+```java
+@Configuration
+public class DaoFactory {
+    @Bean
+    public UserDao userDao() {
+        ConnectionMaker connectionMaker = new SimpleConnectionMaker();
+        UserDao userDao = new UserDao(connectionMaker);
+        return userDao;
+    }
+}
+```
+
+`@Configuration` 애노테이션은, 해당 클래스를 스프링 빈으로 만든다. 클래스 레벨에서 스프링 빈을 만드는 애노테이션이 여러 개 있는데, 여기서는 그냥 넘어가자. 또한 `@Bean` 애노테이션은 클래스 레벨, 메서드 레벨에서 사용되어 해당 객체를 스프링 빈으로 만든다. 이렇게 되면, `DaoFactory`와 그 메서드로 반환되는 `UserDao`는 스프링 IoC 컨테이너에 스프링 빈으로 관리된다.
+
+이제 이를 직접 사용해보자. `UserDaoTest`를 다음과 같이 수정한다.
+
+```java
+class UserDaoTest {
+    public static void main(String[] args) throws SQLException, ClassNotFoundException {
+        ApplicationContext applicationContext = new AnnotationConfigApplicationContext(DaoFactory.class);
+        UserDao dao = applicationContext.getBean(UserDao.class);
+
+        // ...
+    }
+}
+```
+
+애노테이션 기반의 스프링 IoC 컨테이너를 생성하는 `AnnotationConfigApplicationContext`을 이용한다. 이 때 스프링 빈 등록을 위해서, `DaoFactory.class`를 파라미터로 넘긴다.
+
+스프링 IoC 컨테이너가 관리하는 빈을 사용하려면, `getBean` 메소드를 사용하면 된다. (이는 스프링 IoC 컨테이너가, 빈 팩토리라는 것임을 알려준다.) 역시 테스트 코드가 잘 동작하는지 확인한다. 
+
+이 `ApplicationContext`의 동작 방식은 다음과 같다.
+
+![07](./07.png)
+
+앞서 언급했듯이, `ApplicationContext`는 빈 팩토리라고 부를 수 있다. 실제로 위 인터페이스는 `BeanFactory`라는 인터페이스를 상속하고 있다.
+
+```java
+public interface ApplicationContext extends EnvironmentCapable, ListableBeanFactory, HierarchicalBeanFactory,
+		MessageSource, ApplicationEventPublisher, ResourcePatternResolver {
+            // ...
+}
+```
+
+`@Configuration` 애노테이션이 붙은 `DaoFactory`를 빈 중 설정을 담당하는 빈으로 보고, `@Bean`이 붙은 `UserDao`는 빈 목록에 담는다. 이제 클라이언트가 `getBean`을 호출했을 때, `DaoFacotry`에게 생성을 요청하고 그 객체를 클라이언트에게 제공하는 것이다.
+
+우리가, 직접 팩토리를 만들어서 사용하는 것보다, 스프링 IoC 컨테이너인 `ApplicationContext`를 이용하는 것의 장점은 다음과 같다.
+
+1. 클라이언트는 구체적인 팩토리 클래스를 알 필요가 없다.
+2. ApplicationContext는 종합 IoC 서비스를 제공한다.
+3. ApplicationContext는 빈을 검색하는 다양한 방법을 제공한다.
+
+마지막으로 용어만 정리해두자.
+
+* Bean : 빈은 스프링 IoC 컨테이너가 관리하는 오브젝트이다.
+* Bean Factory : 스프링의 IoC를 담당하는 핵심 컨테이너를 말한다. 빈을 등록하고, 생성하고 조회하고, 반환하는 등 빈을 관리한다.
+* Application Context : 빈 팩토리를 확장한 IoC 컨테이넌이다. 기본적인 기능은 빅팩토리와 동일하다. 이외에 애플리케이션 지원 기능을 포함하고 있다.
+* Configuration/Metadata : 애플리케이션 컨텍스트 혹은 빈 팩토리가 IoC를 적용하기 위해 사용되는 메타 정보를 말한다. 예전에는 xml 방식으로 했으나 요즘은 애노테이션 기반으로 한다.
+* Container/IoC Container : IoC 방식으로 빈을 관리하는 컨테이너를 말한다. 걍 스프링 빈을 관리하는 녀석이라고 보면 된다. 위의 빈 팩토리/애플리케이션 컨텍스트와 그 의미는 크게 다르지 않다.
+* Spring Framework : IoC 컨테이너, 애플리케이션 컨텍스트를 포함하여 스프링이 제공하는 모든 기능을 통들어 말할 때 주로 사용한다. 그냥 스프링이라고 말하기도 한다.
+
+
 ## 나의 질문과 답
+
+1) UserDao에서, DB 연결에 대한 관심을 분리할 수 있었다. 그럼 Statement를 실행시키거나, 리소스들을 해제하는 것은 어떻게 분리할 수 있을까?
+   * 책 "자바 웹 프로그래밍 Next Step"에서 잘 설명하고 있음.
+      1) Statement, PreparedStatement를 처리하는 클래스를 위와 같이 구현한다.(JdbcTemplate)
+      2) 리소스 해제는 try-with-resource 구문을 사용한다.
+2) 최근에는 `Spring Boot`를 사용하기 때문에 `ApplicationContext`, `BeanFactory`를 잘 몰라도 스프링 프레임워크를 대충 쓸 수는 있다. 이것들을 알았을 때 장점은 무엇일까?
+    * 커스터마이징을 잘 할 수 있다? 
+    * 내부 동작 구현을 알고 쓰는 것과 모르고 쓰는 것은 명백히 차이가 있다. 그 차이점이 뭐지..?
 
 
 ## 스터디원들의 질문과 답
