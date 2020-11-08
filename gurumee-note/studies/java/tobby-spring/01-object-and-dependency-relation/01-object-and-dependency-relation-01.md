@@ -138,7 +138,7 @@ gurumee query success
 그러나 이 코드는 문제점이 많다. 이를 "객체 지향"적으로 리팩토링해보자.
 
 
-## DAO의 분리
+## DAO의 분리(feat. 상속)
 
 프로그래밍 기초 개념 중 "관심사의 분리"라는 것이 있다. 프로그래밍적으로 말하자면, 관심이 같은 것끼리 모이게 하고, 따로 떨어져 있는 관심끼리는 영향을 주지 않고 분리하는 것을 말한다.
 
@@ -182,10 +182,10 @@ public class UserDao {
 
 ```java
 private Connection getConnection() throws ClassNotFoundException, SQLException {
-        Class.forName("com.mysql.jdbc.Driver");
-        return DriverManager.getConnection(
-                "jdbc:mysql://localhost/springbook", "spring", "book");
-    }
+    Class.forName("com.mysql.jdbc.Driver");
+    return DriverManager.getConnection(
+            "jdbc:mysql://localhost/springbook", "spring", "book");
+}
 ```
 
 > 참고!
@@ -272,7 +272,159 @@ public abstract class UserDao {
 - [팩토리 메서드 패턴](https://gmlwjd9405.github.io/2018/08/07/factory-method-pattern.html)
 
 
-## DAO의 확장
+## DAO의 확장(feat. 컴포지션)
+
+상속을 통한 확장은 쉬우나, 좋지 않다. 책 "Effective Java"에서는 상속보다, 컴포지션을 활용해서 클래스를 확장하는 것을 추천하고 있다. 조금 더 유연한 코드를 작성할 수 있기 때문이다. 이번엔 이렇게 분리해보자.
+
+![03](./03.png)
+
+먼저 `SimpleConnectionMaker`를 다음과 같이 만든다.
+
+```java
+public class SimpleConnectionMaker {
+    public Connection makeNewConnection() throws ClassNotFoundException, SQLException {
+        Class.forName("com.mysql.jdbc.Driver");
+        return DriverManager.getConnection(
+                "jdbc:mysql://localhost/springbook", "spring", "book");
+    }
+}
+```
+
+그 다음 `UserDao`를 다음과 같이 수정하자. 다시 추상 클래스에서, 구체 클래스로 변경한다.
+
+```java
+public class UserDao {
+    private SimpleConnectionMaker simpleConnectionMaker;
+
+    public UserDao() {
+        simpleConnectionMaker = new SimpleConnectionMaker();
+    }
+
+    public void add(User user) throws ClassNotFoundException, SQLException {
+        Connection c = simpleConnectionMaker.makeNewConnection();
+        // ...
+    }
+
+    public User get(String id) throws ClassNotFoundException, SQLException {
+        Connection c = simpleConnectionMaker.makeNewConnection();
+        // ...
+    }
+
+    public static void main(String[] args) throws SQLException, ClassNotFoundException {
+        UserDao dao = new UserDao();
+
+        // ...
+    }
+}
+```
+
+이제 main 메서드를 실행하여, 다시 정확히 동작하는지 확인해보자. 잘 동작한다. 그러나 코드에는 문제점이 크게 2가지가 있다. 
+
+1. SimpleConnectionMaker의 메서드, 만약 타사 커넥션은 `openConnection`으로 연결한다면?
+2. UserDao가 커넥션을 제공하는 클래스가 구체적으로 알아야 한다. (강하게 결합되어 있다.)
+
+이를 해결하는 것은 `인터페이스`를 도입하는 것이다. 
+
+### 인터페이스로 관심사의 진입점을 만들자.
+
+![04](./04.png)
+
+먼저 인터페이스인 `ConnectionMaker`를 만든다.
+
+```java
+public interface ConnectionMaker {
+    Connection makeConnection() throws ClassNotFoundException, SQLException;
+}
+```
+
+그리고 이를 구현하게끔 `SimpleConnectionMaker`를 다음과 같이 수정한다.
+
+```java
+public class SimpleConnectionMaker implements ConnectionMaker{
+    public Connection makeConnection() throws ClassNotFoundException, SQLException {
+        Class.forName("com.mysql.jdbc.Driver");
+        return DriverManager.getConnection(
+                "jdbc:mysql://localhost/springbook", "spring", "book");
+    }
+}
+```
+그 다음 `UserDao`의 코드를 다음과 같이 변경한다.
+
+```java
+public class UserDao {
+    private ConnectionMaker connectionMaker;
+
+    public UserDao() {
+        connectionMaker = new SimpleConnectionMaker();
+    }
+
+    public void add(User user) throws ClassNotFoundException, SQLException {
+        Connection c = connectionMaker.makeConnection();
+        // ...
+    }
+
+    public User get(String id) throws ClassNotFoundException, SQLException {
+        Connection c = connectionMaker.makeConnection();
+        // ...
+    }
+
+    // ...
+}
+```
+
+이제 리팩토링을 했으니 다시 main을 돌려 수정된 코드를 테스트한다. 정상적으로 동작한다면 다음으로 넘어간다. 위 코드는 `ConnectionMaker`라는 인터페이스를 도입함으로써 각 구현 클래스가, `Connection`을 만드는 동일한 이름의 메서드를 호출하게 만든다. 
+
+### 인터페이스를 생성자 파라미터로 받아 클래스간 결합도를 낮춰보자.
+
+그러나 아직 `UserDao`가 `SimpleConnectionMaker`의 존재를 알아야 코드가 동작한다라는 문제를 해결하지 못했다. 즉 아직 클래스끼리 강결합된 상태이다. 이 강하게 결합된 것을 풀어주기 위해서는 어떻게 해야 할까? 바로 생성자의 파라미터로, `ConnectionMaker`를 받는 것이다.
+
+```java
+public class UserDao {
+    private ConnectionMaker connectionMaker;
+
+    public UserDao(ConnectionMaker connectionMaker) {
+        this.connectionMaker = connectionMaker;
+    }
+
+    // ...
+}
+```
+
+이제 main 메서드가 테스트 코드라는 것을 조금 더 명확히 하기 위해, `UserDaoTest`라는 클래스를 만들고 거기에다 옮겨놓자.
+
+```java
+class UserDaoTest {
+    public static void main(String[] args) throws SQLException, ClassNotFoundException {
+        ConnectionMaker connectionMaker = new SimpleConnectionMaker();
+        UserDao dao = new UserDao(connectionMaker);
+
+        User user = new User("gurumee", "hyunwoo", "ilovespring");
+        dao.add(user);
+        System.out.println(user.getId() + " register success");
+
+        User user2 = dao.get("gurumee");
+        System.out.println(user2.getName() + " " + user2.getPassword());
+        System.out.println(user2.getId() + " query success");
+    }
+}
+```
+
+먼저 리팩토링을 했으니 main 코드가 잘 동작하는지 확인하고 넘어간다. 위처럼 `UserDao` 생성자 파라미터로 `ConnectionMaker`를 받음으로써 `UserDao`는 `ConnectionMaker`의 구현 클래스를 몰라도 된다. 또한, `UserDaoTest`는 각 클래스간 관계를 맺게 하기 위한 코드가 있다. 이를 "외부에서 주입한다"라고 말할 수 있다.  
+
+이제 `UserDao`는 어떤 구현 클래스건 `Connection`을 반환하는 `makeConnection` 메소드를 구현하기만 한다면, 이를 사용할 수 있다. 뭐, main 코드에서 `ConnectionMaker`의 구현 클래스를 생성해서 관계를 맺어줘야 한다라는 점은 있지만 이전보다 훨씬 더 유연한 코드를 작성할 수 있게 되었다. 그림으로 표현하면 이렇게 되겠지
+
+![05](./05.png)
+
+여태까지 한 코드 개선은, **SOLID 원칙**을 충실히 따라 진행되었다. 특히 **개방 폐쇄 원칙**을 잘 따르고 있다. 간단하게 말해서, "확장엔 열려 있으면, 변경엔 닫혀 있어야 한다"라는 원칙인데, `UserDao`는 "DB 연결 방법"이라는 기능에 대해서 확장점을 열어두었다. 하지만, DB 연결 방법이 변경되더라도(명세는 바뀌지 않는다.), `UserDao`에 다른 코드에는 영향을 미치지 않는다. 이를 "높은 응집도와 낮은 결합도"를 가졌다고 말하기도 한다.
+
+디자인 패턴의 관점으로 보면 위 코드는 **전략 패턴**에 해당한다. 전략 패턴은 위의 "개방 폐쇄 원칙"에 잘 부합하는 디자인 패턴이기도 하다. 쉽게 말하면, 자신의 컨텍스트에서 필요에 따라 변경이 필요한 알고리즘을 인터페이스를 통해 외부로 분리하는 디자인 패턴이다. 외부로 구현된 코드로 인해 동작이 동적으로 변경된다.
+
+"SOLID 원칙"과 전략 패턴에 대해서는 다음을 참고하라.
+
+* [스트렛지(전략) 패턴](https://gmlwjd9405.github.io/2018/07/06/strategy-pattern.html)
+* [SOLID 원칙](https://johngrib.github.io/wiki/SOLID/)
+  
+
 
 ## IoC와 스프링 IoC
 
@@ -284,5 +436,4 @@ public abstract class UserDao {
 
 
 
-* [스트렛지(전략) 패턴](https://gmlwjd9405.github.io/2018/07/06/strategy-pattern.html)
-* [SOLID 원칙](https://johngrib.github.io/wiki/SOLID/)
+
