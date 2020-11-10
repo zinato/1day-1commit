@@ -571,7 +571,9 @@ public interface ApplicationContext extends EnvironmentCapable, ListableBeanFact
 * Spring Framework : IoC 컨테이너, 애플리케이션 컨텍스트를 포함하여 스프링이 제공하는 모든 기능을 통들어 말할 때 주로 사용한다. 그냥 스프링이라고 말하기도 한다.
 
 
-## 나의 질문과 답
+## 스터디원들의 생각 공유
+
+### 나의 질문과 답
 
 1) UserDao에서, DB 연결에 대한 관심을 분리할 수 있었다. 그럼 Statement를 실행시키거나, 리소스들을 해제하는 것은 어떻게 분리할 수 있을까?
    * 책 "자바 웹 프로그래밍 Next Step"에서 잘 설명하고 있음.
@@ -585,7 +587,7 @@ public interface ApplicationContext extends EnvironmentCapable, ListableBeanFact
     * 내부 동작 구현을 알고 쓰는 것과 모르고 쓰는 것은 명백히 차이가 있다. 그 차이점이 뭐지..?
 
 
-## 스터디원들의 질문과 답
+### 스터디원들의 질문과 답
 
 개발자 K4 : 
 - ApplicationContext 사용 시 장점?
@@ -624,7 +626,7 @@ public interface ApplicationContext extends EnvironmentCapable, ListableBeanFact
     - 팩토리 메서드는 하위 클래스에게 객체 생성 처리를 분리하는 것.
 
 
-## 면접 질문으로 생각해볼 것?
+### 면접 질문으로 생각해볼 것?
 
 1) 라이브러리 vs 프레임워크
 2) SOLID 원칙과 스프링
