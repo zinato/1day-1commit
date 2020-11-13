@@ -62,10 +62,11 @@ WhiteIP 등록하여 연결
  - 사용기술 : Java, Hazelcast, GCP
  - 추천 엔진에서 Serving을 위해 Hazelcast를 사용 가능한지에 대한 테스트
  
- # Projet D 단비 프로젝트 진행
+ # Project D 단비 프로젝트 진행
  - 기간 : 2020.10.21 ~ 
  - 사용기술 : Java, Javascript, GCP
  - KTR 인증 테스트 진행
     - 트렌드 서버 1000 TPS 
     - 트렌드 서버 800ms 이내 
- - 추가 작성   
+ - 추가 작성 해야함
+ 
