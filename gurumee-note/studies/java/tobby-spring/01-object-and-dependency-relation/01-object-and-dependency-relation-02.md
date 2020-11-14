@@ -234,13 +234,188 @@ public class DaoFactory {
 
 ## Xml 기반 설정
 
+현재는 자바 코드 기반, 애노테이션 기반으로 의존성 주입을 하지만, 그 이전에는 xml 기반으로 설정하는 방식을 많이 사용했다. 간단하게 살펴보자. 원래 `DaoFactory`의 코드를 살펴보자.
+
+```java
+@Configuration
+public class DaoFactory {
+    @Bean
+    public UserDao userDao() {
+        ConnectionMaker connectionMaker = new SimpleConnectionMaker();
+        UserDao userDao = new UserDao(connectionMaker);
+        return userDao;
+    }
+}
+```
+
+이를 xml로 표현하면, 다음과 같아진다.
+
+```xml
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd">
+    <bean id="connectionMaker" class="com.gurumee.chonangam.user.dao.SimpleConnectionMaker"/>
+    <bean id="userDao" class="com.gurumee.chonangam.user.dao.UserDao">
+        <property name="connectionMaker" ref="connectionMaker"></property>
+    </bean>
+</beans>
+```
+
+이 때, `UserDao`는 자바 빈이어야 한다. 즉 디폴트 생성자와, 필드에 대한 세터는 반드시 필요하다.(게터는 없어도 되긴 하다.)
+
+```java
+package com.gurumee.chonangam.user.dao;
+
+import com.gurumee.chonangam.user.domain.User;
+
+import java.sql.*;
+
+public class UserDao {
+    private ConnectionMaker connectionMaker;
+    
+    // 디폴트 생성자
+    public UserDao() {}
+
+    // connectionMaker에 대한 세터
+    public void setConnectionMaker(ConnectionMaker connectionMaker) {
+        this.connectionMaker = connectionMaker;
+    }
+
+    // ...
+}
+```
+
+실제로 위의 xml 파일은 `DaoFactory` 뿐 아니라 `ApplicationContext`까지 합친 설정 파일로 보면 된다. 이를 이용하는 것은 `GenericXmlApplicationContext`이다. 실제 테스트 코드는 다음과 같다.
+
+```java
+class UserDaoTest {
+    // ...
+    public static void main(String[] args) {
+        ApplicationContext applicationContext = new GenericXmlApplicationContext("applicationContext.xml");
+        String id = "gurumee";
+        String name = "hyunwoo";
+        String password = "ilovespring";
+
+        User user = new User(id, name, password);
+        dao.add(user);
+        System.out.println(user.getId() + " register success");
+
+        User user2 = dao.get(id);
+        System.out.println(user2.getId() + " " user2.getName());
+    }
+}
+```
+
+이런 식으로 설정해서 코드를 돌리면 된다. 실제 등록할 빈이 수없이 많아질 때는 분리 기준을 정하고 (레이어 별로 혹은 도메인 별로) xml을 여러 개 만들면 된다. 개인적으로 레거시를 수정할 때 말고는 별로 쓰진 않을 것 같다.
+
+
+## DataSource로 전환하자.
+
+여태까지 IoC와 DI를 위해서, `ConnectionMaker` 등의 클래스를 만들었다. 실제 스프링 프레임워크는 `ConnectionMaker`처럼 DB 커넥션해주는 인터페이스가 존재한다. 바로 `DataSource`이다. 이제 `UserDao`를 `DataSource`를 의존하게끔 바꿔보자. `org.springframework.jdbc` 의존성이 필요하다. 이를 설치하고 코드를 다음과 같이 바꾼다.
+
+먼저 `UserDao` 클래스이다.
+
+```java
+public class UserDao {
+    private DataSource dataSource;
+    public UserDao() {
+
+    }
+
+    public UserDao(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
+    public void setDataSource(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
+    public void add(User user) throws SQLException {
+        Connection c = dataSource.getConnection();
+        //...
+    }
+
+    public User get(String id) throws SQLException {
+        Connection c = dataSource.getConnection();
+        //...
+    }
+}
+```
+
+그리고, `DaoFactory`를 다음과 같이 변경하자.
+
+```java
+@Configuration
+public class DaoFactory {
+    @Bean
+    public UserDao userDao() {
+        UserDao userDao = new UserDao(dataSource());
+        return userDao;
+    }
+
+    @Bean
+    public DataSource dataSource() {
+        SimpleDriverDataSource dataSource = new SimpleDriverDataSource();
+        dataSource.setDriverClass(com.mysql.jdbc.Driver.class);
+        dataSource.setUrl("jdbc:mysql://localhost/springbook");
+        dataSource.setUsername("spring");
+        dataSource.setPassword("book");
+        return dataSource;
+    }
+}
+```
+
+테스트 코드는 다음과 같이 실행하면 된다.
+
+```java
+class UserDaoTest {
+    public static void main(String[] args)  throws SQLException {
+        ApplicationContext applicationContext = new AnnotationConfigApplicationContext(DaoFactory.class);
+        UserDao dao = applicationContext.getBean(UserDao.class);
+        String id = "gurumee";
+        String name = "hyunwoo";
+        String password = "ilovespring";
+
+        User user = new User(id, name, password);
+        dao.add(user);
+        System.out.println(user.getId() + " register success");
+
+        User user2 = dao.get(id);
+        System.out.println(user2.getName() + " " + user2.getPassword);
+    }
+}
+```
+
+만약, xml 설정으로 실행해보고 싶으면, `applicationContext.xml`을 다음과 같이 변경하고, 테스트 메인 메소드에 `AnnotationConfigApplicationContext`가 아니라 `GenericXmlApplicationContext`를 사용하면 된다.
+
+```xml
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd">
+    <bean id="dataSource" class="org.springframework.jdbc.datasource.SimpleDriverDataSource">
+        <property name="driverClass" value="com.mysql.jdbc.Driver"/>
+        <property name="url" value="jdbc:mysql://localhost/springbook"/>
+        <property name="username" value="spring"/>
+        <property name="password" value="book"/>
+    </bean>
+    <bean id="userDao" class="com.gurumee.chonangam.user.dao.UserDao">
+        <property name="dataSource" ref="dataSource"/>
+    </bean>
+</beans>
+```
+
+후 1장 끝~!
+
 
 ## 스터디원들의 생각 공유
 
 ### 나의 질문과 답
 
 1) 세터 주입의 예? 실제로 많이 쓰이는가?
-2) 
+2) xml 기반 레거시에만 많이 쓰일 것 같은데 자바 코드 기반 설정에 비해서 편리한 점과 불편한 점은?
 
 
 ### 스터디원들의 질문과 답
