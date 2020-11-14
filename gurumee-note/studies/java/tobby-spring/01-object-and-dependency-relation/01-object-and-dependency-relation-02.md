@@ -100,7 +100,137 @@ public class UserDao {
 `UserDao`를 살짝 변경한 것인데, 필드로 `Connection`을 가지게 되었다. 이 경우, `add` 메서드를 호출할 때 마다, c가 참조하는 `Connection` 객체가 변경된다. 이는 멀티 스레딩 환경에서 값이 제대로 데이터베이스에 저장되지 않는 심각한 문제를 초래한다. 또한, 이 메소드의 실행 결과가 잘되는 것조차 알 수 없다. 이러한 문제를 제거하기 위해서는 이전 코드처럼 상태가 변경될 수 있는 객체는 메소드 레벨에서 관리하는 것이 좋다. 혹은 필드로 주입하는 객체를 빈으로 만드는 방법도 있지만.. 별로 좋은 생각은 아니라고 본다.
 
 
-## DI
+## IoC와 DI
+
+이전에, IoC 컨테이너는 매우 넓은 범위의 개념이라고 언급했었다. 이에 대한 좁은 개념으로써 쓰는 것이 "DI(Dependency Injection)"이다. 직역하면, "의존성 주입"이다. 개인적으로 책에서 나온 설명이 잘 설명해주는 것 같아 긁어왔다. 
+
+> "DI는 오브젝트 래퍼런스를 외부로부터 제공받고 이를 통해, 여타 오브젝트와 다이나믹하게 의존 관계를 만들어지는 것이 핵심이다."
+
+여기서 의존 관계란 무엇일까?
+
+![08](./08.png)
+
+위 UML에서는 A클래스는 B클래스에게 의존 관계에 있다고 말할 수 있다. 바꿔서, A클래스는 B클래스를 사용한다고도 말할 수 있다. 반면, B클래스는 A클래스에 의존하지는 않는다. 여기서 알 수 있는 것은 **의존 관계에는 방향성이 있다.**
+
+이제 그럼 `UserDao`의 의존 관계를 짚어보자.
+
+![09](./09.png)
+
+`UserDao`는 인터페이스인 `ConnectionMaker`를 사용한다. 이 `ConnectionMaker`에만 의존하고 있다. 실제로 `DConnectionMaker`라든지, 내가 이전에 만들었던 `SimpleConnectionMaker`에 대해서 알지도 못 할 뿐더러 내부의 메서드가 변경되더라도 `UserDao`에 영향을 끼치지 않는다. 따라서, 이들은 결합도가 낮다고 볼 수 있다. 
+
+의존관계 주입은 크게 다음의 세 가지 조건을 충족하는 작업을 말한다.
+
+* 클래스 모델이나 코드에는 런타임 시점의 의존 관계가 드러나지 않는다. (즉, 인터페이스에만 의존하고 있어야 한다.)
+* 런타임 시점의 의존 관계는 컨테이너나 팩토리 같은 제 3의 존재가 결정한다.
+* 의존 관계는 사용할 오브젝트에 대한 래퍼런스를 외부에서 제공해줌으로써 만들어진다.
+
+`UserDao`의 런타임 의존 관계는 다음과 같아진다.
+
+![10](./10.png)
+
+`DaoFactory`가 `ConnectionMaker`를 결정해서 넘겨주게 된다. 그림에서는 `DConnectionMaker`이지만, 내 코드에서는 `SimpleConnectionMaker`로 보면 된다. `UserDao` 입장에서는 `DaoFactory`에 의해서, `ConnectionMaker`의 참조를 전달 받는다. 그래서 인터페이스인 `ConnectionMaker`를 구현하는 어떤 클래스든 영향을 받지 않고 쉽게 쓸 수 있다.
+
+정리하면, `DI`는 자신이 사용할 오브젝트에 대한 선택과 생성 제어권을 외부로 넘기고 수동적으로 주입받은 오브젝트를 사용한다. 스프링 IoC 컨테이너는 이 DI에 초점이 맞춰져 있다는 것을 알아두자.
+
+IoC는 DI외에, "의존 관계 검색"이란 개념도 있다. 자신이 필요로 하는 의존 오브젝트를 능동적으로 찾는다. 물론 자신이 어떤 클래스의 오브젝트를 사용하는 것을 결정하지는 않는다. 쉽게, 오브젝트를 결정하고 생성하는 것은 IoC 컨테이너가 맡고, 이를 가져올 때 메서드는 생성자를 통한 주입 대신 스스로 컨테이너를 요청할 수 가 있다. 
+
+```java
+public UserDao() {
+    DaoFactory factory = new DaoFactory();
+    this.connectionMaker = factory.connectionMaker();
+}
+```
+
+위 코드가 그 예시에 해당한다. `UserDao`는 여전히, `ConnectionMaker`의 구현 클래스 오븍젝트를 알 지 못한다. 런타임 시, `DaoFactory`가 동적으로 그 의존관계를 맺어주는 것이다. `ApplicationContext`를 사용한다면, 이렇게도 쓸 수 있을 것이다.
+
+```java
+public UserDao() {
+    ApplicationContext applicationContext = new AnnotationConfigApplicationContext(DaoFactory.class);
+    this.connectionMaker = applicationContext.getBean("connectionMaker", ConnectionMaker.class);
+}
+```
+
+의존 관계 검색은 DI와 비슷하다. 다만 방법이 조금 다를뿐이다. 하지만, DI가 조금 더 단순하고 깔끔하기 때문에, DI를 많이 쓴다. 의존 관계 검색이 DI보다 좋은 점은 딱 한 가지, 검색하는 오브젝트가 꼭 스프링 빈일 필요가 없다는 것이다. 물론 의존 오브젝트는 스프링 빈이어야 하지만..
+
+여기서 DI의 장점을 알고 가자. 책에서는 다음을 장점으로 소개하고 있다.
+
+> 코드에는 런타임 클래스에 대한 의존 관계가 나타나지 않고, 인터페이스를 통해 결합도가 낮은 코드를 만든다. 따라서, 다른 책임을 가진 의존 관계에 있는 클래스가 변경되더라도 자신은 영향을 받지 않으며 변경을 통한 다양한 확장 방법을 제공한다.
+
+쉽게 말하면 다음의 장점이 생긴다. 
+
+1) 기능 구현의 교환이 쉽다.
+2) 부가 기능 추가가 쉽다.
+
+첫 번째 장점의 대표적인 예는 로컬 운영 DB, 실제 DB를 빈을 통해서 바꿔서 주입할 수 있다. 
+
+```java
+@Configuration
+public class DaoFactory {
+    @Bean
+    public UserDao userDao() {
+        UserDao userDao = new UserDao(connectionMaker());
+        return userDao;
+    }
+
+    @Bean
+    public ConnectionMaker connectionMaker() {
+        return new LocalDBConnectionMaker();
+    }
+}
+```
+
+로컬 머신에서 이렇게 의존관계가 되어 있다고 해보자. 코드를 올릴 때는 다음과 같이 1줄만 변경하면 된다.
+
+```java
+@Configuration
+public class DaoFactory {
+    @Bean
+    public UserDao userDao() {
+        UserDao userDao = new UserDao(connectionMaker());
+        return userDao;
+    }
+
+    @Bean
+    public ConnectionMaker connectionMaker() {
+        return new ProductionDBConnectionMaker();
+    }
+}
+```
+
+최근에는 이런 코드보다는 `appliaction.properties`, `application.yml` 등 설정 파일에서, 프로파일을 분리해서 데이터 소스를 설정을 많이 하는 편이다. 또한 두 번째 장점은 부가 기능 추가가 쉽다는 것이다. 만약, 데이터 베이스를 연결하는 횟수를 만들고 싶다면, 다음과 같이 변경하면 된다.
+
+```java
+@Configuration
+public class DaoFactory {
+    @Bean
+    public UserDao userDao() {
+        UserDao userDao = new UserDao(connectionMaker());
+        return userDao;
+    }
+
+    // 부가 기능을 추가한 ConnectionMaker
+    @Bean
+    public ConnectionMaker connectionMaker() {
+        return new CountingConnectionMaker(realConnectionMaker());
+    }
+
+    // 이전 ConnectionMaker
+    @Bean
+    public ConnectionMaker realConnectionMaker() {
+        return new ProductionDBConnectionMaker();
+    }
+}
+```
+
+참고적으로 의존 관계 주입은 여러 방법이 있다. 이들은 다음과 같다.
+
+1) 생성자 주입
+2) 필드 주입
+3) 세터 주입
+4) 메서드 주입
+
+책에서는 전통적으로 세터 주입을 많이 사용된다고 적혀 있지만, 스프링 부트 세대인 나한테는 오히려, 생성자 주입이나 테스트 코드에서 필드 주입을 많이 썼던 것 같다.
+
 
 ## Xml 기반 설정
 
@@ -109,7 +239,7 @@ public class UserDao {
 
 ### 나의 질문과 답
 
-1) 
+1) 세터 주입의 예? 실제로 많이 쓰이는가?
 2) 
 
 
