@@ -84,7 +84,7 @@ Hello
 
 다음 그림을 보면 확실하게 더 이해할 수 있을 것이다.
 
-![자바 코드 컴파일 ~ 실행 결과](./02.png)
+![자바 코드 컴파일 ~ 실행 결과](./03.png)
 출처: 한빛미디어 "신용권 - 이것이 자바다"
 
 
@@ -98,6 +98,17 @@ Hello
 
 
 ## JVM 구성 요소
+
+`JVM` 구성 요소는 다음과 같다.
+
+![JVM 구성 요소](./04.png)
+출처 : [네이버 D2 "JVM Internal"](https://d2.naver.com/helloworld/1230)
+
+크게 3가지가 있는데, `Class Loader`, `Runtime Data Areas`, `Execution Engine`이 바로 그들이다.
+
+아주 간단하게 알아보자면, `Class Loader`가 바이트 코드를 `Runtime Data Areas`에 로드시키고 이 로드된 정보를 토대로 `Execution Engine`이 실행시키는 것이다.
+
+
 ## JDK와 JRE의 차이
 
 `JRE`는 `Java Runtime Environment`의 약자로 `JVM`, 라이브러리 API만 포함되어 있다.
