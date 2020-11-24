@@ -347,6 +347,7 @@ public void test_less_than_or_equal_to() {
 }
 ```
 
+
 ## 논리 연산자
 
 논리 연산자는 AND, OR, NOT이며, 참과 거짓에 대해서 판단한다. 자바에서 제공하는 논리 연산자는 다음과 같다.
@@ -422,8 +423,62 @@ public void test_not() {
 }
 ```
 
+
 ## instanceof
+
+`instanceof 연산자`는 객체가 어떤 클래스인지 여부를 판단한다. 코드는 다음과 같이 쓸 수 있다.
+
+```java
+@Test
+public void test_instanceof() {
+    String s = "test";
+    assertTrue(s instanceof String);
+}
+```
+
+인터페이스를 구현 혹은 상위 클래스를 상속하는 하위 클래스가 여러 개 일때 각 클래스마다 다른 동작을 부여하고 싶을 때, 좋은 연산자이다. 이런 식으로 말이다.
+
+```java
+@Test
+public void test_instanceof2(){
+    Object [] arr = new Object[] {
+            1,
+            "test",
+            2.0
+    };
+
+    for (Object o : arr) {
+        if (o instanceof Integer) {
+            System.out.println("Integer");
+        } else if (o instanceof Double) {
+            System.out.println("Double");
+        } else if (o instanceof String) {
+            System.out.println("String");
+        } else {
+            System.out.println("I don't know type");
+        }
+    }
+}
+```
+
+
 ## assignment(=) operator
+
+이거는 값을 할당하는 연산자이다. 여태까지 코드를 봤을 때 쭉 써왔다.
+
+```
+타입 변수 = 값;
+```
+
+이런 형태로 쓰는데 코드로 보면 다음과 같다.
+
+```java
+int a = 7;
+```
+
+위의 경우 a라는 정수형 변수에 7이라는 값을 할당 시킨 것이다.
+
+
 ## 화살표(->) 연산자
 ## 3항 연산자
 ## 연산자 우선 순위
