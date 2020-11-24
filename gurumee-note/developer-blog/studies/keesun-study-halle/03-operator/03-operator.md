@@ -480,6 +480,45 @@ int a = 7;
 
 
 ## 화살표(->) 연산자
+
+이것은 자바 8에 추가된 "람다"를 지원하기 위한 연산자이다. 자바에서 람다는 무명 인터페이스와 같다. 먼저 다음의 인터페이스가 있다고 해보자.
+
+```java
+public interface IntOperator {
+    int operate(int a, int b);
+}
+```
+
+이를 구현하는 클래스를 만들어도 되지만 간단하게 무명 인터페이스를 구현할 수 있다. 다음처럼 말이다.
+
+```java
+@Test
+public void test_lambda() {
+    IntOperator op = new IntOperator() {
+        @Override
+        public int operate(int a, int b) {
+            return a + b;
+        }
+    };
+    int res = op.operate(5, 3);
+    assertEquals(8, res);
+}
+```
+
+이를 람다식으로 다음과 같이 표현할 수 있다.
+
+```java
+@Test
+public void test_lambda() {
+    IntOperator op = (a, b) -> a + b;
+    int res = op.operate(5, 3);
+    assertEquals(8, res);
+}
+```
+
+간단하게 무명 인터페이스 코드를 축약하는 연산자라고 보면 된다. 여기서 무명 인터페이스가 구현하는 인터페이스는 딱 1개의 메소드를 가지고 있어야 한다. 
+
+
 ## 3항 연산자
 ## 연산자 우선 순위
 ## switch 연산자 (Java 13)
