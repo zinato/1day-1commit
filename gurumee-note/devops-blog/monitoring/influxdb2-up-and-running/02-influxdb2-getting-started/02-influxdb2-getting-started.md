@@ -81,7 +81,7 @@ $ sudo vi /lib/systemd/system/influxdb2.service
 그럼 vi 터미널이 열리는데, 다음을 입력한다.
 
 ```service
-[[Unit]
+[Unit]
 Description=InfluxDB 2.0 service file.
 
 [Service]

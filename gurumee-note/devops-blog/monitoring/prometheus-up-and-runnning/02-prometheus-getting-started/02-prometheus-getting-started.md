@@ -237,4 +237,137 @@ up{job="node_exporter"}
 ```
 
 
-## 알림 매니저 설치 및 프로메테우스, 슬랙 연동
+## 알림 만들어서 내보내기
+
+이제 알림을 만들어보자. 알림을 만들기 위해서는 크게 2가지가 필요하다.
+
+1. prometheus.yml에 알림 파일 설정하기
+2. 알림 규칙을 설정한느 rules.yml 설정하기
+
+먼저 프로메테우스가 설치된 경로로 이동하여 `prometheus.yml`을 다음과 같이 수정한다.
+
+```yml
+global:
+  scrape_interval:     15s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 15s # Evaluate rules every 15 seconds. The default is every 1 minute.
+
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets:
+      # - alertmanager:9093
+
+rule_files:
+  - "rules.yml"
+
+scrape_configs:
+  - job_name: 'prometheus'
+
+    static_configs:
+    - targets: ['localhost:9090']
+
+  - job_name: 'node_exporter'
+    static_configs:
+    - targets:
+        - localhost:9100
+```
+
+`rule_files`에 알림을 설정하는 `rules.yml` 경로가 들어있다. 이는 현재 경로에, `rules.yml`을 참조한다는 뜻이다. 그 후 같은 경로에, `rules.yml`을 다음과 같이 생성한다.
+
+```yml
+groups:
+    - name: example
+      rules:
+          - alert: InstanceDown
+            expr: up == 0
+            for: 1m
+```
+
+이 알림은 프로메테우스가 알고 있는 시스템 중 1분 동안 꺼져 있을 때, 알림을 보낸다. 프로메테우스를 다시 시작하고, 알림을 보내기 위해서 노드 익스포터를 중지한다.
+
+```bash
+# 프로메테우스 재시작
+$ sudo systemctl restart prometheus
+
+# 노드 익스포터 중지
+$ sudo systemctl stop node-exporter
+```
+
+이제 프로메테우스 UI를 접속한다.
+
+![07](./07.png)
+
+그 후 "Alerts"를 클릭한다.
+
+![08](./08.png)
+
+알림 탭에 들어가면, 설정된 알림을 확인할 수 있다. 현재는 알림이 Pending된 상태이다. 조금만 기다려보자.
+
+![09](./09.png)
+
+알림이 발생하였다. 이제 이 알림을 "알림 매니저"를 통해서 슬랙으로 알림을 보내보자. 먼저 알림 매니저를 설치한다. 터미널에 다음을 입력한다.
+
+```bash
+# 앱 설치 경로로 이동
+$ cd ~/apps
+
+# 알림 매니저 설치
+$ wget https://github.com/prometheus/alertmanager/releases/download/v0.21.0/alertmanager-0.21.0.linux-amd64.tar.gz
+
+# 압축 파일 해제
+$ tar zxvf alertmanager-0.21.0.linux-amd64.tar.gz
+
+# 압축 파일 삭제
+$ rm alertmanager-0.21.0.linux-amd64.tar.gz
+
+# 이름 변경
+$ mv alertmanager-0.21.0.linux-amd64 alertmanager
+
+# 알림 매니저 실행
+$ ./alertmanager/alertmanager
+...
+```
+
+실행되는 것을 확인했으면, 알림 매니저를 서비스로 만든다. 터미널에 다음을 입력하여, vim 에디터를 실행시킨다.
+
+```bash
+$ sudo vi /etc/systemd/system/alertmanager.service
+```
+
+그 후 다음을 입력한다.
+
+```
+[Unit]
+Description=Alert Manager
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+ExecStart=/home/ec2-user/apps/alertmanager/alertmanager --config.file=/home/ec2-user/apps/alertmanager/alertmanager.yml --storage.path=/var/lib/alertmanager
+Restart=on-failure
+StartLimitBurst=2
+StartLimitInterval=30
+
+[Install]
+WantedBy=multi-user.target
+```
+
+`:wq!`를 눌러 저장하고, 터미널에 다음을 입력한다.
+
+```bash
+# 데몬 리로드
+$ sudo systemctl daemon-reload
+
+# 알림 매니저 실행
+$ sudo systemctl start alertmanager
+
+# 알림 매니저 상태 확인
+$ sudo systemctl status alertmanager
+● alertmanager.service - Alert Manager
+   Loaded: loaded (/etc/systemd/system/alertmanager.service; enabled; vendor preset: disabled)
+   Active: active (running) since 수 2020-11-18 23:40:42 UTC; 9s ago
+ Main PID: 6631 (alertmanager)
+   CGroup: /system.slice/alertmanager.service
+           └─6631 /home/ec2-user/apps/alertmanager/alertmanager --config.file=/home/ec2-user/apps/alertmanager/alertmanager.yml --storage.path=/var/lib/alertmanager
+...
+```
