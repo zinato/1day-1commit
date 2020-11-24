@@ -2,7 +2,7 @@
 
 ![logo](../logo.png)
 
-> 백기선님의 온라인 스터디 "스터디 할래" 3주차 정리 문서입니다.
+> 백기선님의 온라인 스터디 "스터디 할래" 3주차 정리 문서입니다. 이 문서는 [자바 오라클 문서](https://docs.oracle.com/javase/tutorial/java/nutsandbolts)를 토대로 만들었습니다.
 
 ## 목표
 
@@ -122,6 +122,124 @@ public void test_rem_failed(){
 
 
 ## 비트 연산자
+
+비트 연산자는 정수형 타입에 대해서 "비트 연산"을 한다. 이들은 "산술 연산자"와 마찬가지로 "이항 연산자"이다. 자바에서 제공되는 비트 연산자는 다음과 같다.
+
+| 연산자 | 설명 |
+| :-- | :-- |
+| & | AND 연산 |
+| \| | OR 연산 |
+| ^ | XOR 연산 |
+| << | left shift 연산 |
+| >> | right shift 연산 |
+
+여기서 비트 연산 AND, OR, XOR은 1, 0에 대해서 다음과 같이 연산된다.
+
+**AND**
+| - | 0 | 1 |
+| :--: | :--: | :--: |
+| 0 | 0 | 0 |
+| 1 | 0 | 1 |
+
+예를 들어 0001 과 0011 을 AND 연산을 하면, 0001의 결과를 가질 수 있다. 코드로 표현하면 다음과 같다.
+
+```java
+@Test
+public void test_bit_and(){
+    int a = 0x0001;
+    int b = 0x0011;
+    int res = a & b;
+    assertEquals(0x0001, res);
+}
+```
+
+**OR**
+| - | 0 | 1 |
+| :--: | :--: | :--: |
+| 0 | 0 | 1 |
+| 1 | 1 | 1 |
+
+예를 들어 0001 과 0011 을 OR 연산을 하면, 0011의 결과를 가질 수 있다. 코드로 표현하면 다음과 같다.
+
+```java
+@Test
+public void test_bit_or(){
+    int a = 0x0001;
+    int b = 0x0011;
+    int res = a | b;
+    assertEquals(0x0011, res);
+}
+```
+
+**XOR**
+| - | 0 | 1 |
+| :--: | :--: | :--: |
+| 0 | 0 | 1 |
+| 1 | 1 | 0 |
+
+예를 들어 0001 과 0011 을 XOR 연산을 하면, 0010의 결과를 가질 수 있다. 코드로 표현하면 다음과 같다.
+
+```java
+@Test
+public void test_bit_xor(){
+    int a = 0x0001;
+    int b = 0x0011;
+    int res = a ^ b;
+    assertEquals(0x0010, res);
+}
+```
+
+**Left Shift**
+
+Left Shift 비트 연산자는 비트를 왼쪽으로 1bit씩 민다. 예를 들어 0001이 있다면, 0010이 된다. 코드로 표현하면 다음과 같다.
+
+```java
+ @Test
+public void test_bit_left_shift(){
+    int a = 0x0001;                 // 0x0001 = 00000001
+    int res = a << 1;
+    assertEquals(0x0002, res);      // 0x0002 = 00000010
+}
+```
+
+**Right Shift**
+
+Right Shift 비트 연산자는 비트를 오른쪽으로 1bit씩 민다. 예를 들어 0010이 있다면, 0001이 된다. 코드로 표현하면 다음과 같다.
+
+```java
+@Test
+public void test_bit_right_shift(){
+    int a = 0x0002;                 // 0x0002 = 00000010
+    int res = a >> 1;
+    assertEquals(0x0001, res);      // 0x0001 = 00000001
+}
+```
+
+Right Shift 비트 연산자는 조금 특별한게 있는데, ">>", ">>>" 이렇게 두 가지가 있다. 각각 ">>"는 sign 비트를 유지하고, ">>>" 0을 넣어준다. 무슨 뜻이냐면 코드를 보면 이해할 수 있다.
+
+```java
+@Test
+public void test_bit_right_shift2(){
+    int a = -2;             // 11111111111111111111111111111110
+    int res = a >> 1;       // 11111111111111111111111111111111
+    assertEquals(-1, res);  
+}
+```
+
+오른쪽으로 쉬프트할 때, 가장 최상위의 bit가 유지된다. 반면에 ">>>" 연산자를 써보자.
+
+```java
+@Test
+public void test_bit_right_shift3(){
+    int a = -2;             // 11111111111111111111111111111110
+    int res = a >>> 1;      // 01111111111111111111111111111111
+    assertEquals(2147483647, res);
+}
+```
+
+이때는, 상위비트가 유지되지 않고 0으로 채워지며 오른쪽으로 비트가 이동되는 것을 확인할 수 있다.
+
+
 ## 관계 연산자
 ## 논리 연산자
 ## instanceof
