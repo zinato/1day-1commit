@@ -348,6 +348,80 @@ public void test_less_than_or_equal_to() {
 ```
 
 ## 논리 연산자
+
+논리 연산자는 AND, OR, NOT이며, 참과 거짓에 대해서 판단한다. 자바에서 제공하는 논리 연산자는 다음과 같다.
+
+| 연산자 | 설명 |
+| :-- | :-- |
+| && | AND |
+| \|\| | OR |
+| ! | NOT |
+
+**AND 연산자**
+논리적으로 피연산자 2개가 모두 참일 때, 참 그 외에는 거짓을 나타낸다. 피연산자1이 거짓일 경우, 연산은 피연산자1만 하고 넘어간다.
+| | true  | false |
+| :--: | :--: | :--: |
+| true | true | false |
+| false | false | false |
+
+코드로 보면 다음과 같다.
+
+```java
+@Test
+public void test_and() {
+    int a = 1, b = 2;
+    assertTrue(a == 1 && b==2);
+
+    // a == 1이 거짓이 되기 때문에 False를 반환한다.
+    a = 3;
+    assertFalse(a == 1 && b==2);
+}
+```
+
+**OR 연산자**
+논리적으로 피연산자 2개가 하나라도 참일 때, 참 모두 거짓일 때만 거짓을 나타낸다. 피연산자 1이 참일 경우 연산은 피연산자1만 하고 넘어간다.
+| | true | false |
+| :--: | :--: | :--: |
+| true | true | true |
+| false | true | false |
+
+코드로 보면 다음과 같다.
+
+```java
+@Test
+public void test_or() {
+    int a = 1, b = 2;
+    assertTrue(a == 1 || b==2);
+
+    // a == 1이 거짓이 되더라도 b == 2를 만족하기 때문에 True를 반환한다.
+    a = 3;
+    assertTrue(a == 1 || b==2);
+
+    // a == 1, b == 2를 둘다 불만족하기 때문에 False를 반환한다.
+    b = 7;
+    assertFalse(a == 1 || b==2);
+}
+```
+
+**NOT 연산자**
+피연산자 1개의 논리를 반전시킨다. 참이라면 거짓을, 거짓이라면 참을 반환한다.
+| | NOT | 
+| :--: | :--: | 
+| true | false | 
+| false | true |
+
+코드로 보면 다음과 같다.
+
+```java
+@Test
+public void test_not() {
+    int a = 7;
+    // a == 7 의 논리를 반전시키기 때문에 False가 나온다.
+    // 아래 코드의 경우 a != 7 로 쓰는게 관례이다.
+    assertFalse(!(a == 7));
+}
+```
+
 ## instanceof
 ## assignment(=) operator
 ## 화살표(->) 연산자
