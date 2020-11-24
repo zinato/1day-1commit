@@ -520,7 +520,9 @@ public void test_lambda() {
 }
 ```
 
-간단하게 무명 인터페이스 코드를 축약하는 연산자라고 보면 된다. 여기서 무명 인터페이스가 구현하는 인터페이스는 딱 1개의 메소드를 가지고 있어야 한다. 
+간단하게 무명 인터페이스 코드를 축약하는 연산자라고 보면 된다. 여기서 무명 인터페이스가 구현하는 인터페이스는 딱 1개의 메소드를 가지고 있어야 한다.  
+
+또한, `Java 13`에서 switch 식과 함께 쓸 수 있다. 이는 아래 절을 참고한다.
 
 
 ## 3항 연산자
@@ -581,4 +583,66 @@ public void test_triple_operator(){
 | 11 | 할당 연산자 | =, +=, -=, *=, /=, %=, &=, ^=, !=, <<=, >>=, >>>= |
 
 
-## switch 연산자 (Java 13)
+## switch 표현식 (Java 13)
+
+일반적으로, 자바에서 분기문은 `if, if-else, if-else if-else` 그리고 `switch`가 있다. 한 변수에 대해서 여러 분기를 처리할 때 `switch`문을 쓴다.
+
+```java
+@Test
+public void test_switch() {
+    String level = "C";
+
+    switch (level) {
+        case "A":
+        case "B":
+            System.out.println("BASIC");
+            break;
+        case "C":
+            System.out.println("EXPERT");
+            break;
+        case "D":
+        case "E":
+            System.out.println("Professional");
+            break;
+        default:
+            System.out.println("I don't know");
+            break;
+    }
+}
+```
+
+위의 코드는 `level`에 대해서 "A", "B"면 "BASIC"을, "C"면 "EXPERT"를, "D", "E"면 "Professional"를, 나머지는 "I don't know"를 출력하게 한다.
+
+그런데, 자바 13부터는 `switch`문이 아니라 `switch`식이라고 표현된다. 이 말은 `switch` 가 값을 갖는다는 뜻이다. 다음처럼 쓸 수 있다.
+
+```java
+@Test
+public void test_switch() {
+    String level = "C";
+    String result = switch (level) {
+        case "A", "B" -> "BASIC";
+        case "C" -> "EXPERT";
+        case "D", "E" -> "Professional";
+        default -> "I don't know";
+    };
+    assertEquals("EXPERT", result);
+}
+```
+
+`->`이걸 써도 되고 `yield`를 써도 된다. 다음 처럼 말이다.
+
+```java
+ @Test
+public void test_switch() {
+    String level = "C";
+    String result = switch (level) {
+        case "A", "B": yield "BASIC";
+        case "C": yield "EXPERT";
+        case "D", "E": yield "Professional";
+        default: yield "I don't know";
+    };
+    assertEquals("EXPERT", result);
+}
+```
+
+이 때, 빌드 옵션에 `--enable-preview`를 주어야 한다. 현재 IDE에서는 에러 표시를 내고 있다. 하하;; 중요한 것은 `switch`에서 분기되는 값이 `result`에 할당이 된다는 것이다.
