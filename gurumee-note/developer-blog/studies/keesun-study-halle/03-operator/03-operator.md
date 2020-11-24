@@ -190,7 +190,6 @@ public void test_bit_xor(){
 ```
 
 **Left Shift**
-
 Left Shift 비트 연산자는 비트를 왼쪽으로 1bit씩 민다. 예를 들어 0001이 있다면, 0010이 된다. 코드로 표현하면 다음과 같다.
 
 ```java
@@ -203,7 +202,6 @@ public void test_bit_left_shift(){
 ```
 
 **Right Shift**
-
 Right Shift 비트 연산자는 비트를 오른쪽으로 1bit씩 민다. 예를 들어 0010이 있다면, 0001이 된다. 코드로 표현하면 다음과 같다.
 
 ```java
@@ -241,6 +239,114 @@ public void test_bit_right_shift3(){
 
 
 ## 관계 연산자
+
+각 값을 비교하는 것이 이 연산자의 역할이다. 자바가 제공하는 관계 연산자는 다음과 같다. 역시 이항 연산자이다.
+
+| 연산자 | 설명 |
+| :-- | :-- |
+| == | equal to |
+| != | not equal to |
+| > | greater than |
+| >= | greater than or equal to |
+| < | less than |
+| <= | less than or equal to |
+
+**== 연산자**
+이 연산자는 기본 타입의 경우 값이 같은지 여부를 판단한다. 참조 타입의 경우 같은 참조를 가지고 있는지 여부를 판단한다.
+
+```java
+@Test
+public void test_equal_to_primitive_type() {
+    int a = 5, b = 5;
+    assertTrue(a == b);
+}
+
+@Test
+public void test_equal_to_reference_type() {
+    // 같은 값을 가지나, 참조가 다르다.
+    Person p1 = new Person(29, "gurumee");
+    Person p2 = new Person(29, "gurumee");
+    // 이 연산자의 결과는 실패를 가진다.
+    assertFalse(p1 == p2);
+}
+```
+
+**!= 연산자**
+이 연산자는 `== 연산자`의 반대이다. 값이 다른지 여부를 판단한다. 역시 기본 타입일 때는, 그 값을 참조 타입일 때는 참조에 대해서 판단한다.
+
+```java
+ @Test
+public void test_not_equal_to_primitive_type() {
+    int a = 5, b = 5;
+    // a == b 이기 때문에 실패를 반환한다.
+    assertFalse(a != b);
+}
+
+@Test
+public void test_not_equal_to_reference_type() {
+    Person p1 = new Person(29, "gurumee");
+    Person p2 = new Person(29, "gurumee");
+    // 서로 다른 참조이기 때문에 참을 반환한다.
+    assertTrue(p1 != p2);
+}
+```
+
+**> 연산자**
+이 연산자는 피연산자 1이 피연산자 2보다 큰지 여부를 판단한다.
+
+```java
+@Test
+public void test_greater_than() {
+    int a = 7, b = 5;
+    assertTrue(a > b);
+
+
+    a = 5;
+    assertFalse(a > b);
+}
+```
+
+**>= 연산자**
+이 연산자는 피연산자 1이 피연산자 2보다 크거나 같은지 여부를 판단한다.
+```java
+@Test
+public void test_greater_than_or_equal_to() {
+    int a = 7, b = 5;
+    assertTrue(a >= b);
+
+    a = 5;
+    assertTrue(a >= b);
+}
+```
+
+**< 연산자**
+이 연산자는 피연산자 1이 피연산자 2보다 작은지 여부를 판단한다.
+```java
+@Test
+public void test_less_than() {
+    int a = 3, b = 5;
+    assertTrue(a < b);
+
+
+    a = 5;
+    assertFalse(a < b);
+}
+```
+
+**<= 연산자**
+이 연산자는 피연산자 1이 피연산자 2보다 작거나 같은지 여부를 판단한다.
+```java
+@Test
+public void test_less_than_or_equal_to() {
+    int a = 3, b = 5;
+    assertTrue(a <= b);
+
+
+    a = 5;
+    assertTrue(a <= b);
+}
+```
+
 ## 논리 연산자
 ## instanceof
 ## assignment(=) operator
