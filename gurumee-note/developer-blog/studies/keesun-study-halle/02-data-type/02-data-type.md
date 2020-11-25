@@ -2,7 +2,7 @@
 
 ![logo](../logo.png)
 
-> 백기선님의 온라인 스터디 "스터디 할래" 2주차 정리 문서입니다.
+> 백기선님의 온라인 스터디 "스터디 할래" 2주차 정리 문서입니다. [오라클 자바 공식 문서](https://docs.oracle.com/javase/tutorial/java/nutsandbolts/datatypes.html)를 참고하였습니다.
 
 ## 목표
 
@@ -21,6 +21,21 @@
 
 
 ## 프리미티브 타입 종류와 값의 범위 그리고 기본 값
+
+프리미티브 타입 즉, 자바에서 제공하는 기본 타입은 다음과 같다.
+
+| 타입 | 범위 | 크기 | 기본 값 |
+| :-- | :-- | :-- | :-- |
+| byte | -128 ~ 127 | 8bit(1byte) | 0 |
+| short | -32768 ~ 32767 | 16bit(2byte) | 0 |
+| int | -2^31 ~ 2^31-1 | 32bit(4byte) | 0 |
+| long | -2^63 ~ 2^63-1 | 64bit(8byte) | 0L |
+| float | -1.4E-45 ~ 1.4E-45 | 32bit(4byte) | 0.0f |
+| double | -4.9E-324 ~ 4.9E-324 | 64bit(8byte) | 0.0d |
+| char | 0~65535 | 16bit(2byte) | '\u0000' |
+| boolean | true or false | 8bit(1byte) | false |
+
+
 ## 프리미티브 타입과 레퍼런스 타입
 ## 리터럴
 ## 변수 선언 및 초기화하는 방법
