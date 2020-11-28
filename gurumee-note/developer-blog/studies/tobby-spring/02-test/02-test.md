@@ -293,6 +293,71 @@ add, get, 테스트를 각각 분리하였다. 또한 setUp, tearDown을 작성�
 
 ## 왜 스프링인가? 테스트!!
 
+먼저 Spring에서 지원하는 테스트 기능으로써 가장 강력한 것은 DI를 지원하게 해준다는 것이다. 코드를 다음과 같이 변경한다.
+
+```java
+@SpringBootTest
+class UserDaoTest {
+    @Autowired
+    private UserDao userDao;
+
+    // ...
+}
+```
+
+물론 이게 베스트 프랙티스는 아니다. 데이터 레이어 테스트는 또 따로 해두는 것이 좋다. 여기서는 "DaoFactory를 통해 등록한 UserDao 빈을 주입시킬 수 있다"라는 것에 초점을 맞추면 된다. `@SpringBootTest`는 테스트 코드를 진행할 때, 스프링 부트용 테스트 러너를 실행시킨다. 그리고 `@Autowired`는 필드에 붙이면 필드 인젝션이 된다. 따라서 테스트 코드 실행 시 스프링 DI 컨테이너가 우리가 등록한 `UserDao`를 주입한다.
+
+이제, 데이터베이스를 분리해보자. 현재 데이터베이스 정보를 `DaoFactory`에서 먼저 확인해보자.
+
+```java
+@Configuration
+public class DaoFactory {
+    @Bean
+    public UserDao userDao() {
+        UserDao userDao = new UserDao(dataSource());
+        return userDao;
+    }
+
+    @Bean
+    public DataSource dataSource() {
+        SimpleDriverDataSource dataSource = new SimpleDriverDataSource();
+        dataSource.setDriverClass(com.mysql.jdbc.Driver.class);
+        dataSource.setUrl("jdbc:mysql://localhost/springbook");
+        dataSource.setUsername("spring");
+        dataSource.setPassword("book");
+        return dataSource;
+    }
+}
+```
+
+데이터베이스를 "springbook"에서 "springbook-test"로 바꿔서 참조하게끔 해보겠다. 먼저, `test` 디렉토리 밑에 적당한 위치에 `TestDaoFactory`를 만든다.
+
+```java
+@TestConfiguration
+public class TestDaoFactory {
+    @Bean
+    public UserDao testUserDao() {
+        UserDao userDao = new UserDao(testDataSource());
+        return userDao;
+    }
+
+    @Bean
+    public DataSource testDataSource() {
+        SimpleDriverDataSource dataSource = new SimpleDriverDataSource();
+        dataSource.setDriverClass(com.mysql.jdbc.Driver.class);
+        dataSource.setUrl("jdbc:mysql://localhost/springbook-test");
+        dataSource.setUsername("spring");
+        dataSource.setPassword("book");
+        return dataSource;
+    }
+}
+```
+
+그리고, 이제 `UserDaoTest`를 다음과 같이 변경한다.
+
+```java
+
+```
 
 ## 스터디원들의 생각 공유
 
