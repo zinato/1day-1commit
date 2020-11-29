@@ -342,8 +342,8 @@ public class UserDao {
 
 근데 위 코드는 두 가지 문제점이 있다.
 
-1. "전략 패턴"이 적용되지 않았다.
-2. UserDao와 DeleteAllStatement가 강하게 결합되어 있다.
+1. "전략 패턴"이 적용되지 않았다. - DeleteAllStatement가 고정되어 있다. 필요에 따라 자유롭게 변경이 가능해야 한다.
+2. (객체 의존도 측면에서)UserDao와 DeleteAllStatement가 강하게 결합되어 있다.
 
 전략 패턴이란 `Context`가 어떤 전략을 쓰는가는 전적으로 클라이언트가 결정한다.
 
