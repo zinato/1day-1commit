@@ -417,12 +417,106 @@ public class UserDao {
 ```
 
 
-## 컨텍스트와 DI
+## 분리 또 분리! 스프링 스럽게 분리해보자.
+
+조금 더 개선해보자. `jdbcContextWithStatementStrategy`메소드를 `JdbcContext`클래스로 분리할 것이다. 여기선 통합 개념이 크니 `try-with-resource`로 코드를 더 깔끔하게 만들어보겠다.
+
+```java
+@NoArgsConstructor @AllArgsConstructor
+@Getter @Setter
+public class JdbcContext {
+    private DataSource dataSource;
+
+    public void workWithStatementStrategy(StatementStrategy stmt) throws SQLException {
+        try (Connection c = dataSource.getConnection();
+             PreparedStatement ps = stmt.makePreparedStatement(c);
+        ) {
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw e;
+        }
+    }
+}
+```
+
+빈 설정을 위해서 `DaoFactory`를 변경한다. (테스트 코드를 위해 같은 방법으로 `TestDaoFactory`도 변경하라.)
+
+```java
+@Configuration
+public class DaoFactory {
+    @Bean
+    public UserDao userDao() {
+        UserDao userDao = new UserDao(dataSource(), jdbcContext());
+        return userDao;
+    }
+
+    @Bean
+    public DataSource dataSource() {
+        SimpleDriverDataSource dataSource = new SimpleDriverDataSource();
+        dataSource.setDriverClass(com.mysql.jdbc.Driver.class);
+        dataSource.setUrl("jdbc:mysql://localhost/springbook");
+        dataSource.setUsername("spring");
+        dataSource.setPassword("book");
+        return dataSource;
+    }
+
+    @Bean
+    public JdbcContext jdbcContext() {
+        JdbcContext context = new JdbcContext(dataSource());
+        return context;
+    }
+}
+```
+
+이제 `UserDao`를 다음과 같이 변경한다.
+
+```java
+@NoArgsConstructor @AllArgsConstructor
+@Getter @Setter
+public class UserDao {
+    private DataSource dataSource;
+    private JdbcContext jdbcContext;
+
+    public void add(User user) throws SQLException {
+        StatementStrategy stmt = c -> {
+            PreparedStatement ps = c.prepareStatement("insert into users(id, name, password) values(?, ?, ?)");
+            ps.setString(1, user.getId());
+            ps.setString(2, user.getName());
+            ps.setString(3, user.getPassword());
+            return ps;
+        };
+        jdbcContext.workWithStatementStrategy(stmt);
+    }
+
+    public void deleteAll() throws SQLException {
+        StatementStrategy stmt = c -> {
+            PreparedStatement ps = c.prepareStatement("delete from users");
+            return ps;
+        };
+        jdbcContext.workWithStatementStrategy(stmt);
+    }
+
+    // ...
+}
+```
+
+위 코드 구조의 의존 관계는 다음과 같다.
+
+![04](./04.png)
+출처 "에이콘 - 토비의 스프링"
+
+빈 오브젝트 관계는 다음과 같다.
+
+![05](./05.png)
+출처 "에이콘 - 토비의 스프링"
 
 
 ## 스터디원들의 생각 공유
 
 ### 나의 질문과 답
+
+1. 첫 주차에 질문이었던 " UserDao에서, DB 연결에 대한 관심을 분리할 수 있었다. 그럼 Statement를 실행시키거나, 리소스들을 해제하는 것은 어떻게 분리할 수 있을까?"에 대한 답변을 찾은 것 같아서 매우 인상적인 챕터였다. `UserDao`에서 추가, 삭제, 수정 쿼리를 날릴 때 어떻게 깔끔하게 처리할 수 있는지에 대한 해답을 찾은 것 같다.
+2. 다만 추가적으로 조회에 대한 부분은 어떻게 처리할 지 의문이다.
    
 ### 스터디원들의 질문과 답
 
