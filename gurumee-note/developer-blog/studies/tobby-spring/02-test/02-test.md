@@ -4,7 +4,7 @@
 
     책장속 먼지털기 스터디 3차
     스터디 날짜 : 2020.11.23 (불참)
-    작성 날짜 : 2020.11.26 
+    작성 날짜 : 2020.11.26 - 2020.11.27 
     페이지 : 145 ~ 207
 
 
@@ -330,7 +330,7 @@ public class DaoFactory {
 }
 ```
 
-데이터베이스를 "springbook"에서 "springbook-test"로 바꿔서 참조하게끔 해보겠다. 먼저, `test` 디렉토리 밑에 적당한 위치에 `TestDaoFactory`를 만든다.
+데이터베이스를 "springbook"에서 "testdb"로 바꿔서 참조하게끔 해보겠다. 먼저, `test` 디렉토리 밑에 적당한 위치에 `TestDaoFactory`를 만든다.
 
 ```java
 @TestConfiguration
@@ -345,7 +345,7 @@ public class TestDaoFactory {
     public DataSource testDataSource() {
         SimpleDriverDataSource dataSource = new SimpleDriverDataSource();
         dataSource.setDriverClass(com.mysql.jdbc.Driver.class);
-        dataSource.setUrl("jdbc:mysql://localhost/springbook-test");
+        dataSource.setUrl("jdbc:mysql://localhost/testdb");
         dataSource.setUsername("spring");
         dataSource.setPassword("book");
         return dataSource;
@@ -356,8 +356,17 @@ public class TestDaoFactory {
 그리고, 이제 `UserDaoTest`를 다음과 같이 변경한다.
 
 ```java
-
+@SpringBootTest
+@Import(value = {TestDaoFactory.class})
+class UserDaoTest {
+    // ...
+}
 ```
+
+이제 테스트를 돌려보면, 동작하는 것을 확인할 수 있다. (**다만, mysql에서 데이터베이스를 만들고 유저에게 접근 권한을 주어야 한다.**) 우리는 스프링이 지원하는 테스트를 이용하여, 컨텍스트를 분리하였고 결과적으로 운영 환경에 영향을 주지 않고 테스트 코드를 수행할 수 있게 되었다. 또한 필드 인젝션을 통해서 빈이 주입받는 것 역시 알 수 있었다.
+
+책에서는 `GenericXmlApplicationContext` 상에서 `test-applicationContext.xml` 파일을 만들어서, 테스트용 컨텍스트를 만드는 방법이 나온다. 위의 코드는 `AnnotationConfigApplicationContext`에서 테스트용 설정 빈인 `@TestConfiguration`을 이용하여 테스트 환경을 분리하는 방법이다. 그러나 이 방법들은 코드 상에 데이터베이스의 중요 정보들이 노출되기 때문에, 현재는 이 두 방법보단 `application.properties`이나 `application.yml` 설정 파일과 프로파일을 이용하여, 테스트 환경을 분리하거나 `testcontainers`를 이용하여 환경을 분리하는 방법을 쓴다.
+
 
 ## 스터디원들의 생각 공유
 
