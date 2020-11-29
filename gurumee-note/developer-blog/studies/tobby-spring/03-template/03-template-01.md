@@ -97,7 +97,7 @@ public class UserDao {
 }
 ```
 
-`try-with-resource`구문보다 확실히 코드가 복잡하다. `finally` 블록에서 `ps`와 `c`의 리소스를 반환한다. 이 때 중요한 점은 각각 null 여부인지 체크하고, `close`메소드 역시 `SQLException`이 발생할 수 있으므로 꼭 `try-catch`로 묶어주어야 한다는 점이다. 이제 조회 기능인 `getCount` 메소드에 예외 처리 구문을 추가해보자.
+`try-with-resource`구문보다 확실히 코드가 복잡하다. `finally` 블록에서 `ps`와 `c`의 리소스를 반환한다. 이 때 중요한 점은 각각 null인지 여부를 체크하고, `close`메소드 역시 `SQLException`이 발생할 수 있으므로 꼭 `try-catch`로 묶어주어야 한다는 점이다. 이제 조회 기능인 `getCount` 메소드에 예외 처리 구문을 추가해보자.
 
 ```java
 public class UserDao {
@@ -171,11 +171,251 @@ public class UserDao {
 더 복잡한 코드가 되었다... 만일 `UserDao`같은 클래스가 수 십개, 수 백개 있다고 해보자. 일일이 `try-catch-finally` 구문으로 다 바꿔줘야 함은 물론 `finally` 블록에서 리소스 반환을 빼먹지 않고 코드를 적었음을 보장해야 한다. 굉장히 고된 작업이 될 것이다. 이를 어떻게 하면 조금 더 깔끔하게, 효율적으로 해결할 수 있을까?
 
 
-## 템플릿 메소드 패턴? 전략 패턴?
+## 템플릿 메소드 패턴을 적용해볼까?
+
+여기서 문제의 핵심은 "많은 곳에서 중복되는 코드와 로직에 따라 자꾸 확장되고 자주 변하는 코드를 잘 분리하는 것"이다. 다시 `deleteAll`을 보자.
+
+```java
+public class UserDao {
+    // ...
+    public void deleteAll() throws SQLException {
+        Connection c = null;
+        PreparedStatement ps = null;
+        
+        try {
+            c = dataSource.getConnection();
+            ps = c.prepareStatement("delete from users");
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+                    
+                }
+            }
+            
+            if (c != null) {
+                try {
+                    c.close();    
+                } catch (SQLException e) {
+                    
+                }
+            }
+        }
+    }
+    // ...
+}
+```
+
+데이터를 조회하는 쿼리를 제외한 나머지 부분은 이와 비슷할 것이다. 다만 `ps = c.prepareStatement("delete from users");` 이 구문만 변경이 될 것이다. 한 번 이 부분에 대해서 메소드를 추출해보자.
+
+```java
+public class UserDao {
+    // ...
+    private PreparedStatement makeStatement(Connection c) throws SQLException {
+        PreparedStatement ps;
+        ps = c.prepareStatement("delete from users");
+        return ps;
+    }
+
+    public void deleteAll() throws SQLException {
+        Connection c = null;
+        PreparedStatement ps = null;
+
+        try {
+            c = dataSource.getConnection();
+            ps = makeStatement(c);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+
+                }
+            }
+
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (SQLException e) {
+
+                }
+            }
+        }
+    }
+    // ... 
+}
+```
+
+별로 좋을 것이 없어 보인다. 하지만, 이런 구조를 "템플릿 메소드 패턴"으로 변경해보면 어떨까? `UserDao`의 `makeStatement`를 `abstract protected`로 변경한다. 그럼 `UserDao`도 `abstract` 레벨로 내려간다. 
+
+```java
+public abstract class UserDao {
+    // ...
+
+    abstract protected PreparedStatement makeStatement(Connection c) throws SQLException;
+
+    // ...
+}
+```
+
+그리고, 삭제를 위한 `UserDaoDeleteAll`을 다음과 같이 만들어준다.
+
+```java
+public class UserDaoDeleteAll extends UserDao {
+    protected PreparedStatement makeStatement(Connection c) throws SQLException {
+        PreparedStatement ps;
+        ps = c.prepareStatement("delete from users");
+        return ps;
+    }
+}
+```
+
+이런 식으로 `UserDaoAdd`, `UserDaoGet` 등을 만들어낸다. 템플릿 메소드 패턴을 적용한 후, 클래스 관계도는 이렇게 된다.
+
+![01](./01.png)
+출처 "에이콘 - 토비의 스프링"
+
+훌륭하게 변하는 부분을 독립시켰지만 여기서 또 다음과 같은 문제점을 갖게 된다. 
+
+1. 사용하는 쿼리 개수만큼 서브 클래스 개수가 늘어난다.
+2. 확장 구조가 설계 시점에 고정되어 버린다.
+
+이를 어떻게 해결할 수 있을까?
 
 
+## 전략 패턴을 적용해보자.
 
-## 전략 패턴 최적화
+OCP 원칙을 잘 지키면서 템플릿 메소드 패턴보다 유연하고 확장성이 뛰어난 것이 있을까? 있다! 바로 "전략 패턴"이다. 오브젝트를 아예 둘로 분리하고 클래스 레벨에서는 인터페이스를 통해서만 의존하게끔 만드는 것이다. 다음 그림처럼 말이다.
+
+![02](./02.png)
+출처 "에이콘 - 토비의 스프링"
+
+여기서 `deleteAll`이 `contextMethod`가 된다. 전략 패턴을 적용할 수 있도록 `StatementStrategy` 인터페이스를 생성한다.
+
+```java
+public interface StatementStrategy {
+    PreparedStatement makePreparedStatement(Connection c) throws SQLException;
+}
+```
+
+그리고 모든 유저를 삭제하는 `DeleteAllStatement`를 추가한다.
+
+```java
+public class DeleteAllStatement implements StatementStrategy {
+    @Override
+    public PreparedStatement makePreparedStatement(Connection c) throws SQLException {
+        PreparedStatement ps = c.prepareStatement("delete from users");
+        return ps;
+    }
+}
+```
+
+이제 `UserDao`의 `deleteAll` 메소드에서 `DeleteAllStatement`를 사용해보자. 이전에 만들었던 `makeStatement` 메소드를 제거하고 다시 abstract에서 concrete 레벨로 변경한다. 그 후 컨텍스트인 `deleteAll`에서, `DeleteAllStatement` 생성해서 사용하면 된다.
+
+```java
+public class UserDao {
+    // ...
+    public void deleteAll() throws SQLException {
+        Connection c = null;
+        PreparedStatement ps = null;
+
+        try {
+            c = dataSource.getConnection();
+
+            StatementStrategy strategy = new DeleteAllStatement();
+            ps = strategy.makePreparedStatement(c);
+
+            ps.executeUpdate();
+        } 
+        // ...
+    }
+    // ...
+}
+```
+
+근데 위 코드는 두 가지 문제점이 있다.
+
+1. "전략 패턴"이 적용되지 않았다.
+2. UserDao와 DeleteAllStatement가 강하게 결합되어 있다.
+
+전략 패턴이란 `Context`가 어떤 전략을 쓰는가는 전적으로 클라이언트가 결정한다.
+
+![03](./03.png)
+출처 "에이콘 - 토비의 스프링"
+
+하지만, 현재 우리 코드는 그렇지 않다. 이를 위해서 코드 구조를 변경해보자.
+
+```java
+public class UserDao {
+    // ...
+    public void jdbcContextWithStatementStrategy(StatementStrategy stmt) throws SQLException {
+        Connection c = null;
+        PreparedStatement ps = null;
+
+        try {
+            c = dataSource.getConnection();
+            ps = stmt.makePreparedStatement(c);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            throw e;
+        } finally {
+            if (ps != null) {
+                try {
+                    ps.close();
+                } catch (SQLException e) {
+
+                }
+            }
+
+            if (c != null) {
+                try {
+                    c.close();
+                } catch (SQLException e) {
+
+                }
+            }
+        }
+    }
+    // ...
+}
+```
+
+그 후 `deleteAll`을 다음과 같이 변경한다.
+
+```java
+public class UserDao {
+    // ...
+    public void deleteAll() throws SQLException {
+        StatementStrategy stmt = new DeleteAllStatement();
+        jdbcContextWithStatementStrategy(stmt);
+    }
+    // ...
+}
+```
+
+하지만 아직도 `UserDao`와 `DeleteAllStatement`가 강하게 결합되어 있다. 가장 큰 문제는 쿼리 개수가 늘어날수록 `DeleteAllStatement` 같은 클래스들을 추가해야 한다는 점이다. 강결합을 푼다라고 보기엔 애매하지만, 이는 익명 클래스로 훌륭하게 해결할 수 있다.
+
+```java
+public class UserDao {
+    // ...
+    public void deleteAll() throws SQLException {
+        StatementStrategy stmt = c -> {
+            PreparedStatement ps = c.prepareStatement("delete from users");
+            return ps;
+        };
+        jdbcContextWithStatementStrategy(stmt);
+    }
+    // ...
+}
+```
+
 
 ## 컨텍스트와 DI
 
