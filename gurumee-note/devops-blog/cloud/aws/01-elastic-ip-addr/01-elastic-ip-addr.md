@@ -47,3 +47,8 @@
 ## 주의할 점
 
 이것은 경험담인데.. 탄력적 IP 주소를 할당하면, 꼭 인스턴스와 연결을 해야 한다. 안그러면 엄청난 과금이 나온다. 연결할 인스턴스가 없다면, 꼭 주소를 "릴리즈"(삭제)해야 한다.
+
+
+## 참고
+
+- [AWS 공식 가이드](https://docs.aws.amazon.com/ko_kr/AWSEC2/latest/UserGuide/elastic-ip-addresses-eip.html)
