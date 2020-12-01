@@ -125,7 +125,14 @@ $ sudo systemctl status influxdb2
 
 ![03](./03.png)
 
-그럼 위의 화면이 뜨는데, 입력 창에 값을 적적하게 넣어준 후 "Continue"를 눌러보자.
+그럼 위의 화면이 뜨는데, 입력 창에 값을 적적하게 넣어준다. 입력 값은 순서대로 다음과 같다.
+
+* Username
+* Password/Confirm Password
+* Oranization
+* Bucket
+
+입력값을 모두 입력했으면 "Continue"를 눌러보자.
 
 ![04](./04.png)
 
@@ -133,4 +140,10 @@ $ sudo systemctl status influxdb2
 
 ![05](./05.png)
 
-그럼 다음 화면이 뜬다. 이렇게 해서 `InfluxDB 2.0` 설정이 끝났다. 
+그럼 다음 화면이 뜬다. 이렇게 해서 `InfluxDB 2.0` 시작하기 위한 설정이 모두 끝났다. 
+
+
+## 참고
+
+* [공식 문서 - InfluxDB 2.0 시작하기](https://docs.influxdata.com/influxdb/v2.0/get-started/)
+* [khann님의 리눅스에서 서비스 등록하기](https://khann.tistory.com/5)
