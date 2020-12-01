@@ -72,4 +72,47 @@ $ influxd
 
 ## InfluxDB 2.0 서비스로 만들기
 
+바로 공식 문서대로 UI기반으로 `InfluxDB 2.0`을 세팅할 수 있다. 그 전에 조금 더 편하게 운영하기 위해서, 서비스 형태로 `InfluxDB 2.0`을 구동시켜보자. 먼저, 터미널에서 실행하고 있는 `influxd`를 종료한다.
+
+리눅스의 경우, `systemctl`로 `.service`파일을 서비스로 시작/종료/상태 확인이 가능하다. `systemctl` 명령어는 `/lib/sytemd/system` 디렉토리 밑에 `.service` 파일들을 참조하기 때문에  `influxdb2.service` 파일을 "sudo" 권한으로 해당 디렉토리 경로에 생성한다. 
+
+```bash
+$ sudo vi /lib/systemd/system/influxdb2.service
+```
+
+그럼 vi 터미널이 열리는데, 다음을 입력한다.
+
+```service
+[Unit]
+Description=InfluxDB 2.0 service file.
+
+[Service]
+ExecStart=/usr/local/bin/influxd
+Restart=on-failure
+StartLimitBurst=2
+StartLimitInterval=30
+
+[Install]
+WantedBy=multi-user.target
+```
+
+`:wq` 명령어를 눌러 저장하고 종료한다. 이제 터미널에 다음을 입력한다.
+
+```bash
+# 서비스 실행
+$ sudo systemctl start influxdb2
+
+# 서비스 상태 확인
+$ sudo systemctl status influxdb2
+● influxdb2.service - InfluxDB 2.0 service file.
+   Loaded: loaded (/usr/lib/systemd/system/influxdb2.service; disabled; vendor preset: disabled)
+   Active: active (running) since 화 2020-11-03 02:39:54 UTC; 10s ago
+ Main PID: 15094 (influxd)
+   CGroup: /system.slice/influxdb2.service
+           └─15094 /usr/local/bin/influxd
+
+...
+```
+
+
 ## InfluxDB 2.0 설정하기 (UI)
