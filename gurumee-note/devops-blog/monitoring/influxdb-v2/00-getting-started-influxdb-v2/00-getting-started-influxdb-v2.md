@@ -116,3 +116,21 @@ $ sudo systemctl status influxdb2
 
 
 ## InfluxDB 2.0 설정하기 (UI)
+
+이제 UI기반으로 `InfluxDB 2.0`을 설정해보자. 다음 화면을 확인할 수 있다.
+
+![02](./02.png)
+
+이제 "Get Started"를 눌러서 세팅을 진행해보자.
+
+![03](./03.png)
+
+그럼 위의 화면이 뜨는데, 입력 창에 값을 적적하게 넣어준 후 "Continue"를 눌러보자.
+
+![04](./04.png)
+
+이제 "Continue Later"를 클릭한다.
+
+![05](./05.png)
+
+그럼 다음 화면이 뜬다. 이렇게 해서 `InfluxDB 2.0` 설정이 끝났다. 
