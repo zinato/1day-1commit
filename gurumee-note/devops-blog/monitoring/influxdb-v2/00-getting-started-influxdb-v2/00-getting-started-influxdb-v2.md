@@ -115,7 +115,7 @@ $ sudo systemctl status influxdb2
 ```
 
 
-## InfluxDB 2.0 설정하기 (UI)
+## InfluxDB 2.0 설정하기
 
 이제 UI기반으로 `InfluxDB 2.0`을 설정해보자. 다음 화면을 확인할 수 있다.
 
