@@ -1,4 +1,4 @@
-# 시스템 메트릭 모니터링 (With Telegraf)
+# 시스템 메트릭 모니터링 시스템 구축하기 (With Telegraf)
 
 ![logo](../logo.png)
 
