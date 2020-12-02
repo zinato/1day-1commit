@@ -29,6 +29,8 @@ $ sudo yum install telegraf
 
 # telegraf 실행
 $ sudo systemctl start telegraf
+
+# telegraf 상태 확인
 $ sudo systemctl status telegraf
 ● telegraf.service - The plugin-driven server agent for reporting metrics into InfluxDB
    Loaded: loaded (/usr/lib/systemd/system/telegraf.service; enabled; vendor preset: disabled)
