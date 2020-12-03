@@ -212,9 +212,181 @@ public class SwitchTest {
 
 ### for
 
+`for`는 반복문 중 가장 사랑 받는 반복문이다. 다음과 같은 구조이다.
+
+```java
+for (할당문; 조건문; 증감문) {
+    구문;
+}
+```
+
+먼저 변수를 할당하고, 변수에 대한 조건을 검사하고 참이면 구문을 실행 후, 변수를 증가 혹은 감소 시킨다. 이런 식으로 코드를 테스트할 수 있다.
+
+```java
+public class ForTest {
+    @Test
+    public void test_for() {
+        int[] arr = {1, 2, 3, 4, 5};
+        int res = 0;
+
+        for (int i=0; i<arr.length; i++) {
+            res += arr[i];
+        }
+
+        assertEquals(15, res);
+    }
+}
+```
+
+### for each
+
+그런데 위의 `for`는 오류를 일으킬 가능성이 있다. 만약 `arr.length`가 아닌 숫자를 썼다고 가정해보자. 5라고 적여야 하는데 실수로 6을 적었다. 어떻게 될까? 
+
+```java
+public class ForTest {
+    // ...
+
+    @Test(expected = ArrayIndexOutOfBoundsException.class)
+    public void test_for_fail() {
+        int[] arr = {1, 2, 3, 4, 5};
+        int res = 0;
+
+        for (int i=0; i<6; i++) {
+            res += arr[i];
+        }
+
+        assertEquals(15, res);
+    }
+}
+```
+
+테스트 코드에서 알 수 있듯이 `ArrayIndexOutOfBoundsException`가 발생하게 된다. 이를 근본적으로 해결할 수 있게 향상된 `for`문인 `for each`구문이 있다. 코드 구조는 다음과 같다.
+
+```java
+for (변수 : 순회 가능한 객체) {
+    구문;
+}
+```
+
+구조에서 알 수 있듯이 "순회 가능한 객체"라는 제약 사항이 있긴 하다. 코드는 다음과 같이 쓸 수 있다.
+
+```java
+public class ForTest {
+    // ...
+    @Test
+    public void test_for_each(){
+        int[] arr = {1, 2, 3, 4, 5};
+        int res = 0;
+
+        for (int i : arr) {
+            res += i;
+        }
+
+        assertEquals(15, res);
+    }
+}
+```
+
 ### while
 
+`while`문은 조건이 참일 때까지, 구문을 반복하는 것이다. 코드 구조는 다음과 같다.
+
+```java
+while(조건) {
+    구문;
+}
+```
+
+코드는 다음과 같이 작성할 수 있다.
+
+```java
+public class WhileTest {
+    @Test
+    public void while_test_01() {
+        int i = 1;
+        int res = 0;
+
+        while (i < 5) {
+            res += i;
+            i += 1;
+        }
+
+        assertEquals(10, res);
+    }
+}
+```
+
+만약, 처음부터, 조건이 틀리다면, 반복문은 실행되지 않는다. 다음처럼 말이다.
+
+```java
+public class WhileTest {
+    // ...
+
+    @Test
+    public void while_test_02() {
+        int i = 5;
+        int res = 0;
+
+        while (i < 5) {
+            res += i;
+            i += 1;
+        }
+
+        assertEquals(0, res);
+    }
+}
+```
+
 ### do ~ while
+
+`do~while`문 역시 조건이 참일 때까지 코드를 반복한다. 코드 구조는 다음과 같다.
+
+```java
+do {
+    구문;
+} while(조건);
+```
+
+코드는 다음과 같이 작성할 수 있다.
+
+```java
+public class WhileTest {
+    // ...
+    @Test
+    public void do_while_test_01(){
+        int i = 1;
+        int res = 0;
+
+        do {
+            res += i;
+            i += 1;
+        } while (i < 5);
+
+        assertEquals(10, res);
+    }
+}
+```
+
+`while`과 달리 `do~while`문은 반드시 한 번은 실행하게 된다. 다음처럼 말이다.
+
+```java
+public class WhileTest {
+    // ...
+    @Test
+    public void do_while_test_02(){
+        int i = 5;
+        int res = 0;
+
+        do {
+            res += i;
+            i += 1;
+        } while (i < 5);
+
+        assertEquals(5, res);
+    }
+}
+```
+
 
 ## 과제 0. JUnit5
 
