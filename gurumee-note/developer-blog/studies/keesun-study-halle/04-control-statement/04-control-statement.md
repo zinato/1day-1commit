@@ -154,6 +154,60 @@ public class IfTest {
 
 ### switch
 
+`switch`문은 한 변수에 따라 여러 갈래로 나누는 동작을 할 때 쓰는 제어문이다. 코드 구조는 다음과 같다.
+
+```java
+switch(variable) {
+    case 조건 1: 
+        구문 1
+        break;
+    case 조건 2: 
+        구문 2
+        break;
+    case 조건 N: 
+        구문 N
+        break;
+    default:
+        구문 N+1;
+        break;
+}
+```
+
+코드는 다음처럼 쓸 수 있다.
+
+```java
+public class SwitchTest {
+    @Test
+    public void switch_test_a() {
+        String res = "A";
+        int score = -1;
+
+        switch (res) {
+            case "A":
+                score = 100;
+                break;
+            case "B":
+                score = 90;
+                break;
+            case "C":
+                score = 80;
+                break;
+            case "D":
+                score = 70;
+                break;
+            default:
+                score = 60;
+                break;
+        }
+
+        assertEquals(100, score);
+    }
+}
+```
+
+`Java 13`에선 3장에서 봤듯이, `->` 혹은 `yield` 키워드를 통해서 식으로 취급할 수 있다.
+
+
 ## 반복문
 
 ### for
