@@ -390,9 +390,521 @@ public class WhileTest {
 
 ## 과제 0. JUnit5
 
+나는 이미 `JUnit4`를 이용하고 있다. 간단히 `JUnit5`로 마이그레이션한다. `build.gradle`을 다음과 같이 수정한다.
+
+```gradle
+plugins {
+    id 'java'
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+tasks.withType(JavaCompile) {
+    options.compilerArgs += "--enable-preview"
+}
+
+tasks.withType(Test) {
+    jvmArgs += "--enable-preview"
+}
+
+tasks.withType(JavaExec) {
+    jvmArgs += '--enable-preview'
+}
+
+// 추가된 곳.
+test {
+    useJUnitPlatform()
+}
+
+// 수정된 곳.
+dependencies {
+    testImplementation 'org.junit.jupiter:junit-jupiter-api:5.3.1'
+    testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine:5.3.1'
+}
+```
+
+이제 다시 테스트 코드들을 수행하면, 테스트 코드들이 모두 깨진다. 일단 테스트 코드들의 이 부분들을 모두 수정해주어야 한다.
+
+수정 전 코드
+```java
+// ...
+// JUnit4 의존 모듈
+import org.junit.Test;
+
+import static org.junit.Assert.assertEquals;
+// ...
+```
+
+수정 후 코드
+```java
+// ...
+// JUnit5 의존 모듈
+import org.junit.jupiter.api.Test;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+// ...
+```
+
+`assertTrue`, `assertFalse`도 `assertEquals`같이 변경해주면 된다. 그리고 예외의 경우는 다음과 같이 변경 해준다.
+
+수정 전 코드
+```java
+// ...
+    @Test(expected = Exception.class)
+    public void exection_test() {
+        // 예외가 발생하는 코드
+    }
+// ...
+```
+
+수정 후 코드
+```java
+// ...
+    @Test
+    public void exection_test() {
+        Assertions.assertThrows(Exception.class, () -> {
+            // 예외가 발생하는 코드
+        });
+    }
+// ... 
+```
+
+사용 방법은 별로 다르지 않다.
+
+1. 메소드 레벨이 `public`일 것 (`JUnit 5`에서는 `package private` 레벨도 가능하다.)
+2. `@Test` 애노테이션이 붙을 것
+
+참고적으로 기존 애노테이션들 중 이름이 변경된 것들이 있는데 다음과 같다.
+
+| JUnit4 | JUnit5 | Description |
+| :-- | :-- | :-- |
+| @BeforeClass | @BeforeAll | 클래스에 포함된 모든 테스트가 수행되기 전에 실행 |
+| @AfterClass | @AfterAll | 클래스에 포함된 모든 테스트가 수행된 후에 실행 |
+| @Before | @BeforeEach | 클래스에 포함된 각 테스트가 수행되기 전에 실행 |
+| @After | @BeforeEach | 클래스에 포함된 각 테스트가 수행된 후에 실행 |
+| @Ignore | @Disable | 테스트 클래스/메소드를 무시 |
+| @Category | @Tag | 테스트 필터링 |
+
+
+또한 `JUnit5`에 추가된 애노테이션은 다음과 같다.
+
+| JUnit5 | Description |
+| :-- | :-- |
+| @TestFactory | 동적 테스트를 위한 팩토리 메소드 |
+| @DisplayName | 테스트 이름을 명시 |
+| @Nested | 테스트 클래스 안의 클래스 선언 |
+| @ExtendWith | 커스텀 상속 클래스 등록, `RunWith`와 비슷함. |
+
+
 ## 과제 1. live-study 대시 보드 구현
 
 ## 과제 2. LinkedList 구현
+
+이전에 공부했던 것이 있어 링크를 남긴다.
+
+* [연결 리스트 구현](https://gurumee92.tistory.com/125)
+* [이중 연결 리스트 구현](https://gurumee92.tistory.com/126?category=782305)
+
+오바이긴 하지만, 과제는 "정수형"을 담는 연결 리스트 구현이지만 나는 조금 더 나아가서 "제네릭"을 이용한 단일 연결 리스트를 구현한다. 
+
+먼저 노드이다. 노드는 데이터와, 다음 혹은 이전 노드에 대한 포인터가 필요하다. 단일에 경우는 둘 중 하나만 있으면 되고 보통은 다음 노드를 가리키게끔 구현한다. 현재 내가 가진 지식으로 이 모두를 만족하는 방법은 다음과 같다. 먼저 인터페이스를 선언한다.
+
+```java
+public interface ListNode<E extends Comparable<E>> {
+    E getData();
+    void setData(E data);
+    ListNode<E> getNext();
+    void setNext(ListNode<E> next);
+
+    ListNode<E> getPrev() throws Exception;
+    void setPrev(ListNode<E> prev) throws Exception;
+}
+```
+
+그리고 단일 노드를 다음과 같이 구현한다.
+
+```java
+public class SingleListNode<E extends Comparable<E>> implements ListNode<E> {
+    private E data;
+    private ListNode<E> next;
+
+    public SingleListNode(E data) {
+        this.data = data;
+        this.next = null;
+    }
+
+    @Override
+    public E getData() {
+        return data;
+    }
+
+    @Override
+    public void setData(E data) {
+        this.data = data;
+    }
+
+    @Override
+    public ListNode<E> getNext() {
+        return next;
+    }
+
+    @Override
+    public void setNext(ListNode<E> next) {
+        this.next = next;
+    }
+
+    @Override
+    public ListNode<E> getPrev() throws Exception {
+        throw new Exception("can't use method");
+    }
+
+    @Override
+    public void setPrev(ListNode<E> prev) throws Exception {
+        throw new Exception("can't use method");
+    }
+}
+```
+
+이중 연결 리스트의 경우에는 `*Prev` 메소드에서 예외를 발생 안시키게끔 짜면 되지 않을까? 얼추 `ListNode`는 끝났다. 간단한 테스트코드도 짜두자.
+
+```java
+class SingleListNodeTest {
+    private ListNode<Integer> node;
+
+    @BeforeEach
+    public void setUp() {
+        Integer data = 5;
+        node = new SingleListNode<>(data);
+    }
+
+    @Test
+    @DisplayName("생성 테스트")
+    public void test01() {
+        Integer data = 5;
+        SingleListNode<Integer> node = new SingleListNode<>(data);
+        assertEquals(data, node.getData());
+        assertNull(node.getNext());
+    }
+
+    @Test
+    @DisplayName("set data 테스트")
+    public void test02() {
+        assertNotNull(node.getData());
+        assertNull(node.getNext());
+
+        int newValue = 8;
+        node.setData(newValue);
+        assertEquals(newValue, node.getData().intValue());
+        assertNull(node.getNext());
+    }
+
+    @Test
+    @DisplayName("setNext 테스트")
+    public void test03() {
+        assertNotNull(node.getData());
+        assertNull(node.getNext());
+
+        ListNode<Integer> newNode = new SingleListNode<>(-1);
+        node.setNext(newNode);
+        assertNotNull(node.getNext());
+
+        ListNode<Integer> next = node.getNext();
+        assertEquals(-1, next.getData().intValue());
+        assertNull(next.getNext());
+    }
+
+    @Test
+    @DisplayName("getPrev exception test")
+    public void test04() {
+        Assertions.assertThrows(Exception.class, () -> {
+           node.getPrev();
+        });
+    }
+
+    @Test
+    @DisplayName("setPrev exception test")
+    public void test05() {
+        Assertions.assertThrows(Exception.class, () -> {
+            ListNode<Integer> newNode = new SingleListNode<>(-1);
+            node.setPrev(newNode);
+        });
+    }
+}
+```
+
+이제 단일 연결 리스트를 구현한다. `head`, `tail`이 있고 각각 더미 노드에 연결하는 방식을 사용할 것이다. 또한 기선님이 준 요구 사항을 연결리스트, 배열리스트 모두 쓸 수 있도록 다음과 같이 변경하였다.
+
+```java
+public interface MyList<E extends Comparable<E>> {
+    int size();
+    E get(int index);
+    void set(int index, E data);
+    void add(E data);
+    E remove(int index);
+    boolean contains(E data);
+}
+```
+
+인터페이스에 따른 연결 리스트의 코드는 다음과 같다.
+
+```java
+public class MySingleLinkedList<E extends Comparable<E>> implements MyList<E> {
+    private int size;
+    private final ListNode<E> head;
+    private final ListNode<E> tail;
+
+    public MySingleLinkedList() {
+        size = 0;
+        head = new SingleListNode<>(null);
+        tail = new SingleListNode<>(null);
+        head.setNext(tail);
+    }
+
+    @Override
+    public int size() {
+        return size;
+    }
+
+    @Override
+    public E get(int index) {
+        if (index >= size) {
+            throw new IndexOutOfBoundsException();
+        }
+
+        ListNode<E> node = head;
+
+        for (int i=0; i<=index; i++) {
+            node = node.getNext();
+        }
+
+        return node.getData();
+    }
+
+    @Override
+    public void set(int index, E data) {
+        if (index >= size) {
+            throw new IndexOutOfBoundsException();
+        }
+
+        ListNode<E> node = head;
+
+        for (int i=0; i<=index; i++) {
+            node = node.getNext();
+        }
+
+        node.setData(data);
+    }
+
+    @Override
+    public void add(E data) {
+        ListNode<E> newNode = new SingleListNode<>(data);
+        ListNode<E> node = head;
+
+        while(node.getNext() != tail) {
+            node = node.getNext();
+        }
+
+        node.setNext(newNode);
+        newNode.setNext(tail);
+        size += 1;
+    }
+
+    @Override
+    public E remove(int index) {
+        if (index >= size) {
+            throw new IndexOutOfBoundsException();
+        }
+
+        ListNode<E> prev = head;
+
+        for (int i=0; i<index; i++) {
+            prev = prev.getNext();
+        }
+
+        ListNode<E> node = prev.getNext();
+        E data = node.getData();
+        prev.setNext(node.getNext());
+        node = null;
+        size -= 1;
+        return data;
+    }
+
+    @Override
+    public boolean contains(E data) {
+        ListNode<E> node = head.getNext();
+
+        while(node != tail) {
+            if (data.equals(node.getData())) {
+                return true;
+            }
+
+            node = node.getNext();
+        }
+
+        return false;
+    }
+}
+```
+
+테스트 코드는 다음과 같이 작성하였다.
+
+```java
+class MySingleLinkedListTest {
+    private MyList<String> list;
+
+    @BeforeEach
+    public void setUp(){
+        list = new MySingleLinkedList<>();
+    }
+
+    @Test
+    @DisplayName("initial size = 0 test")
+    public void test01() {
+        assertEquals(0, list.size());
+    }
+
+    @Test
+    @DisplayName("get failed test - empty list")
+    public void test02() {
+        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> {
+            list.get(0);
+        });
+    }
+
+    private void fixtureAddDataSet() {
+        for (int i = 0; i < 5; i++) {
+            String input = "res" + i;
+            list.add(input);
+        }
+    }
+
+    @Test
+    @DisplayName("add test")
+    public void test03() {
+        fixtureAddDataSet();
+
+        assertEquals(5, list.size());
+
+        for (int i=0; i<5; i++) {
+            String expected = "res" + i;
+            assertEquals(expected, list.get(i));
+        }
+    }
+
+    @Test
+    @DisplayName("get failed test - IndexOutOfBoundsException")
+    public void test04() {
+        fixtureAddDataSet();
+
+        assertEquals(5, list.size());
+        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> {
+            list.get(6);
+        });
+    }
+
+    @Test
+    @DisplayName("set success test")
+    public void test05() {
+        fixtureAddDataSet();
+
+        assertEquals(5, list.size());
+
+        for (int i=0; i<5; i++) {
+            String changed = "tmp" + i;
+            list.set(i, changed);
+            assertEquals(changed, list.get(i));
+        }
+    }
+
+    @Test
+    @DisplayName("set failed test - empty list")
+    public void test06() {
+        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> {
+            list.set(0, "here");
+        });
+    }
+
+    @Test
+    @DisplayName("set failed test - IndexOutOfBoundsException")
+    public void test07() {
+        fixtureAddDataSet();
+        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> {
+            list.set(6, "here");
+        });
+    }
+
+    @Test
+    @DisplayName("remove test")
+    public void test08() {
+        fixtureAddDataSet();
+        assertEquals(5, list.size());
+
+        for (int i=0; i<5; i++) {
+            String remove = list.remove(0);
+            assertEquals("res" + i, remove);
+        }
+
+        fixtureAddDataSet();
+        assertEquals(5, list.size());
+
+        for (int i=0; i<5; i++) {
+            String remove = list.remove(list.size()-1);
+            assertEquals("res" + (5-(i+1)), remove);
+        }
+
+        fixtureAddDataSet();
+        assertEquals(5, list.size());
+
+        String remove = list.remove(3);
+        assertEquals(4, list.size());
+        assertEquals("res3", remove);
+        assertEquals("res4", list.get(3));
+    }
+
+    @Test
+    @DisplayName("remove failed test")
+    public void test09() {
+        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> {
+            list.remove(0);
+        });
+
+        fixtureAddDataSet();
+        assertEquals(5, list.size());
+
+        Assertions.assertThrows(IndexOutOfBoundsException.class, () -> {
+            list.remove(5);
+        });
+    }
+
+    @Test
+    @DisplayName("contains test")
+    public void test10() {
+        fixtureAddDataSet();
+        assertEquals(5, list.size());
+
+        for (int i=0; i<5; i++) {
+            String expected = "res"+i;
+            assertTrue(list.contains(expected));
+        }
+    }
+
+    @Test
+    @DisplayName("contains failed")
+    public void test11() {
+        for (int i=0; i<5; i++) {
+            String expected = "res"+i;
+            assertFalse(list.contains(expected));
+        }
+    }
+}
+```
+
+내친 김에 `ArrayList`도 만들자. 배열 기반 Stack/Queue를 만들 때 애를 이용하면 좋을 것이다.
 
 ## 과제 3. 배열 기반 Stack 구현
 
