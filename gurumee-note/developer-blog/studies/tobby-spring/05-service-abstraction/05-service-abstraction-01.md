@@ -243,6 +243,7 @@ class UserDaoTest {
 
 다른 부분은 `User`의 필드가 바뀌는 것에 대해 변경된 테스트 코드이다. 중요한 부분은 픽스처가 추가되고 빌더로 추가된 필드까지 모두 저장하는 부분이다.
 
+UserDaoTest.java
 ```java
 private User user;
 
@@ -283,6 +284,7 @@ public void setUp() {
 
 이제 테스트 `getTest`를 한 번 다음과 같이 수정해보자.
 
+UserDaoTest.java
 ```java
 @Test
 @DisplayName("UserDao get success test")
@@ -326,6 +328,109 @@ public class UserDaoJdbc implements UserDao {
 자 이제 테스트를 돌려보면 잘 통과하는 것을 확인할 수 있다.
 
 ### 수정 기능 추가
+
+이제 업데이트를 해보자. 테스트 코드를 먼저 작성한다.
+
+UserDaoTest.java
+```java
+@Test
+@DisplayName("update test")
+public void test06() {
+    user.setLevel(Level.SILVER);
+    user.setLogin(50);
+    userDao.update(user);
+
+    User updated = userDao.get(user.getId());
+    assertEquals(user.getLevel(), updated.getLevel());
+    assertEquals(user.getLogin(), updated.getLogin());
+}
+```
+
+테스트를 돌려보면 컴파일 에러가 난다. `UserDao`는 `update`메소드가 없기 때문이다. 이제 `update` 메소드를 작성하자. 먼저 인터페이스인 `UserDao`에 메소드 시그니처를 추가한다.
+
+```java
+public interface UserDao {
+    void add(User user);
+    User get(String id);
+    List<User> getAll();
+    void deleteAll();
+    int getCount();
+    void update(User input);
+}
+```
+
+그리고 그 구현체인 `UserDaoJdbc`에도 `update`메소드를 다음과 같이 추가한다.
+
+UserDaoJdbc.java
+```java
+@Override
+public void update(User user) {
+    this.jdbcTemplate.update("update users set name=?, password=?, level=?, login=?, recommend=? where id=?",
+            user.getName(), user.getPassword(), user.getLevel().getValue(), user.getLogin(), user.getRecommend(), user.getId());
+}
+```
+
+이제 테스트를 돌려보자. 무사히 통과한다. 이제 `update`가 정확히 잘 이루어졌는지 테스트를 보강한다. `update`문은 `where id=?`라는 구문에 영향을 받는다. 만약 잘 작성되지 않을 경우 모든 유저가 변경되는 초유의 사태가 벌어질 수 있다. 이를 테스트하기 위해 다음과 같이 테스트 코드를 수정한다.
+
+UserDaoTest.java
+```java
+private User user1;
+private User user2;
+
+@BeforeEach
+public void setUp() {
+    user1 = User.builder()
+            .id("test1")
+            .name("test1")
+            .password("test1")
+            .level(Level.BASIC)
+            .login(1)
+            .recommend(0)
+            .build();
+    userDao.add(user1);
+    user2 = User.builder()
+            .id("test2")
+            .name("test2")
+            .password("test2")
+            .level(Level.SILVER)
+            .login(55)
+            .recommend(10)
+            .build();
+    userDao.add(user2);
+    User tmp = User.builder()
+            .id("test3")
+            .name("test3")
+            .password("test3")
+            .level(Level.GOLD)
+            .login(100)
+            .recommend(40)
+            .build();
+    userDao.add(tmp);
+}
+
+// ...
+
+@Test
+@DisplayName("update test")
+public void test06() {
+    user1.setLevel(Level.SILVER);
+    user1.setLogin(50);
+    userDao.update(user1);
+
+    User updated = userDao.get(user1.getId());
+    assertEquals(user1.getLevel(), updated.getLevel());
+    assertEquals(user1.getLogin(), updated.getLogin());
+
+    User findUser = userDao.get(user2.getId());
+    assertEquals(user2.getName(), findUser.getName());
+    assertEquals(user2.getPassword(), findUser.getPassword());
+    assertEquals(user2.getLevel(), findUser.getLevel());
+    assertEquals(user2.getLogin(), findUser.getLogin());
+    assertEquals(user2.getRecommend(), findUser.getRecommend());
+}
+```
+
+다른 유저가 변경되는지 보기 위해서 `user2` 픽스처가 추가되었다. 그 후 `user1` 업데이트 이후, `user2`를 데이터베이스에서 찾아서 변경되었는지 테스트하는 것이다. 테스트를 돌려보면 무사히 통과한다.
 
 ### 서비스 코드의 등장!
 
