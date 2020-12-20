@@ -432,6 +432,203 @@ public void test06() {
 
 다른 유저가 변경되는지 보기 위해서 `user2` 픽스처가 추가되었다. 그 후 `user1` 업데이트 이후, `user2`를 데이터베이스에서 찾아서 변경되었는지 테스트하는 것이다. 테스트를 돌려보면 무사히 통과한다.
 
-### 서비스 코드의 등장!
+### 서비스 코드의 등장! 레벨 관리 기능의 구현.
+
+자 이제 비지니스 로직인 레벨 관리 기능을 만든다. 비지니스 로직을 어디다 저장을 해야 할까? 데이터를 액세스하는 `UserDao`는 적절하지 않아 보인다. 이 때는 비지니스 로직만을 다루는 하나의 계층을 더 만드는 것이 옳다. 이제 이런 의존 관계를 맺는 클래스들을 만들어보자.
+
+![의존 관계](./01.png)
+
+먼저 `UserService` 클래스이다.
+
+```java
+@RequiredArgsConstructor
+@Getter
+public class UserService {
+    private final UserDao userDao;
+}
+```
+
+그리고, `xml`이든 자바든 빈 설정 파일에서 `UserDao`를 주입시켜준다.
+
+```java
+@Configuration
+public class BeanFactory {
+    @Bean
+    public UserService userService(){
+        UserService userService = new UserService(userDao());
+        return userService;
+    }
+    // ...
+}
+```
+
+물론 테스트 코드에서도 사용할 수 있게 `TestBeanFactory`에서도 `UserService`를 설정해주어야 한다. 이제 다음과 같은 테스트 코드를 만든다. 
+
+```java
+@SpringBootTest
+@Import(TestBeanFactory.class)
+class UserServiceTest {
+    @Autowired
+    private UserService userService;
+
+    @Test
+    @DisplayName("컨테스트 로드 테스트")
+    public void bean() {
+        assertNotNull(userService);
+    }
+}
+```
+
+테스트용 설정 빈인 `TestBeanFactory`를 참조하여, `UserService`를 주입하고 있다. 테스트 메소드에서는 주입 받은 `userService`가 null이 아닌지 여부를 테스트 하는 것이다. 알맞게 설정했다면, 테스트가 정상적으로 통과할 것이다. 이제 레벨 관리 메소드인 `upgradeLevels`를 `UserService` 클래스에 추가한다.
+
+```java
+@RequiredArgsConstructor
+@Getter
+public class UserService {
+    private final UserDao userDao;
+
+    public void upgradeLevels() {
+        List<User> users = userDao.getAll();
+
+        for (User user : users) {
+            boolean changed = false;
+            
+            // BASIC -> SILVER : BASIC이면서 로그인 횟수 50회 이상
+            if (user.getLevel() == Level.BASIC && user.getLogin() >= 50) {
+                user.setLevel(Level.SILVER);
+                changed = true;
+            } 
+            // SILVER -> GOLD : SILVER이면서 추천 횟수 30회 이상
+            else if (user.getLevel() == Level.SILVER && user.getRecommend() >= 30) {
+                user.setLevel(Level.GOLD);
+                changed = true;
+            }
+
+            if (changed) {
+                userDao.update(user);
+            }
+        }
+    }
+}
+```
+
+이제 테스트 코드를 만들어보자. 먼저 원할한 테스트를 위해 데이터들을 미리 셋업해두자. `UserServiceTest`에 다음을 추가한다.
+
+UserServiceTest.java
+```java
+// 데이터 저장
+@Autowired
+private UserDao userDao;
+
+// 픽스처
+private List<User> users;
+
+@BeforeEach
+public void setUp() {
+    userDao.deleteAll();
+
+    List<User> users = Arrays.asList(
+            new User("test1", "test1", "test1", Level.BASIC, 49, 0),
+            new User("test2", "test2", "test2", Level.BASIC, 50, 0),
+            new User("test3", "test3", "test3", Level.SILVER, 60, 29),
+            new User("test4", "test4", "test4", Level.SILVER, 60, 30),
+            new User("test5", "test5", "test5", Level.GOLD, 100, 100)
+    );
+
+    for (User user : users) {
+        userDao.add(user);
+    }
+
+    this.users = userDao.getAll();
+}
+
+@Test
+@DisplayName("컨테스트 로드 테스트")
+public void bean() {
+    assertNotNull(userService);
+}
+```
+
+이제 픽스처인 `users`에 저장된 유저 목록을 잠시 살펴보자.
+
+```java
+new User("test1", "test1", "test1", Level.BASIC, 49, 0),
+new User("test2", "test2", "test2", Level.BASIC, 50, 0),
+new User("test3", "test3", "test3", Level.SILVER, 60, 29),
+new User("test4", "test4", "test4", Level.SILVER, 60, 30),
+new User("test5", "test5", "test5", Level.GOLD, 100, 100)
+```
+
+먼저 "test2"는 레벨이 BASIC이면서, login 횟수가 50회 이상이다. 추후 SILVER로 변경되어야 한다. "test4"는 SILVER이면서, recommend 횟수가 30회이다. 추후 GOLD로 변경되어야 한다. 이를 명심하면서 테스트 메소드를 다음과 같이 추가한다.
+
+UserServiceTest.java
+```java
+private void checkLevel(User user, Level expectedLevel) {
+    User update = userDao.get(user.getId());
+    assertEquals(expectedLevel, update.getLevel());
+}
+
+@Test
+@DisplayName("레벨 업 테스트")
+public void test_level_upgrade() {
+    userService.upgradeLevels();
+
+    checkLevel(users.get(0), Level.BASIC);
+    checkLevel(users.get(1), Level.SILVER);
+    checkLevel(users.get(2), Level.SILVER);
+    checkLevel(users.get(3), Level.GOLD);
+    checkLevel(users.get(4), Level.GOLD);
+}
+```
+
+테스트가 무사히 통과한다. 레벨 역시 의도한대로 업그레이드 되는 것을 확인할 수 있다. 이제 사용자를 추가하는 `add` 메소드를 작성한다. 그 전에 왜 서비스 코드에서 `add`를 또 작성하는지 의문이 들 수 있다. 처음 비지니스 로직을 세울 때 조건들을 다시 돌이켜보자.
+
+> 처음 가입하면 BASIC이다.
+
+그렇다. 이런 조건이 있었다. 그럼 `UserDao.add`에 이 로직을 넣으면 어떨까? 나쁘진 않으나 처음 가입 시를 제외하고는 무의미한 정보인데 이를 데이터 액세스하는 부분에서 처리하는 것이 옳은 것일까?
+
+역시 "처음 가입하면 BASIC이다." 조건도 비지니스 로직이기 때문에 `UserService`가 처리하는 것이 옳다. 먼저 테스트 코드를 작성하자.
+
+UserServiceTest.java
+```java
+@Test
+@DisplayName("생성 테스트")
+public void test_add() {
+    User existLevelUser = User.builder()
+            .id("test6")
+            .name("test6")
+            .password("test6")
+            .level(Level.GOLD)
+            .login(60)
+            .recommend(31)
+            .build();
+    userService.add(existLevelUser);
+    User saved = userDao.get(existLevelUser.getId());
+    assertEquals(existLevelUser.getLevel(), saved.getLevel());
+
+    User notExistLevelUser = User.builder()
+            .id("test7")
+            .name("test7")
+            .password("test7")
+            .build();
+    userService.add(notExistLevelUser);
+    saved = userDao.get(notExistLevelUser.getId());
+    assertEquals(Level.BASIC, saved.getLevel());
+}
+```
+
+위 테스트는 두 가지 케이스를 테스트한다. 먼저 레벨이 존재하는 유저를 저장할 때, 나머지는 레벨이 존재하지 않는 유저를 저장할 때이다. 레벨이 존재하는 유저는 저장했던 레벨이, 존재하지 않는 유저는 BASIC 레벨이 나와야 한다. 이제 `UserService`에 `add`를 추가한다.
+
+UserService.java
+```java
+public void add(User user) {
+    if (user.getLevel() == null) {
+        user.setLevel(Level.BASIC);
+    }
+    userDao.add(user);
+}
+```
+
+`login`, `recommend` 필드도 0으로 초기화해야 하는거 아닌가 싶을 수도 있다. 하지만 그럴 필요는 없다. 자바 기본 값으로 초기화가 이루어지기 때문에. 이제 테스트를 돌려보자. 무사히 통과하는 것을 확인할 수 있다.
 
 ### 리팩토링 리팩토링!
