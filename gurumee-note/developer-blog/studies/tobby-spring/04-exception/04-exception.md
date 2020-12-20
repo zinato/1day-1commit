@@ -215,7 +215,7 @@ public class DaoFactory {
 }
 ```
 
-소스코드가 변경되었으니 테스트를 진행하자. 다 통과할 것이다. 실제로, 키가 중복되는 에러인 `DuplicateKeyException`은 `DataAccessException`의 하위 클래스이다. 따라서 코드가 변경되어 잘 동작하지만 "예외 전략"은 아직 적용되지 않았다. 이제 `UserDaoJdbc.add`를 다음과 같이 바꿔보자.
+소스코드가 변경되었으니 테스트를 진행하자. 다 통과할 것이다. 실제로, 키가 중복되는 에러인 `DuplicateKeyException`은 `DataAccessException`의 하위 클래스이다. 현재 `Spring Data JDBC`를 쓰면서 적절하게 에러를 런타임 에러로 변경되었지만, 그 에러의 상세 에러를 확인할 수 없다. 즉, 코드가 변경되어 잘 동작하지만 "예외 전략"은 아직 적용되지 않았다.
 
 ```java
 public void add(User user) throws DataAccessException {
