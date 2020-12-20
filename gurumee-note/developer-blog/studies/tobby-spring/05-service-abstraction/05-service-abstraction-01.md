@@ -437,6 +437,7 @@ public void test06() {
 자 이제 비지니스 로직인 레벨 관리 기능을 만든다. 비지니스 로직을 어디다 저장을 해야 할까? 데이터를 액세스하는 `UserDao`는 적절하지 않아 보인다. 이 때는 비지니스 로직만을 다루는 하나의 계층을 더 만드는 것이 옳다. 이제 이런 의존 관계를 맺는 클래스들을 만들어보자.
 
 ![의존 관계](./01.png)
+출처: 책 토비의 스프링 - 에이콘
 
 먼저 `UserService` 클래스이다.
 
@@ -632,3 +633,191 @@ public void add(User user) {
 `login`, `recommend` 필드도 0으로 초기화해야 하는거 아닌가 싶을 수도 있다. 하지만 그럴 필요는 없다. 자바 기본 값으로 초기화가 이루어지기 때문에. 이제 테스트를 돌려보자. 무사히 통과하는 것을 확인할 수 있다.
 
 ### 리팩토링 리팩토링!
+
+여기서 마무리해도 좋지만 우리는 훌륭한 개발자이니 조금 더 리팩토링을 해보자. 우리 코드에 이런 질문을 던져 볼 필요가 있다.
+
+* 코드에 중복된 부분은 없는가
+* 코드가 무엇을 하는 것인지 이해하기 편한가
+* 코드가 자신이 있어야 할 자리에 있는가
+* 변경이 일어난다면, 쉽게 대응할 수 있는가
+
+이를 명심하면서 리팩토링을 진행시켜보자. 먼저 제일 걸리는 것은 `UserService.upgradeLevels`의 if문이다. 이는 `Level`의 단계가 많아질 수록 점점 복잡해질 것이다.**코드가 무엇을 하는 것인지 이해하기 불편해진다.** 이를 메소드 단계로 추출해보자. 먼저 유저가 다음 레벨로 업그레이드 할 수 있는지 조건들을 검사하는 `canUpgradeLevel` 메소드를 만든다.
+
+UserService.java
+```java
+private boolean canUpgradeLevel(User user) {
+    Level currentLevel = user.getLevel();
+    switch (currentLevel) {
+        case BASIC: return (user.getLogin() >= 50);
+        case SILVER: return (user.getRecommend() >= 30);
+        case GOLD: return false;
+        default: throw new IllegalArgumentException("Unknown Level:" + currentLevel);
+    }
+}
+```
+
+그 후, 유저의 레벨을 업그레이드 시키는 `upgradeLevel` 메소드를 추가한다.
+
+UserService.java
+```java
+private void upgradeLevel(User user) {
+    if (user.getLevel() == Level.BASIC) {
+        user.setLevel(Level.SILVER);
+    } else if (user.getLevel() == Level.SILVER) {
+        user.setLevel(Level.GOLD);
+    }
+    userDao.update(user);
+}
+```
+
+그 다음 `upgradeLevels`를 다음과 같이 수정한다.
+
+UserService.java
+```java
+public void upgradeLevels() {
+    List<User> users = userDao.getAll();
+
+    for (User user : users) {
+        if (canUpgradeLevel(user)) {
+            upgradeLevel(user);
+        }
+    }
+}
+```
+
+깔끔하다! 이제 테스트를 돌려서 잘 동작하는지 확인하자. 정상적으로 동작하면 더 고칠 것이 없나 확인해보자. 이번엔 추가한 `upgradeLevel` 메소드가 걸린다. 과연 **유저의 레벨을 변경하는 코드가 여기에 있어야 하는 것일까?** 필드가 너무 노골적으로 변경되고 있다. 이를 변경해보자. 먼저 `Level`을 다음과 같이 변경한다.
+
+```java
+@Getter
+public enum Level {
+    GOLD(3, null), SILVER(2, GOLD) , BASIC(1, SILVER);
+
+    private final int value;
+    private final Level next;
+
+    Level(int value, Level next) {
+        this.value = value;
+        this.next = next;
+    }
+
+    public static Level valueOf(int value) {
+        switch (value) {
+            case 1: return BASIC;
+            case 2: return SILVER;
+            case 3: return GOLD;
+            default: throw new AssertionError("Unknown value: " + value);
+        }
+    }
+}
+```
+
+다음 레벨을 표시하는 `next`가 추가되었다. 마지막 단계인 GOLD는 다음 레벨이 없음을 유의하자. 그 후 `User`를 다음과 같이 변경한다.
+
+```java
+@NoArgsConstructor @AllArgsConstructor
+@Getter @Setter @ToString @EqualsAndHashCode
+@Builder
+public class User {
+    private String id;
+    private String name;
+    private String password;
+
+    private Level level;
+    private int login;
+    private int recommend;
+
+    // 추가
+    public void upgradeLevel() {
+        Level next = this.level.getNext();
+        if (next == null) {
+            throw new IllegalStateException(this.level + "은 업그레이드가 불가능합니다.");
+        }
+
+        this.level = next;
+    }
+}
+```
+
+그럼 `UserService.upgradeLevel`은 다음과 같이 간결하게 변경된다.
+
+UserService.java
+```java
+private void upgradeLevel(User user) {
+    user.upgradeLevel();
+    userDao.update(user);
+}
+```
+
+역시 테스트 코드를 돌려서 확인해보자. 
+
+> 참고!
+> 
+> 여기서는 다루지 않지만 책에서는 User 역시 테스트하고 있습니다. 간단한 로직이지만, 새로운 기능이나 다른 로직이 추가될 수 있기 때문에 테스트하는 것이 좋습니다.
+
+이제 테스트 코드를 개선시켜보자. `checkLevel`과 `test_level_upgrade`은 의도가 명확하게 들어나 있는가? 개인적으로는 명확해보이나 더 명확하게 바꿀 수 있다. 
+
+UserServiceTest.java
+```java
+private void checkLevel(User user, boolean isUpgrade) {
+    User update = userDao.get(user.getId());
+    if (isUpgrade) {
+        assertEquals(user.getLevel().getNext(), update.getLevel());
+    } else {
+        assertEquals(user.getLevel(), update.getLevel());
+    }
+
+}
+
+@Test
+@DisplayName("레벨 업 테스트")
+public void test_level_upgrade() {
+    userService.upgradeLevels();
+
+    checkLevel(users.get(0), false);
+    checkLevel(users.get(1), true);
+    checkLevel(users.get(2), false);
+    checkLevel(users.get(3), true);
+    checkLevel(users.get(4), false);
+}
+```
+
+메소드 시그니처가 기대되는 다음 레벨이 아닌, 업그레이드 여부로 바뀐다. IDE에서는 불린 값이 파라미터 이름을 보여주어 조금 더 명확하게 코드를 이해할 수 있다. 
+
+![스마트 코드](./02.png)
+
+이제 코드에 나타나는 중복을 제거해보자. `UserService`와 `UserServiceTest`에서 전반적으로 로그인 횟수, 추천 횟수에 대한 것들에 중복이 나타난다. 이를 제거한다.
+
+UserService.java
+```java
+// 필드 추가
+public static final int MIN_LOGIN_COUNT_FOR_SILVER = 50;
+public static final int MIN_RECOMMEND_COUNT_FOR_GOLD = 30;
+
+private boolean canUpgradeLevel(User user) {
+    Level currentLevel = user.getLevel();
+    switch (currentLevel) {
+        case BASIC: return (user.getLogin() >= MIN_LOGIN_COUNT_FOR_SILVER);
+        case SILVER: return (user.getRecommend() >= MIN_RECOMMEND_COUNT_FOR_GOLD);
+        case GOLD: return false;
+        default: throw new IllegalArgumentException("Unknown Level:" + currentLevel);
+    }
+}
+```
+
+UserServiceTest.java
+```java
+@BeforeEach
+public void setUp() {
+    userDao.deleteAll();
+
+    List<User> users = Arrays.asList(
+            new User("test1", "test1", "test1", Level.BASIC, UserService.MIN_LOGIN_COUNT_FOR_SILVER-1, 0),
+            new User("test2", "test2", "test2", Level.BASIC, UserService.MIN_LOGIN_COUNT_FOR_SILVER, 0),
+            new User("test3", "test3", "test3", Level.SILVER, 60, UserService.MIN_RECOMMEND_COUNT_FOR_GOLD-1),
+            new User("test4", "test4", "test4", Level.SILVER, 60, UserService.MIN_RECOMMEND_COUNT_FOR_GOLD),
+            new User("test5", "test5", "test5", Level.GOLD, 100, 100)
+    );
+
+    // ...
+}
+```
