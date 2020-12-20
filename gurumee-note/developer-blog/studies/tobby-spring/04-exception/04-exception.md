@@ -166,4 +166,71 @@ public abstract class NestedRuntimeException extends RuntimeException {
 
 ## UserDao를 통해 알아보는 예외 전환
 
+이제 `UserDao`에 "예외 전환" 전략을 적용해보도록 하겠다. 왜 예외 전환 전략을 적용해야 할까? 앞서 언급했듯이, 예외 전환의 목적은 크게 2가지이다.
+
+1. 굳이 필요하지 않은 `try-catch` 혹은 `throws`를 줄여주는 것
+2. 로우 레벨 예외를 좀 더 의미 있고 추상화된 예외로 바꾸는 것
+
+`UserDao`는 태생적으로 큰 한계를 가지고 있다. 바로 `JDBC`를 가지고 있어서 생기는 문제인데, 크게 다음과 같다.
+
+1. 비표준 SQL
+2. 호환성 없는 SQLException의 DB 에러 정보
+
+최근의 `SQL`은 그래도 표준에 따라 만들어지지만, 각 데이터베이스마다 부가적인 기능을 다루는 `SQL`들이 존재한다. 따라서, `MySQL`에서는 정상 동작하더라도 `PostgreSQL`에서는 동작을 하지 않을 수 있다. 예외 코드도 마찬가지이다. 표준을 지키는 예외 코드들도 있지만 표준을 지키지 않는 예외 코드들도 적지 않다. 따라서 현재 `UserDao`를 그대로 쓰면 데이터베이스에 종속적인 애플리케이션이 된다.
+
+또한 스프링 프레임워크에서 데이터 액세스 기술의 집합체인 `Spring Data`에는 ORM 기술인 `JPA`부터, 쿼리 매퍼 `Mybatis` 그리고 비동기적으로 데이터 액세스를 할 수 있는 `R2DBC` 등 이 밖에 여러 기술들이 있다. 마찬가지로 현재는 `Spring Data JDBC`의 종속적인 애플리케이션이 된다.
+
+이를 벗어나기 위해서 `UserDao`를 인터페이스를 생성하고 이전에 `UserDao`는 `UserDaoJdbc`로 변경 후, `UserDao` 인터페이스를 구현하도록 하자.
+
+UserDao.java
+```java
+public interface UserDao {
+    void add(User user);
+    User get(String id);
+    List<User> getAll();
+    void deleteAll();
+    int getCount();
+}
+```
+
+UserDaoJdbc.java
+```java
+public class UserDaoJdbc implements UserDao {
+    // 이전과 동일
+}
+```
+
+그리고, 빈 설정 파일인 `DaoFactory` 그리고 `TestDaoFactory`에서 `UserDao`를 반환하는 코드륻 다음과 같이 바꾼다.
+
+```java
+@Configuration
+public class DaoFactory {
+    @Bean
+    public UserDao userDao() {
+        UserDaoJdbc userDao = new UserDaoJdbc(jdbcTemplate());
+        return userDao;
+    }
+
+    // 이전과 동일
+}
+```
+
+소스코드가 변경되었으니 테스트를 진행하자. 다 통과할 것이다. 실제로, 키가 중복되는 에러인 `DuplicateKeyException`은 `DataAccessException`의 하위 클래스이다. 따라서 코드가 변경되어 잘 동작하지만 "예외 전략"은 아직 적용되지 않았다. 이제 `UserDaoJdbc.add`를 다음과 같이 바꿔보자.
+
+```java
+public void add(User user) throws DataAccessException {
+    try {
+        String query = "insert into users(id, name, password) values(?, ?, ?)";
+        jdbcTemplate.update(query, user.getId(), user.getName(), user.getPassword());
+    } catch (DataAccessException e) {
+        throw new DuplicateKeyException("id is duplicated");
+    }
+}
+```
+
+`DataAccessException`이 발생할 때, 만약 ID가 중복될 경우 `DuplicateKeyException`으로 변환되어 예외가 발생할 것이다. 이를 확인하기 위해 테스트를 꼭 돌려보길 바란다. 
+
+> 참고!
+> 
+> 책에서는 학습 테스트를 만들어서 확인해보라고 권하고 있습니다만 현재 버전에서는 동작하지 않습니다.
 
