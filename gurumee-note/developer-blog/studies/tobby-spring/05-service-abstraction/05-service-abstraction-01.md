@@ -821,3 +821,104 @@ public void setUp() {
     // ...
 }
 ```
+
+자 이제 코드에 유연성을 더하기 위해서 DI를 적용해보자. 레벨을 업그레이드 정책이 특정 기간에만 변경이 될 때가 있다. 이 때 `UserService`를 직접 수정하는 것은 위험하다. 차라리 인터페이스를 만들고 평소에는 `UserService`를 특정 기간에는 그에 맞는 구현체를 주입해주는 것이 좋다. 먼저 인터페이스인 `UserLevelUpgradePolicy`를 만든다.
+
+```java
+public interface UserLevelUpgradePolicy {
+    boolean canUpgradeLevel(User user);
+    void upgradeLevel(User user);
+}
+```
+
+그리고 `UserService`에서 이를 구현하게 하면 된다. 위의 메소드들이 public 레벨로 변경된다.
+
+```java
+@RequiredArgsConstructor
+@Getter
+public class UserService implements UserLevelUpgradePolicy {
+    // ..
+    public boolean canUpgradeLevel(User user) {
+        // ..
+    }
+
+    public void upgradeLevel(User user) {
+        //...
+    }
+    // ..
+}
+```
+
+`UserLevelUpgradePolicy` 역시 빈으로 만들어둔다. (테스트 용 빈 설정도 마찬가지)
+
+BeanFactory.java
+```java
+@Bean
+public UserLevelUpgradePolicy userLevelUpgradePolicy(){
+    UserLevelUpgradePolicy policy = userService();
+    return policy;
+}
+```
+
+자 이제 테스트 코드를 다음과 같이 만든다.
+
+```java
+@SpringBootTest
+@Import(TestBeanFactory.class)
+class UserLevelUpgradePolicyTest {
+    @Autowired
+    private UserLevelUpgradePolicy userLevelUpgradePolicy;
+
+    @Autowired
+    private UserDao userDao;
+
+    @BeforeEach
+    public void setUp() {
+        userDao.deleteAll();
+
+        List<User> users = Arrays.asList(
+                new User("test1", "test1", "test1", Level.BASIC, UserService.MIN_LOGIN_COUNT_FOR_SILVER-1, 0),
+                new User("test2", "test2", "test2", Level.BASIC, UserService.MIN_LOGIN_COUNT_FOR_SILVER, 0),
+                new User("test3", "test3", "test3", Level.SILVER, 60, UserService.MIN_RECOMMEND_COUNT_FOR_GOLD-1),
+                new User("test4", "test4", "test4", Level.SILVER, 60, UserService.MIN_RECOMMEND_COUNT_FOR_GOLD),
+                new User("test5", "test5", "test5", Level.GOLD, 100, 100)
+        );
+
+        for (User user : users) {
+            userDao.add(user);
+        }
+    }
+
+    @Test
+    @DisplayName("context load")
+    public void test_context_load() {
+        assertNotNull(userLevelUpgradePolicy);
+    }
+
+    @Test
+    @DisplayName("can upgrade test")
+    public void test_can_upgrade() {
+        User user = userDao.get("test2");
+        assertTrue(userLevelUpgradePolicy.canUpgradeLevel(user));
+
+        user = userDao.get("test3");
+        assertFalse(userLevelUpgradePolicy.canUpgradeLevel(user));
+    }
+
+    @Test
+    @DisplayName("upgrade test")
+    public void test_upgrade() {
+        List<User> users = userDao.getAll();
+        for (User user : users) {
+            if (userLevelUpgradePolicy.canUpgradeLevel(user)) {
+                Level currentLevel = user.getLevel();
+                userLevelUpgradePolicy.upgradeLevel(user);
+                User updated = userDao.get(user.getId());
+                assertEquals(currentLevel.getNext(), updated.getLevel());
+            }
+        }
+    }
+}
+```
+
+음 중복이 되긴 하지만.. 일단 DI가 되는 것은 확인했다. 이번 주차는 비지니스 로직을 어떻게 빼내는지, 리팩토링은 무엇을 중점적으로 보는지 배운 것 같다. 개인적으로 "서비스 추상화"라는 개념이 나오기 전 필요한 작업을 진행하는 내용이라 별 것 없을 줄 알았는데 그래도 배우는 것이 있는게 신기하다.
