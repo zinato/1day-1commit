@@ -22,25 +22,16 @@
 
 책에서 요구 사항 한 개를 추가하였다. 유저들의 레벨을 업그레이드 하는 도중 어떤 이유로 서버가 다운 됐을 때, 이미 업그레이드 된 유저들의 상태를 돌려놓고, 레벨 변경 작업을 이루지 못했다고 유저들에게 알린다고 한다.
 
-이를 테스트하려면 어떻게 할까? 어떻게 강제로 테스트 코드 내에서 에러를 발생시키는지 알아보자. 책에서는 `UserService`를 확장하여, 에러를 발생시키는 테스트 용 `UserService`를 만들 것을 추천하고 있다. 책에서는 `Setter Injection + xml` 기반으로 빈을 설정하기 때문에, 무리 없이 바로 진행할 수 있다. 하지만 나의 경우는 `Constructor Injection + Java` 기반으로 빈을 설정하고 있어서 다소 어려움이 있다. 나의 경우에는 합성 패턴으로 해결을 본다. 나의 `TestUserService`는 다음과 같다.
-
-> 참고!
-> 
-> 책에서는 단순 UserService 상속, 필드 id에 대한 생성자만 존재합니다.
+이를 테스트하려면 어떻게 할까? 어떻게 강제로 테스트 코드 내에서 에러를 발생시키는지 알아보자. 책에서는 `UserService`를 확장하여, 에러를 발생시키는 테스트 용 `UserService`를 만들 것을 추천하고 있다. 
 
 TestUserService.java
 ```java
-public class TestUserService {
+public class TestUserService extends UserService {
     private String id;
-    private UserService userService;
 
-    public TestUserService(String id, UserService userService) {
+    public TestUserService(String id, UserDao userDao) {
+        super(userDao);
         this.id = id;
-        this.userService = userService;
-    }
-
-    public boolean canUpgradeLevel(User user) {
-        return userService.canUpgradeLevel(user);
     }
 
     public void upgradeLevel(User user) {
@@ -48,26 +39,16 @@ public class TestUserService {
             throw new TestUserServiceException();
         }
 
-        userService.upgradeLevels();
-    }
-
-    public void upgradeLevels() {
-        List<User> users = userService.getUserDao().getAll();
-
-        for (User user : users) {
-            if (canUpgradeLevel(user)) {
-                upgradeLevel(user);
-            }
-        }
-    }
-
-    public void add(User user) {
-       userService.add(user);
+        super.upgradeLevel(user);
     }
 }
 ```
 
-책과 달리 `UserService.upgradeLevels` 변경될 때마다 이를 변경해주어야 한다는 단점이 생겼지만, 그런대로 쓸 수 있을 것 같다. 또한 강제 예외를 발생시키기 위한 `TestUserServiceException`을 생성한다.
+책과 달리 `UserDao`를 생성자 호출 시 인자로 넣어주어야 한다. 
+
+> 참고!
+> 
+> 다만 테스트 코드 작성 시 setUserDao를 호출할 필요가 사라집니다. ^^
 
 TestUserServiceException.java
 ```java
@@ -83,7 +64,7 @@ UserServiceTest.java
 @Test
 @DisplayName("예외 발생 시 작업 취소 여부 테스트")
 public void test_cancel_when_exception() {
-    TestUserService testUserService = new TestUserService(users.get(3).getId(), userService);
+    UserService testUserService = new TestUserService(users.get(3).getId(), userDao);
 
     assertThrows(TestUserServiceException.class, () -> {
         testUserService.upgradeLevels();
@@ -149,8 +130,168 @@ try {
 
 ### UserService에 트랜잭션 적용
 
-1. UserService에 트랜잭션 적용
-2. DB 기술 독립적인 트랜잭션의 적용
+트랜잭션 설정은 어디에 두면 좋을까? `UserService`? `UserDao`? 뭔가 DB 레이어와 연관이 깊으니까 `UserDao`라고 생각할 수도 있겠다. 현재 호출 구조는 다음과 같다.
+
+![03](./03.png)
+
+현재는 `UserDao.update`를 할 때마다 커넥션이 생성되고, 트랜잭션은 메소드 시작과 끝이라고 보면 된다. (정확히는 SQL문 실행 시작과 끝) 우리는 이렇게 트랜잭션을 설정하고 싶은 것이다.
+
+![04](./04.png)
+
+이렇게 하기 위해서는 `UserDao.update`가 아닌 `UserService.upgradeLevels`에서 트랜잭션을 걸어야 한다. 가장 쉽게는 이렇게 할 수 있을 것이다.
+
+1. UserDao.update 메소드 파라미터에 Connection을 추가한다. 
+   ```java
+   public interface UserDao {
+        // ...
+        void update(Connection c,User user);
+    }
+
+   ```
+2. UserService.upgradeLevels()를 다음과 같은 구조로 만든다.
+   ```java
+   public void upgradeLevels() {
+        (1) DB Connection 생성
+        (2) 트랜잭션 시작
+        try {
+            // 이는 upgradeLevel 메소드 파라미터에 Connection이 추가되어야 함을 뜻한다.
+            (3) userDao.update(c, user); 여러번 호출 
+            (4) 트랜잭션 커밋
+        } catch(Exception e) {
+            (5) 트랜잭션 롤백
+            throw e;
+        } finally {
+            (6) DB Connection 종료
+        }
+    }
+   ```
+
+그런데 이렇게 작성 시 다음의 3가지 문제점을 가지게 된다.
+
+1. `JdbcTemplate`을 더 이상 활용할 수 없다.
+2. 비지니스 로직만 담은 `UserService`에서 `Connection`을 처리해야 한다. 즉 DB 레이어와 분리한 이점을 잃어버린다.
+3. `UserDao` 인터페이스에 `Connection` 파라미터가 추가되면, 더 이상 기술 독립적으로 만들 수가 없다.
+
+어떻게 이를 해결할 수 있을까? `Connection` 파라미터를 제거를 위해서 `TransactionSynchronization`을 다음과 같이 사용할 수 있다. `UserService`를 다음과 같이 수정한다.
+
+UserService.java
+```java
+@RequiredArgsConstructor
+@Getter
+public class UserService implements UserLevelUpgradePolicy {
+    // ...
+    private final DataSource dataSource;
+    private final UserDao userDao;
+
+    // ...
+    public void upgradeLevels() throws Exception {
+        TransactionSynchronizationManager.initSynchronization();
+        Connection c = DataSourceUtils.getConnection(dataSource);
+        c.setAutoCommit(false);
+
+        try {
+            List<User> users = userDao.getAll();
+
+            for (User user : users) {
+                if (canUpgradeLevel(user)) {
+                    upgradeLevel(user);
+                }
+            }
+            c.commit();
+        } catch (Exception e) {
+            c.rollback();
+            throw e;
+        } finally {
+            DataSourceUtils.releaseConnection(c, dataSource);
+            TransactionSynchronizationManager.unbindResource(this.dataSource);
+            TransactionSynchronizationManager.clearSynchronization();
+        }
+    }
+}
+```
+
+`upgradeLevel`에 `Connection`을 전달하지 않고도 트랜잭션을 걸었다. 훌륭하다. 이를 위해서 자바 기반 빈 설정 파일(BeanFactory, TestBeanFactory)들에서 `UserService` 빈 설정 부분과 `TestUserService`에 생성자에서 `DataSource`를 파라미터로 넘겨 주어야 한다.
+
+그런데 어떻게 이것이 가능한 것일까? `JdbcTemplate`은 매우 영리하게 만들어졌다. 만약 미리 생성되어 DB 커넥션이나, 트랜잭션이 없으면 직접 커넥션을 만들고 트랜잭션을 시작하여 JDBC 작업을 진행한다. 반면 작업 전에 커넥션과 트랜잭션이 있으면 그것을 이용한다. 실로 놀라지 않을 수 없다.
+
+현재도 훌륭하지만 아직 개선 사항이 남아있다. `upgradeLevels`에서 `Connection`을 사용하면서 `JDBC` 기술에 종속적인 코드가 되어버렸다. 이를 해결해보자.
+
+![05](05.png)
+
+스프링은 여러 기술들을 트랜잭션을 걸 수 있게 위와 같이 이미 구현되어 있다. 따라서 우리는 `PlatformTransactionManager`를 이용하면 기술에 독립적인 코드로 돌아갈 수 있을 것이다. `UserService` 코드를 다음과 같이 변경한다.
+
+UserService.java
+```java
+@RequiredArgsConstructor
+@Getter
+public class UserService implements UserLevelUpgradePolicy {
+    // ...
+    private final PlatformTransactionManager transactionManager;
+    private final UserDao userDao;
+
+    // ...
+    public void upgradeLevels() {
+        TransactionStatus status = transactionManager.getTransaction(new DefaultTransactionDefinition());
+
+        try {
+            List<User> users = userDao.getAll();
+
+            for (User user : users) {
+                if (canUpgradeLevel(user)) {
+                    upgradeLevel(user);
+                }
+            }
+            transactionManager.commit(status);
+        } catch (Exception e) {
+            transactionManager.rollback(status);
+            throw e;
+        }
+    }
+}
+```
+
+이제 빈 설정 파일에 `PlatformTransactionManager`를 빈으로 만들고, `UserService`가 이를 참조하게 만들어야 한다. `BeanFactory`를 다음과 같이 수정한다.
+
+BeanFactory.java
+```java
+@Configuration
+public class BeanFactory {
+    // ...
+
+    @Bean
+    public UserService userService(){
+        UserService userService = new UserService(transactionManager(), userDao());
+        return userService;
+    }
+
+    // ...
+
+    @Bean
+    public PlatformTransactionManager transactionManager() {
+        return new DataSourceTransactionManager(dataSource());
+    }
+
+    // ...
+}
+```
+
+같은 요령으로 `TestBeanFactory` 역시 수정한다. 물론 `TestUserService` 역시 생성자에서 `DataSource`가 아닌 `PlatformTransactionManager`를 파라미터로 넘겨주어야 한다.
+
+```java
+public class TestUserService extends UserService {
+    private String id;
+
+    public TestUserService(String id, PlatformTransactionManager transactionManager, UserDao userDao) {
+        super(transactionManager, userDao);
+        this.id = id;
+    }
+    // ...
+}
+```
+
+만약 다른 하이버네이트 기술이나 JTA 기술로 변경해야 한다면, 빈 설정 파일에서 `PlatformTransactionManager`를 설정하는 부분만 변경하면 다른 코드 수정 없이 손쉽게 트랜잭션을 걸 수 있다. 스프링을 통해서 데이터 액세스 기술 독립적으로 트랜잭션 서비스를 추상화하였다. 
+
+## 서비스 추상화와 단일 책임 원칙
 
 ## 메일 서비스 추상화
 
