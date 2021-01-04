@@ -586,6 +586,9 @@ UserService.java
 @Test
 @DisplayName("레벨 업 테스트")
 public void test_level_upgrade() {
+    DummyMailSender dummyMailSender = (DummyMailSender) testMailSender;
+    List<String> requests = dummyMailSender.getRequests();
+    requests.clear();
 
     testUserService.upgradeLevels();
 
@@ -595,8 +598,6 @@ public void test_level_upgrade() {
     checkLevel(users.get(3), true);
     checkLevel(users.get(4), false);
 
-    DummyMailSender dummyMailSender = (DummyMailSender) testMailSender;
-    List<String> requests = dummyMailSender.getRequests();
     assertEquals(2, requests.size());
     assertEquals(users.get(1).getEmail(), requests.get(0));
     assertEquals(users.get(3).getEmail(), requests.get(1));
@@ -605,6 +606,10 @@ public void test_level_upgrade() {
 ```
 
 테스트가 무사히 통과된다. 이를 통해 `UserService.upgradeLevels` 호출 시, 레벨이 변경되는 유저에게 `MailSender.send` 메소드가 호출됨을 증명할 수 있었다. 이때 `DummyMailSender` 타입의 빈인 `testMailSender`는 "목 객체"라고 한다.
+
+> 참고!
+> 
+> 현재 testMailSender는 빈, 스코프는 싱글톤이기 때문에, requests 필드가 유지될 수 있습니다. 따라서 다른 테스트에 영향 받지 않도록 리스트를 clear 합니다. test_level_upgrade 메소드에만 이메일 전송 여부를 목 테스트하기 때문에, 이 메소드에만 해도 괜찮을 듯 싶습니다. 2개 이상이라면 setUp에서 해주어야 합니다.
 
 목 오브젝트를 이용한 테스트 동작 방식은 다음과 같다.
 
