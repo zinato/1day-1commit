@@ -64,10 +64,10 @@ UserServiceTest.java
 @Test
 @DisplayName("예외 발생 시 작업 취소 여부 테스트")
 public void test_cancel_when_exception() {
-    UserService testUserService = new TestUserService(users.get(3).getId(), userDao);
+    UserService testUserServiceProxy = new TestUserService(users.get(3).getId(), userDao);
 
     assertThrows(TestUserServiceException.class, () -> {
-        testUserService.upgradeLevels();
+        testUserServiceProxy.upgradeLevels();
     });
 
     checkLevel(users.get(1), false);
@@ -384,4 +384,231 @@ com.sun.mail.util.MailConnectException: Couldn't connect to host, port: mail.ksu
   nested exception is:
 ```
 
-## 테스트를 위한 메일 서비스 추상화
+## 메일 서비스 추상화와 Mock 테스트
+
+메일 서비스를 추상화하기 전에 한 번 생각해보자. 과연 테스트를 위해서 메소드 호출마다 메일을 보내는 것이 바람직할까? 메일 서비스는 유저 관리 그 중에서도 레벨 변경에 대한 보조적인 기능일 뿐이다. 이 보조적인 기능 때문에 중요한 테스트를 못하게 되면 큰 손실이 아닐 수 없다.
+
+또한 `JavaMail`은 매우 안정적인 기술이다. 따라서 우리가 이에 대한 테스트를 일일히 하는 것은 굉장히 부담일 뿐더러 극적으로 말하면 시간낭비에 불과하다. 이를 위해 "Mock 테스트"를 이용해서 모듈에 대한 불필요한 테스트를 제거해보도록 하겠다. 이 Mock 테스트를 위해서, 메일 서비스 추상화는 필수적인 단계이다. 스프링은 이미 이를 구현하고 있다. 바로 `MailSender` 인터페이스이다.
+
+MailSender.java
+```java
+public interface MailSender {
+
+	/**
+	 * Send the given simple mail message.
+	 * @param simpleMessage the message to send
+	 * @throws MailParseException in case of failure when parsing the message
+	 * @throws MailAuthenticationException in case of authentication failure
+	 * @throws MailSendException in case of failure when sending the message
+	 */
+	void send(SimpleMailMessage simpleMessage) throws MailException;
+
+	/**
+	 * Send the given array of simple mail messages in batch.
+	 * @param simpleMessages the messages to send
+	 * @throws MailParseException in case of failure when parsing a message
+	 * @throws MailAuthenticationException in case of authentication failure
+	 * @throws MailSendException in case of failure when sending a message
+	 */
+	void send(SimpleMailMessage... simpleMessages) throws MailException;
+
+}
+```
+
+이를 이용해서 `UserService`를 개선하면 다음과 같다.
+
+UserService.java
+```java
+@RequiredArgsConstructor
+@Getter
+public class UserService implements UserLevelUpgradePolicy {
+    // ...
+    private final PlatformTransactionManager transactionManager;
+    private final MailSender mailSender;
+    private final UserDao userDao;
+
+    // ...
+
+    private void sendUpgradeEmail(User user) {
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(user.getEmail());
+        message.setFrom("useradmin@ksug.org");
+        message.setSubject("Upgrade 안내");
+        message.setText("사용자 등급이 " + user.getLevel().name() + "로 업그레이드 되었습니다");
+        mailSender.send(message);
+    }
+
+    public void upgradeLevel(User user) {
+        user.upgradeLevel();
+        userDao.update(user);
+        sendUpgradeEmail(user);
+    }
+
+    // ...
+}
+```
+
+강제되었던 try-catch가 사라진 것을 확인할 수 있다. 스프링 프레임워크의 `MailException`은 `NestedRuntimeException`을 상속하기 때문이다. 자 이제 빈 설정 파일에 `MailSender` 부분을 주입시켜주어야 한다. (TestUserService의 생성자도 바꿔준다.)
+
+BeanFactory.java
+```java
+@Configuration
+public class BeanFactory {
+    // ...
+
+    @Bean
+    public UserService userService(){
+        UserService userService = new UserService(transactionManager(), mailSender(), userDao());
+        return userService;
+    }
+
+    // ...
+
+    @Bean
+    public MailSender mailSender() {
+        JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
+        mailSender.setHost("mail.server.com");
+        return mailSender;
+    }
+}
+```
+
+이제 테스트를 위해서 "Mock 객체"를 생성할 것이다. 메일을 발송하진 않지만, 메소드 호출을 위해서 빈 메소드로 구현된 테스트 용 `MailSender`를 만들면 된다. `TestMailSenderImpl`을 다음과 같이 만들어준다.
+
+TestMailSenderImpl.java
+```java
+public class TestMailSenderImpl implements MailSender {
+    @Override
+    public void send(SimpleMailMessage simpleMessage) throws MailException {
+        
+    }
+
+    @Override
+    public void send(SimpleMailMessage... simpleMessages) throws MailException {
+
+    }
+}
+```
+
+테스트용 빈 설정 파일에서 빈 주입시 이 `MailSender`를 참조하게 만든다.
+
+TestBeanFactory.java
+```java
+@TestConfiguration
+public class TestBeanFactory {
+    // ...
+
+    @Bean
+    public UserService testUserService() {
+        UserService userService = new UserService(testTransactionManager(), mailSender(), testUserDao());
+        return userService;
+    }
+
+    // ...
+
+    @Bean
+    public MailSender testMailSender() {
+        return new DummyMailSender();
+    }
+}
+```
+
+자 이제 테스트 코드를 다음과 같이 수정한다.
+
+UserServiceTest.java
+```java
+@SpringBootTest
+@Import(TestBeanFactory.class)
+class UserServiceTest {
+    // ...
+
+    @Autowired
+    private MailSender testMailSender;
+
+    // ...
+
+    @Test
+    @DisplayName("예외 발생 시 작업 취소 여부 테스트")
+    public void test_cancel_when_exception() {
+        UserService testUserServiceProxy = new TestUserService(users.get(3).getId(), testTransactionManager, testMailSender, testUserDao);
+
+        assertThrows(TestUserServiceException.class, () -> {
+            testUserServiceProxy.upgradeLevels();
+        });
+
+        checkLevel(users.get(1), false);
+    }
+}
+```
+
+이제 테스트를 돌려보자. 통과한다. 이렇게 테스트 대상이 되는 오브젝트의 기능에만 충실하게 수행하면서 빠르게, 자주 테스트를 실행할 수 있도록 사용되는 오브젝트를 **테스트 더블(대역)**이라고 한다. 
+
+대표적인 예로, **테스트 스텁**이 있다. 테스트 스텁은 테스트 대상 오브젝트의 의존 객체로서 존재하면서 테스트 동안에 코드가 정상적으로 수행할 수 있도록 돕는다.
+
+이를 Mock 객체를 만들어서 테스트를 했다고 하기가 매우 쑥스러운 상황이다. 잠시 `UserDao` 테스트를 생각해보자. 우리는 현재 이런 방식으로 테스트하고 있다.
+
+![07](./07.png)
+출처: 책 토비의 스프링 3.1 - 에이콘
+
+`testUserDao`가 테스트용 DB를 접속하여, 실제 DB에 내용이 적용되었는지 테스트할 수 있게 되었다. 메일 서비스도 비슷하지만 조금 다르다. 메일 서비스의 구조는 다음과 같다.
+
+![08](./08.png)
+출처: 책 토비의 스프링 3.1 - 에이콘
+
+실제로 메일 서버가 없다. 그럼 이 `testMailSender`가 "메일을 받은 것"처럼 내용을 알려주면 어떨까? 그럼 메소드 호출을 정상적으로 하고 있는지 알 수 있을 것이다. `DummyMailSender`를 다음과 같이 변경한다.
+
+DummyMailSender.java
+```java
+public class DummyMailSender implements MailSender {
+    private List<String> requests = new ArrayList<>();
+
+    public List<String> getRequests() {
+        return requests;
+    }
+
+    @Override
+    public void send(SimpleMailMessage simpleMessage) throws MailException {
+        requests.add(simpleMessage.getTo()[0]);
+    }
+
+    @Override
+    public void send(SimpleMailMessage... simpleMessages) throws MailException {
+
+    }
+}
+```
+
+`send` 메소드 호출 마다, 해당 유저의 이메일을 넣어주도록 만들었다. 이제 `UserServiceTest.test_level_upgrade` 테스트 코드를 다음과 같이 수정한다.
+
+UserService.java
+```java
+// ...
+@Test
+@DisplayName("레벨 업 테스트")
+public void test_level_upgrade() {
+
+    testUserService.upgradeLevels();
+
+    checkLevel(users.get(0), false);
+    checkLevel(users.get(1), true);
+    checkLevel(users.get(2), false);
+    checkLevel(users.get(3), true);
+    checkLevel(users.get(4), false);
+
+    DummyMailSender dummyMailSender = (DummyMailSender) testMailSender;
+    List<String> requests = dummyMailSender.getRequests();
+    assertEquals(2, requests.size());
+    assertEquals(users.get(1).getEmail(), requests.get(0));
+    assertEquals(users.get(3).getEmail(), requests.get(1));
+}
+// ...
+```
+
+테스트가 무사히 통과된다. 이를 통해 `UserService.upgradeLevels` 호출 시, 레벨이 변경되는 유저에게 `MailSender.send` 메소드가 호출됨을 증명할 수 있었다. 이때 `DummyMailSender` 타입의 빈인 `testMailSender`는 "목 객체"라고 한다.
+
+목 오브젝트를 이용한 테스트 동작 방식은 다음과 같다.
+
+![09](./09.png)
+출처: 책 토비의 스프링 3.1 - 에이콘
+
+여기서 5번을 제외하면 "테스트 스텁"이라고도 볼 수 있다. 쉽게 말해서 테스트 스텁 + 간접적으로 테스트 구간을 확인할 수 있게 해주는 것이 "Mock 오브젝트"라고 할 수 있다. 이들은 스프링에서 더더욱 잘 활용할 수 있는데 `@MockBean`을 이용해서 빈을 모킹할 수 있다. 또한 스프링 없이도 `Mockito` 같은 라이브러리를 이용해서 목 객체를 만들어서 테스트 할 수 있다.
