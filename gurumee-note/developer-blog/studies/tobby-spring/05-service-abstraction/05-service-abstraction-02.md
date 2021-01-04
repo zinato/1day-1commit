@@ -315,6 +315,73 @@ SRP의 장점은 관심사를 적절히 분리해내어, 하위 구현체가 바
 
 ## 메일 서비스 추상화
 
-1. JavaMailService
-2. 테스트를 위한 서비스 추상화
-3. Mock 객체 생성 및 테스트
+이번에는 아예 다른 관심사를 가진 서비스를 추상화해보자. 새롭게 "유저의 레벨이 변경되면 유저가 등록한 이메일에 이를 통보하자."라는 요구사항이 추가되었다고 가정하자.
+
+## JavaMail 간단 적용
+
+먼저 User 테이블이 다음과 같이 변경되어야 한다.
+
+```sql
+create table users (
+    id varchar(10) primary key,
+    name varchar(20) not null,
+    password varchar(20) not null,
+    email varchar(50) not null,
+    level int not null,
+    login int not null,
+    recommend int not null
+);
+```
+
+이에 따라 `User`에 email 필드를 추가하고, `UserDao`에 DB와 객체를 매핑하는 곳을 수정해주어야 한다. 또한 `User`를 생성하는 모든 코드에서 email 필드를 추가해주어야 한다. 그리고 이제 `build.gradle`에 `JavaMail` 관련 라이브러리를 다운받는다.
+
+build.gradle
+```
+// ...
+dependencies {
+    // 추가
+    implementation 'org.springframework.boot:spring-boot-starter-mail'
+
+    // ...
+}
+// ...
+```
+
+그리고 `UserService`에 `sendUpgradeEmail` 메소드를 추가하고 `upgradeLevel` 메소드에 이를 적용한다.
+
+UserService.java
+```java
+// ...
+private void sendUpgradeEmail(User user) {
+    Properties props = new Properties();
+    props.put("mail.smtp.host", "mail.ksug.org");
+    Session s = Session.getInstance(props, null);
+    MimeMessage message = new MimeMessage(s);
+
+    try {
+        message.setFrom(new InternetAddress("useradmin@ksug.org"));
+        message.addRecipient(Message.RecipientType.TO, new InternetAddress(user.getEmail()));
+        message.setSubject("Upgrade 안내");
+        message.setText("사용자 등급이 " + user.getLevel().name() + "로 업그레이드 되었습니다");
+        Transport.send(message);
+    } catch (MessagingException e) {
+        throw new RuntimeException(e);
+    }
+}
+
+public void upgradeLevel(User user) {
+    user.upgradeLevel();
+    userDao.update(user);
+    sendUpgradeEmail(user);
+}
+// ...
+```
+
+이제 `UserServiceTest` 테스트 코드를 돌려보자. 현재 메일 전송 서버가 준비되어 있지 않기 때문에 이는 실패할 것이다.
+
+```
+com.sun.mail.util.MailConnectException: Couldn't connect to host, port: mail.ksug.org, 25; timeout -1;
+  nested exception is:
+```
+
+## 테스트를 위한 메일 서비스 추상화
