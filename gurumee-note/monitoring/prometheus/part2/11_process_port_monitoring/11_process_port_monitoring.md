@@ -2,7 +2,9 @@
 
 ## 프로세스 포트 모니터링이란?
 
-이 모니터링은 필자의 회사에서 사용하고 있는 모니터링 시스템의 기능 중 하나이다. 간단하게 설명해서 특정 IP:PORT로 TCP 통신이 가능한 지 헬스 체크하는 것이다. 보통은 `Zabbix`, `PRTG` 등의 기술로 실행 중인 프로세스에 매핑된 포트를 모니터링을 한다. 우리는 이번 장에서 이를 `Prometheus`와 `blackbox-exporter`를 이용해서 구축한다.
+프로세스 포트 모니터링이란 명칭은 필자의 회사에서 사용하고 있는 모니터링 시스템의 기능 중 하나이다. 다른 곳도 동일하게 부르는지는 모르겠다. 간단하게 설명해서 특정 IP:PORT로 TCP 통신이 가능한 지 헬스 체크하는 것이다. 
+
+보통은 `Zabbix`, `PRTG` 등의 기술로 실행 중인 프로세스에 매핑된 포트를 모니터링을 한다. 우리는 이번 장에서 이를 `Prometheus`와 `blackbox-exporter`를 이용해서 구축한다.
 
 ## Blackbox Monitoring과 blackbox-exporter
 
@@ -81,7 +83,7 @@ $ docker-compose stop server
 
 ## 서버 환경에서 설치부터 대시보드 구축까지
 
-이제 본격적으로 `blackbox-exporter` 설치부터 설정, `Prometheus` 연동, `Grafana` 대시보드 구축까지 진행해보자.
+이제 본격적으로 `blackbox_exporter` 설치부터 설정, `Prometheus` 연동, `Grafana` 대시보드 구축까지 진행해보자.
 
 > 참고! 적어도 이번 실습을 진행하기 위해서는...
 > 
@@ -189,10 +191,68 @@ modules:
 
 ### blackbox-exporter와 Prometheus 연동
 
+이제 `Prometheus`에서 `blackbox-exporter`가 특정 IP:PORT에 대해서 TCP 통신 가능 여부를 확인할 수 있도록 설정해보자. 터미널에 다음을 입력하여 설정 파일을 연다.
+
+```bash
+$ cd ~/apps/prometheus/prometheus.yml
+```
+
+그 후 다음과 같이 수정한다.
+
+/home/ec2-user/apps/prometheus/prometheus.yml
+```yml
+# ...
+
+scrape_configs:
+# ...
+  - job_name: 'blackbox-exporter'
+    scrape_interval: 5s
+    metrics_path: /probe
+    params:
+      module: [tcp_connect]  
+    static_configs:
+      - targets:
+				# 원하는 Process Port Monitoring 할 IP:PORT
+        - 172.31.43.152:8080
+        - 172.31.41.180:8080
+				- 172.31.43.152:80
+				- 172.31.41.180:80
+				- 172.31.37.117:80
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: localhost:9115 # blackbox ip:port 
+```
+
+여기서 몇 가지 중요한 설정이 있다. 먼저 `scrape_interval`이다. `blackbox-exporter`에서도 `timeout`을 볼 수 있다. 이 때 어떻게 동작할까? 이 경우 10초(5 + 5) 정도의 주기를 갖게 된다. 그렇다고 TCP 통신이 15초동안 연결되지 않는다. 통신 연결 확인 후, 바로 끊어진다.
+
+또한, `metric_path`가 "/probe"로 지정된 것을 볼 수 있다. `blackbox-exporter`는 `static_configs.targets`에 있는 "IP:PORT" 목록에 대해서 다음 엔드포인트에 "IP:PORT" 별 수집된 메트릭을 노출시킨다. URL 형식은 다음과 같다.
+
+> http://<blackbox 설치된 인스턴스 IP>:9115/probe?target=<static_configs.targets에 있는 IP:PORT 중 1개>&module=<params.module에 적인 모듈 중 1개>
+
+`params.module`은 `blackbox-exporter` 설정 파일에서 작성한 모듈 목록이다. 현재는 TCP 연결만 확인하는 `tcp_connect`만 있다. 또 `relabel_configs`는 위 설정 파일 형식 토대로 만들어준다. `replacement`는 "<blackbox 설치된 인스턴스 IP:9115>"로 한다.
+
+설정 후에 `Prometheus UI`에 접속한 후 쿼리 문에 "probe_success" 쿼리를 날려보자. 다음과 같은 화면이 뜰 것이다.
+
 ![06](./06.png)
+
+여기서 중요한 것은 "probe_success"가 `blackbox-exporter`가 지정한 프로토콜 방식으로 IP:PORT와 연결이 성공했음을 알리는 지표라는 것이다. 
 
 ### Grafana 대시보드 구축
 
+이전 장에서 어떻게 json 파일을 가지고 대시보드를 구축하는지 배웠으니 자세한 설정은 넘어간다. 다음 json 파일을 임포트하면 된다.
+
+* [https://github.com/gurumee92/gurumee-prometheus-code/blob/master/part2/ch11/config/dashboard_blackbox.json](https://github.com/gurumee92/gurumee-prometheus-code/blob/master/part2/ch11/config/dashboard_blackbox.json)
+
+그럼 다음 화면을 확인할 수 있다.
+
 ![07](./07.png)
 
+이 때 서버에서 동작하는 프로세스를 하나 꺼두면 다음 화면과 같이 "DOWN"됨을 알 수 있다. 아래 상황은 :80번 포트에 매핑된 nginx 프로세스를 죽인 상황이다.
+
 ![08](./08.png)
+
+해당 포트에 매핑된 프로세스가 살아나면 다시 "UP"으로 바뀐다. 결국 프로세스 포트 모니터링에서 중요한 것은 "UP & DOWN"이다. 나머지 "probe duration"이나 "dns lookup" 정보들은 프로세스보다는 프로세스가 동작하는 인스턴스가 살아있음을 알려준다.
