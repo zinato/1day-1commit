@@ -52,6 +52,56 @@
 * Distributor
 * Ingester
 * Querier
-* Ruler
 * Query Frontend
+* Ruler
+
+### Distributor
+
+`Prometheus`가 전송한 데이터를 처리하는 역할을 한다. 전송된 데이터의 유효성을 체크한 후, 문제가 없으면 `Ingester`로 병렬적으로 데이터를 전송한다. 이 때 데이터를 전송할 `Ingester`를 선택할 때 구성된 Hash Ring을 통해서 해싱하여 선택한다. 이 때 해싱할 때 데이터의 내부 속성을 이용해서 해싱하게 된다. 이용할 수 있는 내부 속성의 조합은 다음과 같다.
+
+* 메트릭 이름 + 테넌트 ID (기본)
+* 메트릭 이름 + 라벨 + 테넌트 ID
+
+또한, 데이터 유효성 체크는 다음을 포함한다.
+
+* 메트릭의 라벨(=태그)들의 이름이 형식적으로 정확한가
+* 각 메트릭마다 최대/최소 라벨 개수를 준수하는가 (=최소 ~ 최대 개수 사이인가)
+* 수집된 데이터의 timestamp가 최소/최대 시간 범위 안에 있는가
+
+`Distributor`는 "stateless"하며, 필요에 따라 스케일 업/다운이 가능하다. 
+
+### Ingester
+
+`Ingester`는 `Distributor`로 전달 받은 데이터들을 `Storage`에 넘겨주는 역할을 한다. `Cortex`가 지원하고 있는 데이터 저장 방법은 크게 2가지이다.
+
+* Chunk
+* Block
+
+Chunk 방식이 기본이며, 수신된 데이터를 Index/Chunk를 나누어서 저장한다. 가능한 데이터 저장소로는 `AWS DynamoDB/S3`, `GCP BigTable/GCS`, `Cassandra/Cassandra` 가 있다. 
+
+또한 Block 방식은 `Prometheus TSDB`와 유사한 방식으로 데이터를 저장하는 방법이며, `AWS S3`, `GCP GCS` 등을 저장소로 사용할 수 있다.
+
+또한, 앞서 언급했던 것처럼 `Ingester` 들은 각각 토큰과 함께 "Hash Ring"에 구성되는데 KV Store가 필요하다. 이를 지원하는 KV Store는 다음과 같다.
+
+* Consul
+* Etcd
+* Gossip Memberlist
+
+### Querier
+
+`Querier`는 이름 그대로 `Cortex` 클러스터의 `Ingester`와 `Storage`에 저장된 데이터를 `PromQL`로 쿼리하는 역할을 한다. 복제본으로 인해 중복되는 데이터가 있다면, 내부적으로 이를 제거해서 쿼리 결과로 보여준다.
+
+### Query Frontend
+
+`Query Frontend`는 선택적인 역할로, `Querier`의 쿼리 속도를 높이는데 사용된다. 내부적으로 쿼리 조정을 수행하고 내부 큐의 쿼리들을 보관한다. 만약 `Query Frontend` 역할을 하는 `Cortex`가 있다면, `Querier`들은 이 내부 큐의 작업들을 가져와서 실행한 후 반화하는 작업자들이 된다.
+
+`redis`, `memcache` 등을 데이터베이스로써 사용할 수 있다.
+
+### Ruler
+
+`Ruler`는 선택적인 역할로써, 규칙과 알림을 기록하기 위해서 `PromQL` 쿼리들을 실행한다. 또한 각 테넌트에 대한 기록 규칙 및 경고를 저장하는 데이터베이스가 필요하다. 
+
+`Ruler`는 semi-stateful하며, 병렬적으로 스케일할 수 있다. `Prometheus AlertManager` 기반으로 작성된 `Cortex AlertManager`를 통해서 기록된 알림들을 `Slack` 등의 외부 엔드포인트로 보내줄 수 있다.
+
+
 
