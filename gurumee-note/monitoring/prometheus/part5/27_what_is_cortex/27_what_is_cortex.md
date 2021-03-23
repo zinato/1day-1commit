@@ -93,9 +93,9 @@ Chunk 방식이 기본이며, 수신된 데이터를 Index/Chunk를 나누어서
 
 ### Query Frontend
 
-`Query Frontend`는 선택적인 역할로, `Querier`의 쿼리 속도를 높이는데 사용된다. 내부적으로 쿼리 조정을 수행하고 내부 큐의 쿼리들을 보관한다. 만약 `Query Frontend` 역할을 하는 `Cortex`가 있다면, `Querier`들은 이 내부 큐의 작업들을 가져와서 실행한 후 반화하는 작업자들이 된다.
+`Query Frontend`는 선택적인 역할로, `Querier`의 쿼리 속도를 높이는데 사용된다. 내부적으로 쿼리 조정을 수행하고 내부 큐의 쿼리들을 보관한다. 만약 `Query Frontend` 역할을 하는 `Cortex`가 있다면, `Querier`들은 이 내부 큐의 작업들을 가져와서 실행한 후 반환하는 작업자들이 된다.
 
-`redis`, `memcache` 등을 데이터베이스로써 사용할 수 있다.
+`redis`, `memcache` 등을 데이터베이스로써 사용할 수 있으며, 보통 로드 밸런싱하는 게이트웨이, 구성도로 보면 `NGINX`와 같이 구성되서 사용된다. 
 
 ### Ruler
 
