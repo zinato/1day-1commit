@@ -18,4 +18,4 @@
   * [12장. Packer로 모니터링 서버 이미지 생성하기]()
 * 4부 Packer 더 심도있게 사용하기
   * [13장. Packer와 Ansible로 더 강력한 프로비저닝하기]()
-  * [14장. Packer와 Vagrant로 생성한 이미지 후처리하기]()
+  * [14장. Packer로 생성한 이미지 Vargrant로 후처리하기]()
