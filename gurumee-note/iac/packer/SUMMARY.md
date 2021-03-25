@@ -2,7 +2,7 @@
 
 * [소개](README.md)
 * 1부 Packer 기본
-  * [01장. Packer란 무엇인가?]()
+  * [01장. Packer란 무엇인가?](./part1/01_what_is_packer/01_what_is_packer.md)
   * [02장. Packer 주요 용어 정리]()
   * [03장. Packer 템플릿 (1) HCL]()
   * [04장. Packer 템플릿 (2) JSON]()
