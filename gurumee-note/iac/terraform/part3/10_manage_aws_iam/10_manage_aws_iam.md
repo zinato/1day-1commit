@@ -22,16 +22,14 @@
 
 먼저 프로바이더를 구성한다. `provider.tf`를 다음과 같이 생성한다.
 
-part3/ch12/provider.tf
+part3/ch10/provider.tf
 ```tf
 provider "aws" {
   region = "us-east-1"
 }
 ```
 
-끝이다. `region`의 경우는 적절하게 값을 주면 된다. 대한민국에서 코드를 작성하는 것이라면 `ap-northeast-2`를 추천한다.
-
-나는 이미 이 지역에 리소스가 있어서 `us-east-1`로 지정했다. 별 차이는 없다. 다만 다른 지역에 AWS 리소스가 생성되어 속도 차이가 조금 있을 뿐..?
+끝이다. `region`의 경우는 적절하게 값을 주면 된다. 대한민국에서 코드를 작성하는 것이라면 `ap-northeast-2`를 추천한다. 나는 이미 이 지역에 리소스가 있어서 `us-east-1`로 지정했다. 별 차이는 없다. 다만 다른 지역에 AWS 리소스가 생성되어 속도 차이가 조금 있을 뿐..?
 
 이제 이 `provider.tf`가 있는 위치에서 `terraform init` 명령어를 실행시킨다.
 
@@ -43,7 +41,7 @@ $ terraform init
 
 먼저 `iam.tf`를 생성한다. 그 후 다음을 복사한다.
 
-part3/ch12/iam.tf
+part3/ch10/iam.tf
 ```tf
 resource "aws_iam_policy" "cortex_auto_scale_policy" {
     name        = "cortex_auto_scale_policy"
@@ -236,7 +234,7 @@ Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
 
 이제 위에서 만든 `cortex_auto_scale_policy` 정책을 가지는 역할을 만들어보자. 먼저 `iam.tf`에 다음을 추가한다.
 
-part3/ch12/iam.tf
+part3/ch10/iam.tf
 ```tf
 // ...
 resource "aws_iam_role" "cortex_auto_scale_role" {
@@ -279,7 +277,7 @@ EOF
 
 정책이 연결되지 않아서 그렇다. 이제 우리가 만든 정책과 역할을 연결하자. `iam.tf`에 다음의 내용을 추가한다.
 
-part3/ch12/iam.tf
+part3/ch10/iam.tf
 ```tf
 // ...
 
@@ -299,7 +297,7 @@ resource "aws_iam_role_policy_attachment" "cortex_auto_scale_role_attach" {
 
 앞서 언급했 듯이 `AWS AutoScaling`을 사용하기 위해서는 결국 위 역할의 "인스턴스 프로파일"이 필요하다. 이제 이를 만들어준다.
 
-part3/ch12/iam.tf
+part3/ch10/iam.tf
 ```tf
 // ...
 
