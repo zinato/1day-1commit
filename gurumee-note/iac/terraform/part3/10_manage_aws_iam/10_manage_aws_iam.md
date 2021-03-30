@@ -1,4 +1,4 @@
-# 12장. 테라폼으로 AWS IAM 관리하기
+# 10장. Terraform으로 AWS IAM 관리하기
 
 ## AWS IAM이란 무엇인가?
 
@@ -16,7 +16,7 @@
 
 이번 장에서 쓰일 코드는 다음 URL에서 얻을 수 있다.
 
-* 코드 링크 : [https://github.com/gurumee92/gurumee-terraform-code/tree/master/part3/ch12](https://github.com/gurumee92/gurumee-terraform-code/tree/master/part3/ch12)
+* 코드 링크 : [https://github.com/gurumee92/gurumee-terraform-code/tree/master/part3/ch10](https://github.com/gurumee92/gurumee-terraform-code/tree/master/part3/ch10)
 
 ## AWS Provider 구성
 

@@ -1,4 +1,4 @@
-# 13장. 테라폼으로 AWS VPC 관리하기
+# 13장. Terraform으로 AWS VPC 관리하기
 
 ## AWS VPC이란 무엇인가?
 
@@ -65,7 +65,7 @@
 
 이번 장에서 만들 코드는 다음에서 확인할 수 있다.
 
-* 코드 링크 : [https://github.com/gurumee92/gurumee-terraform-code/tree/master/part3/ch13](https://github.com/gurumee92/gurumee-terraform-code/tree/master/part3/ch13)
+* 코드 링크 : [https://github.com/gurumee92/gurumee-terraform-code/tree/master/part3/ch11](https://github.com/gurumee92/gurumee-terraform-code/tree/master/part3/ch11)
 
 ## AWS VPC 리소스 생성
 
