@@ -69,14 +69,13 @@
 
 ## AWS VPC 리소스 생성
 
-part3/ch11/provider.tf
-```tf
-provider "aws" {
-  region = "us-east-1"
-}
-```
+지난 장을 진행하지 않았다면, 반드시 진행하고 오길 바란다.
 
 ### VPC
+
+![02](./02.png)
+
+이번 절에서는 `VPC`를 생성한다. 디렉토리에 `vpc.tf`를 만들고 다음을 입력한다.
 
 part3/ch11/vpc.tf
 ```tf
@@ -90,11 +89,42 @@ resource "aws_vpc" "vpc" {
 }
 ```
 
+`Terraform` 공식 레지스트리 문서에 따르면, "cidr_block"이 필수 값으로 들어가 있는 것을 확인할 수 있다. 
+
+![03](03.png)
+
+"cidr_block"은 private_ip 대역의 주소 할당 방법의 일환으로, 다음과 같은 대역을 설정할 수 있다.
+
+* 10.0.0.0
+* 172.16.0.0
+* 192.168.0.0
+
+그리고 블락 설정이라고 "10.10.0.0/16"에서 "/16"이 블락 설정이다. AWS `VPC`에서는 16 ~ 28 사이의 숫자로 설정해주어야 한다. 이제 `terraform apply` 명령어로 인프라스트럭처를 구성해보자. 그리고 구성 전 상황이랑 비교해서, 위의 `vpc.tf`로 어떤 것이 설정 되는지 확인해보자.
+
+이전 인프라스트럭처 상황은 다음과 같다.
+
+![04](./04.png)
+
+`terraform apply` 명령어 이후, 인프라스트럭처 상황은 다음과 같다.
+
+![05](./05.png)
+
+결국 `VPC` 하나를 생성하면, 기본적으로 `Route Table` 1개, `Network ACL` 1개, `Security Group` 1개씩 생긴다. 
+
+이들을 앞에 default를 붙여서, `default route table` 이런 식으로 부른다. 기본적으로 만들어지는 리소스라는 뜻인데, 이마저도 `Terraform`으로 관리할 수 있다. 추후 진행되는 절에서 더 자세히 살펴본다.
+
+* Terraform 공식 레지스트리 AWS VPC : [https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/vpc)
+  
 ### Subnet
+
+![06](./06.png)
+
+이제 `Subnet`을 만들어보자. 위의 그림과 같이 `Availabilty Zone` 2개에 각각`public subnet` 1개, `private subnet` 1개씩 만들 것이다. 즉 총 4개의 `Subnet`을 생성한다. `vpc.tf`를 다음과 같이 수정한다.
 
 part3/ch11/vpc.tf
 ```tf
-# ...
+# 이전과 동일
+
 # subnet (public)
 resource "aws_subnet" "public_subnet_1a" {
     vpc_id     = aws_vpc.vpc.id
@@ -134,11 +164,44 @@ resource "aws_subnet" "private_subnet_1b" {
 }
 ```
 
-### Internet Gateway
+`Terraform` 공식 레지스트리 문서에 따르면, "cidr_block"과 "vpc_id"가 필수 값으로 들어가 있는 것을 확인할 수 있다. 
+
+![07](./07.png)
+
+여기서 "cidr_block"은 "10.10.x.0"으로 구성하되, x는 `VPC`와 겹치지 않게 0이 되선 안되고 또한 자기들끼리도 겹치게 설정하면 안된다. 
+
+"vpc_id"는 생성한 `VPC`의 id를 값으로 주면 된다. `Terraform`으로 관리하는 리소스의 어트리뷰트를 이용하기 위해서는 다음의 형식을 따른다.
+
+```
+# <resource>.<resource_name>.<resource_attribute_name>
+aws_vpc.vpc.id
+```  
+
+이번에도 `terraform apply` 명령어를 입력하여 어떤 리소스들이 생기는지 확인해보자.
+
+이전 인프라스트럭처 상황은 다음과 같다.
+
+![08](./08.png)
+
+`terraform apply` 명령어에 의해 새롭게 구성된 인프라스트럭처의 상황은 다음과 같다.
+
+![09](./09.png)
+
+`VPC`처럼 추가적으로 생성되는 default 리소스들은 없다.
+
+* Terraform 공식 레지스트리 AWS Subnet : [https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/subnet](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/subnet)
+
+
+### Internet Gateway(IGW)
+
+![10](./10.png)
+
+이번에 만들어볼 것은 `public subnet`과 외부 인터넷을 연결하는 `IGW`이다. `vpc.tf`를 다음과 같이 수정한다.
 
 part3/ch11/vpc.tf
 ```tf
-# ...
+# 이전과 동일
+
 # igw
 resource "aws_internet_gateway" "igw" {
     vpc_id = aws_vpc.vpc.id
@@ -149,11 +212,32 @@ resource "aws_internet_gateway" "igw" {
 }
 ```
 
-### NAT Gateway
+`Terraform` 공식 레지스트리 문서에 따르면, "vpc_id"가 필수 값으로 들어가 있는 것을 확인할 수 있다. 
+
+![11](./11.png)
+
+역시 `terraform apply` 명령어로 무엇이 생성되는지 확인해보자. 이전 인프라스트럭처의 상황은 다음과 같다.
+
+![12](./12.png)
+
+`terraform apply` 명령어에 의해 새롭게 구성된 인프라스트럭처의 상황은 다음과 같다.
+
+![13](./13.png)
+
+`IGW` 역시, `VPC`처럼 추가적으로 생성되는 default 리소스들은 없다.
+
+* Terraform 공식 레지스트리 AWS Internet Gateway : [https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/internet_gateway](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/internet_gateway)
+
+### NAT Gateway(NGW)
+
+![14](./14.png)
+
+이번에는 `private subnet`에서 외부 인터넷을 통신할 수 있도록 `NGW`를 생성해보자. `vpc.tf`를 다음과 같이 수정한다.
 
 part3/ch11/vpc.tf
 ```tf
-# ...
+# 이전과 동일
+
 # ngw
 resource "aws_eip" "ngw_ip" {
     vpc   = true
@@ -172,6 +256,30 @@ resource "aws_nat_gateway" "ngw" {
     }
 }
 ```
+
+`Terraform` 공식 레지스트리 문서에 따르면, "allocation_id"와 "subnet_id"가 필수 값으로 들어가 있는 것을 확인할 수 있다. 
+
+![15](./15.png)
+
+문서를 읽어보면, "allocation_id"는 "elastic ip 주소"라는 것을 알 수 있다. 따라서 `aws_eip`를 생성해 주어야 한다. 이는 `AWS EC2`의 리소스이므로 추후 절에서 더 깊이 다루도록 하겠다. 지금은 이렇게 만든다고만 알아두면 된다.
+
+그리고 `NGW`는 무조건 `public subnet` 상에서 위치해 있어야 한다. 따라서 "subnet_id"는 `public_subet_1a`의 id를 할당해 주었다. 역시 `terraform apply` 명령어로 인해 인프라스트럭처에 어떤 변화가 생긴지 확인해보자.
+
+> 참고! NGW 생성 시 시간이 어느 정도 걸립니다.
+> 
+> NGW 생성 시에 다른 리소스들과 달리 시간이 어느 정도 더 걸립니다. 왜냐하면 실제 NGW를 위한 ec2 인스턴스를 띄우는 과정이 포함되어 있어서 그렇습니다.
+
+먼저 이전 인프라스트럭처의 상황이다.
+
+![16](./16.png)
+
+그 다음 `terraform apply` 명령어로 인해 변경된 인프라스트럭처의 상황이다.
+
+![17](./17.png)
+
+* Terraform 공식 레지스트리 AWS NAT Gateway : [https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/nat_gateway](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/nat_gateway)
+
+`Elastic ip`와 `NGW`외에 `VPC`처럼 추가적으로 생성되는 default 리소스들은 없다.
 
 ### Route Table
 
