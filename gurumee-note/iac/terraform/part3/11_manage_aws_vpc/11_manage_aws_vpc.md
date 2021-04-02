@@ -283,6 +283,10 @@ resource "aws_nat_gateway" "ngw" {
 
 ### Route Table
 
+![18](./18.png)
+
+이번에는 트래픽이 어떻게 흐르는지에 대한 규칙을 만들 수 있는 `route table`을 생성한다. 먼저 `VPC`가 생성될 때, 기본으로 생성되는 `default route table`을 생성한다.
+
 part3/ch11/vpc.tf
 ```tf
 # ...
@@ -299,7 +303,23 @@ resource "aws_default_route_table" "public_rt" {
         Name = "public route table"
     }
 }
+```
 
+공식 문서에 따르면, 필수 argument는 "default_route_table_id"이다. 이는 `VPC`의 attribute로 초기화한다.
+
+![19](19.png)
+
+또한, 트래픽을 흐르게 하고 싶으면, 위 코드처럼 "route" argument를 구성하면 된다. 이렇게 하면, 인스턴스에서 외부랑 통신할 때 `IGW`로 트래픽이 흐르게 된다. 또한 "route" 역시 리소스로써 구성할 수 있다. 이는 조금 이따가 살펴보도록 하자.
+
+> 참고! 
+> 
+> 기본적으로 VPC 내 인스턴스 간, 트래픽은 허용됩니다.
+
+이제, 위 `route table`에 `public subnet`이 따르도록 `route table association`을 정의한다. 
+
+part3/ch11/vpc.tf
+```tf
+# ...
 resource "aws_route_table_association" "public_rta_a" {
     subnet_id      = aws_subnet.public_subnet_1a.id
     route_table_id = aws_default_route_table.public_rt.id
@@ -309,7 +329,17 @@ resource "aws_route_table_association" "public_rta_b" {
     subnet_id      = aws_subnet.public_subnet_1b.id
     route_table_id = aws_default_route_table.public_rt.id
 }
+```
 
+이렇게 "subnet_id"와 "route_table_id"를 이용하면, `route table association`를 구성할 수 있다. 공식 문서에 따르면, "route_table_id"는 필수 값이며, "subnet_id" 혹은 "gateway_id"를 선택하여 구성할 수 있다. 
+
+![20](./20.png)
+
+이제 `private subnet`의 `route table`을 생성해보자. 요령은 `aws_default_route_table`과 비슷하다.
+ 
+part3/ch11/vpc.tf
+```tf
+# ...
 # route table (private)
 resource "aws_route_table" "private_rt" {
     vpc_id = aws_vpc.vpc.id
@@ -317,7 +347,17 @@ resource "aws_route_table" "private_rt" {
         Name = "private route table"
     }
 }
+```
 
+`aws_default_route_table`는 "default_route_table_id"가 필수 값이라면, `aws_route_table`은 "vpc_id"가 필수 값이다.
+
+![21](./21.png)
+
+`aws_route_table_association`은 동일하다. 다만, "aws_route_table.private_rt.id" 이런 식으로 정의해주면 된다.
+
+part3/ch11/vpc.tf
+```tf
+# ...
 resource "aws_route_table_association" "private_rta_a" {
     subnet_id      = aws_subnet.private_subnet_1a.id
     route_table_id = aws_route_table.private_rt.id
@@ -327,13 +367,42 @@ resource "aws_route_table_association" "private_rta_b" {
     subnet_id      = aws_subnet.private_subnet_1b.id
     route_table_id = aws_route_table.private_rt.id
 }
+```
 
+그리고 아래와 같이 따로 `route`를 정의해줄 수 있다. 아래 `route`는 `private_subnet`에서 인터넷 통신이 필요할 때 트래픽이 `NGW`로 흐를 수 있게 규칙을 정의한다.
+
+part3/ch11/vpc.tf
+```tf
+# ...
 resource "aws_route" "private_rt_route" {
     route_table_id              = aws_route_table.private_rt.id
     destination_cidr_block      = "0.0.0.0/0"
     nat_gateway_id              = aws_nat_gateway.ngw.id
 }
 ```
+
+공식 문서에 따르면, "route_table_id" 값은 필수적이며, "destination_cidr_block"을 지정해서 트래픽을 어디로 흐를지 정의할 수 있다. 또한 "nat_gateway_id" 말고, "gateway_id" 등 다른 게이트웨이 사용도 가능하다.
+
+![22](./22.png)
+
+이제 `terraform apply` 명령어를 통해서 인프라스트럭처 구성이 어떻게 달라지는 확인해보자.
+
+"VPC > Route Tables" 메뉴를 살펴면 다음과 같이 구성됨을 확인할 수 있다.
+
+![23](./23.png)
+
+가장 첫 번째 줄은 우리가 생성한 것이 아니라, AWS 내에서 기본적으로 생성된 것이니 무시한다. 이제 "public_route_table"을 찍어보면, "internet gatway"와 연결됨을 확인할 수 있다.
+
+![24](./24.png)
+
+이제 "private_route_table"을 찍어보자. 역시 "NAT gateway"와 연결됨을 확인할 수 있다.
+
+![25](./25.png)
+
+* Terraform 공식 레지스트리 AWS Default Route Table : [https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/nat_gateway](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/nat_gateway)
+* Terraform 공식 레지스트리 AWS Route Table : [https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route_table](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route_table)
+* * Terraform 공식 레지스트리 AWS Route Table Association : [https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route_table_association](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route_table_association)
+* * Terraform 공식 레지스트리 AWS Route: [https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/route)
 
 ### Network ACL
 
@@ -409,6 +478,7 @@ resource "aws_security_group" "inhouse_sg" {
         protocol    = "tcp"
         cidr_blocks = [
             aws_vpc.vpc.cidr_block,
+            # 자신의 IP
             "121.161.72.112/32",
         ]
     }
