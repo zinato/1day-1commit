@@ -568,3 +568,5 @@ resource "aws_security_group" "web_server_sg" {
 ```
 
 자 모두 만들었다. `terraform apply` 명령어를 통해서, 어떤 인프라스트럭처가 만들어지는지 꼭 확인하길 바란다.
+
+* Terraform 공식 레지스트리 AWS Security Group : [https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group)
