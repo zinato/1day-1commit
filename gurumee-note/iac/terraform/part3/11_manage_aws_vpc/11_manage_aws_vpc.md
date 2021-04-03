@@ -275,9 +275,9 @@ resource "aws_nat_gateway" "ngw" {
 
 ![17](./17.png)
 
-* Terraform 공식 레지스트리 AWS NAT Gateway : [https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/nat_gateway](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/nat_gateway)
-
 `Elastic ip`와 `NGW`외에 `VPC`처럼 추가적으로 생성되는 default 리소스들은 없다.
+
+* Terraform 공식 레지스트리 AWS NAT Gateway : [https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/nat_gateway](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/nat_gateway)
 
 ### Route Table
 
@@ -565,7 +565,10 @@ resource "aws_security_group" "web_server_sg" {
 }
 ```
 
-자 모두 만들었다. `terraform apply` 명령어를 통해서, 어떤 인프라스트럭처가 만들어지는지 꼭 확인하길 바란다.
+`terraform apply` 명령어를 통해서, 어떤 인프라스트럭처가 만들어지는지 꼭 확인하길 바란다.
 
 * Terraform 공식 레지스트리 AWS Default Security Group : [https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/default_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/default_security_group)
 * Terraform 공식 레지스트리 AWS Security Group : [https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group)
+
+
+이렇게 해서 우리가 원하는 `aws vpc` 구조를 모두 만들었다. 필요한 리소스가 있다면, 공식 레지스트리를 적극적으로 이용하길 바란다.
