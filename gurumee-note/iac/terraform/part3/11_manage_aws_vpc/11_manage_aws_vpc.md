@@ -483,8 +483,6 @@ resource "aws_default_security_group" "default_sg" {
 
 ![27](./27.png)
 
-* Terraform 공식 레지스트리 AWS Default Security Group : [https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/default_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/default_security_group)
-
 이제 VPN 대역만 통할 수 있도록 `security group`을 만들어보자. 여기서는 가상의 IP 주소로 설정했지만 실제로는 공부할 때는 자신의 IP 대역을, 현업에서는 회사의 VPN 대역을 설정하면 된다.
 
 자신의 IP 대역은 여기서 확인할 수 있다.
@@ -569,4 +567,5 @@ resource "aws_security_group" "web_server_sg" {
 
 자 모두 만들었다. `terraform apply` 명령어를 통해서, 어떤 인프라스트럭처가 만들어지는지 꼭 확인하길 바란다.
 
+* Terraform 공식 레지스트리 AWS Default Security Group : [https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/default_security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/default_security_group)
 * Terraform 공식 레지스트리 AWS Security Group : [https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group](https://registry.terraform.io/providers/hashicorp/aws/latest/docs/data-sources/security_group)
