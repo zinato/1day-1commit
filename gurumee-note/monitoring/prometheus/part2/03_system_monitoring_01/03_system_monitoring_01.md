@@ -1,4 +1,4 @@
-# 5장. 서버 리소스 모니터링하기 (1) node-exporter
+# 시스템 모니터링하기 (1) node-exporter
 
 ## node-exporter란 무엇인가
 
@@ -10,7 +10,7 @@
 
 ## node-exporter 설치 및 연동
 
-이제 서버 리소스를 모니터링하기 위해서 `node-exporter`를 설치할 것이다. 참고적으로 UNIX 계열 OS만 가능하기 때문에, Windows 운영 체제 실습자들은 VMware 등으로 Linux를 설치해서 실습하길 바란다. 물론 Windows OS 관련 익스포터도 존재하지만, 여기서는 다루지 않는다. 
+이제 시스템을 모니터링하기 위해서 `node-exporter`를 설치할 것이다. 참고적으로 UNIX 계열 OS만 가능하기 때문에, Windows 운영 체제 실습자들은 VMware 등으로 Linux를 설치해서 실습하길 바란다. 물론 Windows OS 관련 익스포터도 존재하지만, 여기서는 다루지 않는다. 
 
 ### 로컬 환경에서 설치 및 연동
 
