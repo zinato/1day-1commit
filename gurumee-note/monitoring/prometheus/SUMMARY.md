@@ -33,8 +33,7 @@
   * [알림 만들기 (2) 간단한 알림 만들기]()
   * [알림 만들기 (3) 복잡한 알림 만들기]()
 * 5부 Prometheus 스케일 아웃
-  * [Prometheus의 한계]()
-  * [Cortex (1) Cortex란 무엇인가](./part5/27_what_is_cortex/27_what_is_cortex.md)
+  * [Cortex (1) Cortex란 무엇인가](./part5/01_what_is_cortex/01_what_is_cortex.md)
   * [Cortex (2) 튜토리얼1 Chunk Storage]())
   * [Cortex (3) 튜토리얼2 Block Storage]()
   * [Thanos (1) Thanos란 무엇인가]()
