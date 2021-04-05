@@ -1,6 +1,5 @@
 # Summary
 
-* [소개](README.md)
 * 1부 테라폼이란 무엇인가
   * [01장. 테라폼이란 무엇인가](./part1/01_what_is_terraform/01_what_is_terraform.md)
   * [02장. 테라폼 맛보기](./part1/02_terraform_tutorial/02_terraform_tutorial.md)

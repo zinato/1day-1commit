@@ -1,6 +1,5 @@
 # Summary
 
-* [구르미의 Prometheus](README.md)
 * 1부 Prometheus의 기본
   * [01장. Prometheus란 무엇인가](./part1/01_what_is_prometheus/01_what_is_prometheus.md)
   * [02장. Prometheus 설치](./part1/02_install_prometheus/02_install_prometheus.md)
