@@ -3,9 +3,9 @@
 * 1부 Prometheus의 기본
   * [01장. Prometheus란 무엇인가](./part1/01_what_is_prometheus/01_what_is_prometheus.md)
   * [02장. Prometheus 설치](./part1/02_install_prometheus/02_install_prometheus.md)
-  * [03장. node-exporter와 함께 살펴보는 PromQL]()
-  * [04장. Instrumenting (1) - Client Library]()
-  * [05장. Instrumenting (2) - Exposition]()
+  * [03장. Instrumenting (1) - Client Library]()
+  * [04장. Instrumenting (2) - Exposition]()
+  * [05장. PromQL (1)]()
 * 2부 Prometheus로 모니터링을 해보자.
   * [모니터링이란 무엇인가]()
   * [Grafana 설치](./part2/02_install_grafana/02_install_grafana.md)
