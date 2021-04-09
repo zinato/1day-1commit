@@ -497,4 +497,4 @@ rate(hello_world_latency_histogram_sum[1m]) / rate(hello_world_latency_histogram
 2. 또한 관찰 될 값의 범위와 분포에 대한 아이디어가 있으면 `Histogram`을 써라.
 3. 그 외에는 `Summary` 타입을 써라.
 
-## 어떻게 계측할 것인가
+## 3.4 메트릭 수집을 위한 팁
