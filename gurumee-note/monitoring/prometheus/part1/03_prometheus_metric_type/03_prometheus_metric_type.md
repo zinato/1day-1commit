@@ -11,7 +11,7 @@
 * Client Library를 통한 메트릭 수집
 * Exporter를 통한 메트릭 수집
 
-위 2가지 방법 모두, `Prometheus`에서 지원하는 다음의 4가지 메트릭 타입으로 각 메트릭을 정의하여 저장한다.
+위 2가지 방법 모두, 결국 `Prometheus`에서 지원하는 다음의 4가지 타입의 메트릭들을 저장하게 된다.
 
 1. Counter
 2. Gauge

@@ -3,8 +3,9 @@
 * 1부 Prometheus의 기본
   * [01장. Prometheus란 무엇인가](./part1/01_what_is_prometheus/01_what_is_prometheus.md)
   * [02장. Prometheus 설치](./part1/02_install_prometheus/02_install_prometheus.md)
-  * [03장. Instrumenting (1) - Client Library]()
-  * [04장. Instrumenting (2) - Exposition]()
+  * [03장. Prometheus 메트릭 타입](./part1/03_prometheus_metric_type/03_prometheus_metric_type.md)
+  * [04장. Instrumenting (2) - Push Gateway]()
+  * [04장. Instrumenting (3) - Exposition]()
   * [05장. PromQL (1)]()
 * 2부 Prometheus로 모니터링을 해보자.
   * [모니터링이란 무엇인가]()
