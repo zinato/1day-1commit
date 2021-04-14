@@ -138,11 +138,13 @@ type CounterVec struct {
 // ...
 ```
 
-`CounterVec` 구조체는 필드 이름 없이 `*MetricVec` 타입이 설정된 것을 확인할 수 있는데, 이는 `MetricVec`의 필드를 모조리 물려 받는 것을 뜻한다. 즉 `CounterVec`은 다음 `MetricVec`의 필드들을 사용할 수 있다.
+`CounterVec` 구조체는 필드 이름 없이 `*MetricVec` 타입이 설정된 것을 확인할 수 있는데, 이는 `MetricVec`의 필드를 모조리 물려 받는 것을 뜻한다. 
 
 > 참고! Golang의 상속
 > 
 > 엄격하게 말하면 Golang은 상속 개념이 없습니다. 위는 "컴포지션"이라는 것을 이용해서, 다른 구조체의 필드를 모조리 가져오는 것입니다. 상속을 흉내낸 것이라고 볼 수 있습니다.
+
+즉 `CounterVec`은 다음 `MetricVec`의 필드들을 사용할 수 있다.
 
 github.com/prometheus/client_golang/blob/master/prometheus/vec.go
 ```go
@@ -161,6 +163,7 @@ type MetricVec struct {
 
 결국 `NewCounterVec`은 `CounterOpts`와 `Label` 목록을 전달 받아서 `MetricVec` 구조체를 적절하게 초기화시키는 것이라고 보면 된다. 
 
+part1/ch04/main.go
 ```go
 // ...
 func main() {
@@ -170,7 +173,21 @@ func main() {
 }
 ```
 
-`main` 함수를 보면 "/"에 `index` 함수가 바인딩 된 것을 볼 수 있는데
+`main` 함수를 보면 "/"에 `index` 함수가 바인딩 된 것을 볼 수 있다.
+
+part1/ch04/main.go
+```go
+// ...
+func index(w http.ResponseWriter, r *http.Request) {
+	REQUEST.WithLabelValues(r.URL.Path, r.Method).Inc()
+	fmt.Fprintf(w, "Hello, %q", html.EscapeString(r.URL.Path))
+}
+// ...
+```
+
+`index` 함수를 보면, URL "/" 아래에서 요청이 일어날 때마다 그 Path와 Http Method를 `Label` 값으로 넘겨주어서, 1씩 누적 시키는 것을 확인할 수 있다. 이 때 중요한 것은 `NewCounterVec` 함수에서 전달할 때, `Label` 목록의 순서를 맞춰야 한다는 것이다. 따라서 Path, Http Method를 순서대로 값을 넣어준다.
+
+요청 개수 어케하나
 
 ## 4.3 Label을 이용한 집계
 
