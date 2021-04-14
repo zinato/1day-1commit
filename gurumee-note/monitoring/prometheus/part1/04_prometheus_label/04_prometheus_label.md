@@ -187,7 +187,36 @@ func index(w http.ResponseWriter, r *http.Request) {
 
 `index` 함수를 보면, URL "/" 아래에서 요청이 일어날 때마다 그 Path와 Http Method를 `Label` 값으로 넘겨주어서, 1씩 누적 시키는 것을 확인할 수 있다. 이 때 중요한 것은 `NewCounterVec` 함수에서 전달할 때, `Label` 목록의 순서를 맞춰야 한다는 것이다. 따라서 Path, Http Method를 순서대로 값을 넣어준다.
 
-요청 개수 어케하나
+이제 제대로 수집하는지 확인해보자. `docker-compose`를 이용해 애플리케이션과 `Prometheus`를 실행한다.
+
+```bash
+$ pwd
+# docker-compose.yml이 있는 곳.
+/Users/gurumee/Workspace/gurumee-prometheus-code/part1/ch04
+
+$ docker-compose up --build -d
+```
+
+몇 초 후 다음 명령어를 입력하여 http 요청을 만든다. 
+
+```bash
+$ source request.sh
+```
+
+`requast.sh`는 다음과 같은 요청을 한다.
+
+* Path: "/", HTTP Method: "GET" x4
+* Path: "/", HTTP Method: "POST" x2
+* Path: "/", HTTP Method: "PUT" x1
+* Path: "/", HTTP Method: "DELETE" x1
+* Path: "/test1", HTTP Method: "GET" x2
+* Path: "/test2", HTTP Method: "POST" x2
+* Path: "/test3", HTTP Method: "PUT" x2
+* Path: "/test4", HTTP Method: "DLETE" x2
+
+한 번 브라우저에서 "localhost:2112/metrics"를 접속해서 한 번 확인해보자. 다음과 같이 메트릭이 수집되었다면 성공이다.
+
+![01](./01.png)
 
 ## 4.3 Label을 이용한 집계
 
