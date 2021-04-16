@@ -218,38 +218,67 @@ $ source request.sh
 
 ![01](./01.png)
 
-## 4.3 Label을 이용한 집계
+## 4.3 Label을 이용한 쿼리 및 집계
 
-이번엔 `PromQL`을 이용해서 수집된 메트릭을 집계해보자. 여기서는 간단한 `PromQL`을 다룰 것이며 추후, 이어지는 장에서 더 깊게 배우게 될 것이다. 지금은 그냥 간단히 훑는 느낌으로 살펴보자. 우리는 다음의 데이터를 얻기 위해서 집계를 할 것이다.
-
-* path : "/"이면서 method: "GET"인 개수
-* path : "/"이면서 method: "GET"이 아닌 개수
-* method : "POST" 혹은 "PUT"인 요청 개수
-* path : "/test*"인 요청 개수
-* path : "/test*"이 아닌 요청 개수
-
-
-먼저 `Prometheus UI`(localhost:9090)를 접속하자. 먼저 path가 "/"면서, method가 "GET"인 `http_requests_total`를 집계해보자. 다음 쿼리를 입력한다.
+이번엔 `PromQL`을 이용해서 수집된 메트릭을 집계해보자. 여기서는 간단한 `PromQL`을 다룰 것이며 추후, 이어지는 장에서 더 깊게 배우게 될 것이다. 지금은 그냥 간단히 훑는 느낌으로 살펴보자. 먼저 `Prometheus UI`(localhost:9090)를 접속하자. 먼저 path가 "/"면서, method가 "GET"인 `http_requests_total`를 쿼리해보자. 다음 쿼리를 입력한다.
 
 ```
-sum(http_requests_total{ path="/", method="GET" })
+http_requests_total{ path="/", method="GET" }
 ```
+
+결과는 다음과 같다. 
+
+![02](./02.png)
+
+`Prometheus`는 임의의 메트릭에 대해서 가지고 있는 `Label` 개수 이하만큼 지정을 해서 필터링 후 집계가 가능하다. 또한 `=` 연산자를 이용해서 `Label`의 값이 일치하는 메트릭에 대해서 쿼리가 가능하다. 이번엔 다음 쿼리를 입력하여 path는 "/", method는 "GET"이 아닌 `http_requests_total`를 쿼리해본다.
+
+```
+http_requests_total{ path="/", method!="GET" }
+```
+
+결과는 다음과 같다.
+
+![03](./03.png)
+
+`!=` 연산자를 이용하면 값이 일치하지 않은 메트릭들에 대해서 쿼리가 가능하다. 또한 `Prometheus`의 강력한 기능은 `Label`의 값들을 이용해서 집계가 가능하다는 것이다. 위는 쿼리는 3개의 시계열 데이터를 쿼리(검색)한 것이다. 이를 합쳐보자. 다음 쿼리를 입력한다.
 
 ```
 sum(http_requests_total{ path="/", method!="GET" })
 ```
 
-```
-sum(http_requests_total{ path=~"POST|PUT"})
-```
+![04](./04.png)
+
+위 그림에서 확인할 수 있듯이 path가 "/"이면서 method가 "GET"이 아닌 `http_requests_total`의 합계는 총 4개이다. 또한, `Label`이 강력한 이유는 정규 표현식을 통해서도 쿼리 및 집계가 가능하다는 것이다. 다음 쿼리를 입력해서 `http_requests_total`의 method가 "POST" 혹은 "PUT"인 총 개수를 집계해보자.
 
 ```
-sum(http_requests_total{ path=~"/test*"})
+sum(http_requests_total{ method=~"POST|PUT"})
 ```
 
+결과는 다음과 같다.
+
+![05](./05.png)
+
+`=~` 연산자는 `Label`의 값에 대해서 정규표현식이 맞는 메트릭들에 대해서 쿼리할 수 있게 한다. 이번에는 path가 "/te"로 시작하는 `http_requests_total`를 쿼리해보자.
+
 ```
-sum(http_requests_total{ path!~"/test*"})
+http_requests_total{ path=~"/te.*"}
 ```
+
+결과는 다음과 같다.
+
+![05](./05.png)
+
+여기서 "/te.*"은 정규표현식으로써 "/te"로 시작하는 것들을 찾아낼 수 있다. 이번에는 path가 "/te"로 시작하지 않는 `http_requests_total`를 쿼리해보자.
+
+```
+http_requests_total{ path!~"/te.*"}
+```
+
+결과는 다음과 같다.
+
+![06](./06.png)
+
+`!~` 연산자는 `=~` 반대로 정규표현식이 맞지 않는 메트릭들을 쿼리할 수 있게 한다. 역시 이렇게 쿼리한 메트릭들도 `sum`등의 함수를 통해서 집계가 가능하다
 
 ## 4.4 Label 사용 시 Tip
 
