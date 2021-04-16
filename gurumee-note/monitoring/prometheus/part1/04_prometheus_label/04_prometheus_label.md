@@ -86,7 +86,7 @@ func main() {
 }
 ```
 
-이 애플리케이션에 대해 간단하게 설명하자면 해당 URL과 HTTP Method 별로 누적 요청 개수를 수집한다. 설명이 필요한 코드 부분만 살펴보자.
+이 애플리케이션에 대해 간단하게 설명하자면 해당 URL과 HTTP Method 별로 누적 요청 개수를 수집한다. 여기서 알 수 있는 점은 `Label`은 한 메트릭 이름 당 여러 개를 지정할 수 있다는 것이다. 먼저 전역 변수인 `REQUEST`를 살펴보자.
 
 part1/ch04/main.go
 ```go
@@ -103,7 +103,7 @@ var (
 // ...
 ```
 
-수집하고 싶은 메트릭에서 `Label`을 설정하고 싶다면 `prometheus.New[Metric]Vec`을 함수를 써야 한다. 여기서는 URP과 HTTP Method에 따른 요청 누적 개수이기 때문에 `Counter` 타입을 수집해야 한다. 따라서 위의 코드처럼 `NewCounterVec` 함수를 사용했다. 여기서는 조금 더 깊이 실제 코드를 까보자. 
+수집하고 싶은 메트릭에서 `Label`을 설정하고 싶다면 `prometheus.New[Metric]Vec`을 함수를 써야 한다. 여기서는 URP과 HTTP Method에 따른 요청 누적 개수이기 때문에 `Counter` 타입을 수집해야 한다. 따라서 위의 코드처럼 `NewCounterVec` 함수를 사용했다. 여기서는 조금 더 깊이 실제 코드를 살펴 보자. 
 
 github.com/prometheus/client_golang/blob/master/prometheus/counter.go
 ```go
@@ -212,12 +212,14 @@ $ source request.sh
 * Path: "/test1", HTTP Method: "GET" x2
 * Path: "/test2", HTTP Method: "POST" x2
 * Path: "/test3", HTTP Method: "PUT" x2
-* Path: "/test4", HTTP Method: "DLETE" x2
+* Path: "/test4", HTTP Method: "DELETE" x2
 
 한 번 브라우저에서 "localhost:2112/metrics"를 접속해서 한 번 확인해보자. 다음과 같이 메트릭이 수집되었다면 성공이다.
 
 ![01](./01.png)
 
 ## 4.3 Label을 이용한 집계
+
+
 
 ## 4.4 Label 사용 시 Tip
