@@ -34,7 +34,7 @@ http_request{ status_code="500" }
 `Label`을 이용해서, 메트릭에 대한 집계를 할 수 있기 때문이다. 상태코드 2xx에 대한 개수를 보고 싶으면 다음과 같이 쿼리를 만들 수 있다.
 
 ```
-sum(rate(http_request{status_code="2.."}[5m]))
+sum(rate(http_request{status_code=~"2.."}[5m]))
 ```
 
 "2.."이라고 표현함으로써, `Label`의 키 `status_code`의 값이 2xx(200, 201 등의 2로 시작하는 3자리 숫자)인 모든 데이터를 집계할 수 있다.
@@ -246,9 +246,13 @@ http_requests_total{ path="/", method!="GET" }
 sum(http_requests_total{ path="/", method!="GET" })
 ```
 
+결과는 다음과 같다.
+
 ![04](./04.png)
 
-위 그림에서 확인할 수 있듯이 path가 "/"이면서 method가 "GET"이 아닌 `http_requests_total`의 합계는 총 4개이다. 또한, `Label`이 강력한 이유는 정규 표현식을 통해서도 쿼리 및 집계가 가능하다는 것이다. 다음 쿼리를 입력해서 `http_requests_total`의 method가 "POST" 혹은 "PUT"인 총 개수를 집계해보자.
+위 그림에서 확인할 수 있듯이 path가 "/"이면서 method가 "GET"이 아닌 `http_requests_total`의 합계는 총 4개이다. 
+
+또한, `Label`이 강력한 이유는 앞에서 언급 했듯이 정규 표현식을 통해서도 쿼리 및 집계가 가능하다는 것이다. 다음 쿼리를 입력해서 `http_requests_total`의 method가 "POST" 혹은 "PUT"인 총 개수를 집계해보자.
 
 ```
 sum(http_requests_total{ method=~"POST|PUT"})
@@ -266,7 +270,7 @@ http_requests_total{ path=~"/te.*"}
 
 결과는 다음과 같다.
 
-![05](./05.png)
+![05](./06.png)
 
 여기서 "/te.*"은 정규표현식으로써 "/te"로 시작하는 것들을 찾아낼 수 있다. 이번에는 path가 "/te"로 시작하지 않는 `http_requests_total`를 쿼리해보자.
 
@@ -276,7 +280,7 @@ http_requests_total{ path!~"/te.*"}
 
 결과는 다음과 같다.
 
-![06](./06.png)
+![06](./07.png)
 
 `!~` 연산자는 `=~` 반대로 정규표현식이 맞지 않는 메트릭들을 쿼리할 수 있게 한다. 역시 이렇게 쿼리한 메트릭들도 `sum`등의 함수를 통해서 집계가 가능하다
 
