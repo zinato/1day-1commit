@@ -220,6 +220,46 @@ $ source request.sh
 
 ## 4.3 Label을 이용한 집계
 
+이번엔 `PromQL`을 이용해서 수집된 메트릭을 집계해보자. 여기서는 간단한 `PromQL`을 다룰 것이며 추후, 이어지는 장에서 더 깊게 배우게 될 것이다. 지금은 그냥 간단히 훑는 느낌으로 살펴보자. 우리는 다음의 데이터를 얻기 위해서 집계를 할 것이다.
 
+* path : "/"이면서 method: "GET"인 개수
+* path : "/"이면서 method: "GET"이 아닌 개수
+* method : "POST" 혹은 "PUT"인 요청 개수
+* path : "/test*"인 요청 개수
+* path : "/test*"이 아닌 요청 개수
+
+
+먼저 `Prometheus UI`(localhost:9090)를 접속하자. 먼저 path가 "/"면서, method가 "GET"인 `http_requests_total`를 집계해보자. 다음 쿼리를 입력한다.
+
+```
+sum(http_requests_total{ path="/", method="GET" })
+```
+
+```
+sum(http_requests_total{ path="/", method!="GET" })
+```
+
+```
+sum(http_requests_total{ path=~"POST|PUT"})
+```
+
+```
+sum(http_requests_total{ path=~"/test*"})
+```
+
+```
+sum(http_requests_total{ path!~"/test*"})
+```
 
 ## 4.4 Label 사용 시 Tip
+
+`Label` 사용 시 매우 주의할 점이 있다. 한 메트릭에 대한 `Label`의 개수가 증가할수록 `Cardinality`가 증가한다. `Cardinality`란 `Prometheus`가 수집한 고유한 시계열 개수라고 보면 된다. 앞서 메트릭 이름과 `Label`에 따라서 시계열이 식별된다고 언급했었다. 
+
+```
+http_requests_total{ method="GET", path="/" } 2
+http_requests_total{ method="GET", path="/test" } 1
+```
+
+즉 위의 시계열 데이터는 메트릭 이름은 같으나 다른 데이터라고 보면 된다. 이렇게 메트릭 이름에 대한 `Label` 개수가 증가할수록 `Cardinality`는 폭발적으로 증가하게 된다. 각각 서로 다른 method가 4개, path가 10개라면 `http_requests_total` 메트릭에 대한 `Cardinality`는 40(4 * 10)이 된다. 이렇게 높은 `Cardinality`는 데이터가 적을 때는 문제가 안되지만 많아지면 많아질수록 `Prometheus`에 치명적인 성능 문제를 야기할 수 있다.
+
+이에 대해서 책 "Prometheus Up & Running(번역판 : 프로메테우스 오픈소스 모니터링 시스템)"에서는 임의의 메트릭에 대한 `Cardinality`는 10 이하로 되도록 만들 것을 권장하고 있다.
