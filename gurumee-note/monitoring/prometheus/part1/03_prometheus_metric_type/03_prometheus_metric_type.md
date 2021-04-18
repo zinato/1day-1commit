@@ -1,4 +1,4 @@
-# 03장. Prometheus 메트릭 타입
+# 03장. Prometheus Metric Type
 
 ## 3.1 개요
 

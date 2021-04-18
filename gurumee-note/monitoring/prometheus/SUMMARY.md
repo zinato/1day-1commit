@@ -3,10 +3,12 @@
 * 1부 Prometheus의 기본
   * [01장. Prometheus란 무엇인가](./part1/01_what_is_prometheus/01_what_is_prometheus.md)
   * [02장. Prometheus 설치](./part1/02_install_prometheus/02_install_prometheus.md)
-  * [03장. Prometheus 메트릭 타입](./part1/03_prometheus_metric_type/03_prometheus_metric_type.md)
-  * [04장. Instrumenting (2) - Push Gateway]()
-  * [04장. Instrumenting (3) - Exposition]()
-  * [05장. PromQL (1)]()
+  * [03장. Prometheus Metric Type](./part1/03_prometheus_metric_type/03_prometheus_metric_type.md)
+  * [04장. Prometheus Label](./part1/04_prometheus_label/04_prometheus_label.md)
+  * [05장. Prometheus Query (1) PromQL 기본]()
+  * [06장. Prometheus Query (2) PromQL 연산자]()
+  * [07장. Prometheus Query (3) PromQL 함수]()
+  * [08장. Prometheus Query (4) HTTP API]()
 * 2부 Prometheus로 모니터링을 해보자.
   * [모니터링이란 무엇인가]()
   * [Grafana 설치](./part2/02_install_grafana/02_install_grafana.md)
