@@ -137,7 +137,7 @@ process_resident_memory_bytes{job="node-exporter"} offset 1m
 
 쿼리 결과는 다음과 같다.
 
-![08](./08.png)
+![09](./09.png)
 
 `offset 1m`을 제거하면 다른 데이터가 보이는 것을 확인할 수 있다. `Time Duration`과 `offset`을 사용할 때는 주의할 점이 크게 2가지가 있다.
 
