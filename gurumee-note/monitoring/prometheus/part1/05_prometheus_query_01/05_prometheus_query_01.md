@@ -27,7 +27,7 @@ $ cd part1/ch05/
 $ docker-compose up -d
 ```
 
-다음 화면이 보인다면, 잘 구동된 것이다.
+브라우저에서 `localhost:9090`에 접속한 후 쿼리 입력 창에 `up`을 입력했을 때 다음 화면이 보인다면, 잘 구동된 것이다.
 
 ![01](./01.png)
 
@@ -58,8 +58,37 @@ $ docker-compose up -d
 
 역시 왼쪽에는 타입인 `Scalar`가 오른쪽엔 값인 `1.25`가 보인다. `Scalar` 타입은 실수를 포함하는 숫자라고 보면 된다. 실수, 숫자, 지수, 16진수, Inf, -Inf, NaN이 될 수 있다.
 
-## 5.3 Instant Vector Selector
-## 5.4 Range Vector Selector
-## 5.5 Time Duration과 Offset
+## 5.3 Instant Vector
 
+`Instant Vector`는 쿼리 평가 시점 전 가장 최근 샘플의 데이터이며 자신의 모든 값에 대해 타임스탬프를 갖고 있다. `Prometheus UI`에 다음을 입력해보자.
+
+```
+process_resident_memory_bytes{job="node-exporter"}
+```
+
+쿼리 결과는 다음과 같다.
+
+![04](./04.png)
+
+역시 왼쪽은 타입, 오른쪽은 값이다. 쿼리문 자체가 `Instant Vector` 타입을 나타낸다. 
+
+여기서 메트릭 이름에 `{}`가 붙어 있는 것을 볼 수 있는데, 이를 `Selector`라고 부른다. `Selector`는 보통 `Instant Vector` 타입을 반환하게 된다. 
+
+또한 `{}` 안에 `job="node-exporter"`를 볼 수 있는데, 이 때 `=`는 `Matcher`의 일종이다. `Mather`는 메트릭이 가지고 있는 `Label`에 대해서 필터링 기능을 제공한다. 
+
+`Mathcer`의 종규는 다음과 같다.
+
+* = : `Label` 값이 정확히 일치하는 데이터를 추출
+* != : `Label` 값이 정확히 일치하지 않는 데이터를 추출
+* =~ : `Label` 값에 대해서 정규표현식이 일치하는 데이터를 추출
+* !~ : `Label` 값에 대해서 정규표현식이 일치하는 않는 데이터를 추출
+
+위에서 `Instant Vector`는 모든 값에 대해서 타임스탬프를 가지고 있다고 했다. 이는 그래프를 그릴 수 있음을 뜻한다. "Graph" 탭을 클릭해보자.
+
+![05](./05.png)
+
+다음과 같이 `Instant Vector`에 대해서 시각화가 가능하다.
+
+## 5.4 Range Vector
+## 5.5 Time Duration과 Offset
 ## 5.6 PromQL 꿀팁
