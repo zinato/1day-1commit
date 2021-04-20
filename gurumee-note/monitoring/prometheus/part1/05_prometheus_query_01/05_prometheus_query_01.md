@@ -7,7 +7,7 @@
 * PromQL
 * HTTP API
 
-이 장에서는 일반적으로 쿼리하는데 사용되는 `PromQL`의 "기본"이라 할 수 있는 `Scalar`, `Selector`, `Matcher`, `Instant Vector`, `Range Vector`, `Time Duration`, `Offset` 등에 대해 살펴본다.
+이 장에서는 일반적으로 쿼리하는데 사용되는 `PromQL`의 "기본"이라 할 수 있는 `Scalar`, `Selector`, `Matcher`, `Instant Vector`, `Range Vector`, `Time Duration`, `offset` 등에 대해 살펴본다.
  
 이 장에서는 쉽고 빠르게 데이터를 수집하도록 `node-exporter`와 `Prometheus`를 연동할 것이다. `node-exporter`와 `Prometheus` 연동 및 모니터링 시 필요한 내용들에 대해서는 "2부 모니터링 편"에서 깊이 다룰 예정이다. 여기서는, 실행하는 방법만 살펴보도록 하자. 코드는 다음 URL에서 얻을 수 있다.
 
@@ -87,8 +87,44 @@ process_resident_memory_bytes{job="node-exporter"}
 
 ![05](./05.png)
 
-다음과 같이 `Instant Vector`에 대해서 시각화가 가능하다.
+다음과 같이 `Instant Vector`에 대해서 시각화가 가능하다. 참고로 이 타입만 그래프를 그릴 수 있다.
 
 ## 5.4 Range Vector
+
+![06](./06.png)
+
 ## 5.5 Time Duration과 Offset
-## 5.6 PromQL 꿀팁
+
+`Prometheus`에서 지원하는 `Time Duration`은 다음과 같다.
+
+* ms - milliseconds
+* s - seconds
+* m - minutes
+* h - hours
+* d - days - 항상 24h
+* w - weeks - 항상 7d
+* y - years - 항상 365d
+
+`Time Duration`은 보통 위와 같이 `Range Vector`를 구할 때 쓰거나, `Instant Vector` 혹은 `Range Vector`에 대해서 `offset`을 이용하여 지난 시간의 데이터를 얻을 때 사용한다. 한 번 지난 1분 전의 데이터를 얻어보자.
+
+```
+process_resident_memory_bytes{job="node-exporter"} offset 1m
+```
+
+쿼리 결과는 다음과 같다.
+
+![07](./07.png)
+
+`offset 1m`을 제거하면 다른 데이터가 보이는 것을 확인할 수 있다. `Time Duration`과 `offset`을 사용할 때는 주의할 점이 크게 2가지가 있다.
+
+1. Time Duration은 정수만 가능하다.
+2. offset은 지난 시간에 대해서만 가능하다.
+
+만약 1시간 30분이 지난 데이터를 얻고자 한다면, 다음처럼 써야 한다.
+
+```
+process_resident_memory_bytes{job="node-exporter"} offset 90m     (O)
+process_resident_memory_bytes{job="node-exporter"} offset 1h 30m  (X) 이건 안된다.
+```
+
+또한 `offset`을 이용해서 미래 시간은 쓸 수 없다.
