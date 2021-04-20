@@ -70,13 +70,9 @@ process_resident_memory_bytes{job="node-exporter"}
 
 ![04](./04.png)
 
-역시 왼쪽은 타입, 오른쪽은 값이다. 쿼리문 자체가 `Instant Vector` 타입을 나타낸다. 
+역시 왼쪽은 타입, 오른쪽은 값이다. 쿼리문 자체가 `Instant Vector` 타입을 나타낸다. 여기서 메트릭 이름에 `{}`가 붙어 있는 것을 볼 수 있는데, 이를 `Selector`라고 부른다. `Selector`는 보통 `Instant Vector` 타입을 반환하게 된다. 또한 `{}` 안에 `job="node-exporter"`를 볼 수 있는데, 이 때 `=`는 `Matcher`의 일종이다. `Mather`는 메트릭이 가지고 있는 `Label`에 대해서 필터링 기능을 제공한다. 
 
-여기서 메트릭 이름에 `{}`가 붙어 있는 것을 볼 수 있는데, 이를 `Selector`라고 부른다. `Selector`는 보통 `Instant Vector` 타입을 반환하게 된다. 
-
-또한 `{}` 안에 `job="node-exporter"`를 볼 수 있는데, 이 때 `=`는 `Matcher`의 일종이다. `Mather`는 메트릭이 가지고 있는 `Label`에 대해서 필터링 기능을 제공한다. 
-
-`Mathcer`의 종규는 다음과 같다.
+`Mathcer`의 종류는 다음과 같다.
 
 * = : `Label` 값이 정확히 일치하는 데이터를 추출
 * != : `Label` 값이 정확히 일치하지 않는 데이터를 추출
