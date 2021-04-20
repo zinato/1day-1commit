@@ -91,7 +91,31 @@ process_resident_memory_bytes{job="node-exporter"}
 
 ## 5.4 Range Vector
 
+`Range Vector`는 쿼리 시점까지 `Time Duration`에 대해 일치하는 모든 시계열을 가지고 있다. 간단하게 말하면 `Instant Vector`에 `[]`라는 `Range Vector Selector`를 사용한 데이터라고 보면 된다. 다음을 쿼리해보자.
+
+```
+process_resident_memory_bytes{job="node-exporter"}[1m]
+```
+
+쿼리 결과는 다음과 같다.
+
 ![06](./06.png)
+
+이는 `Instant Vector`인 `process_resident_memory_bytes{job="node-exporter"}`를 쿼리한 시점 1분까지의 모든 시계열을 가지는 `Range Vector`를 반환한다. 오른쪽 값을 보면 12개가 나오는데, 이는 5초 주기로 `Prometheus`가 `node-exporter`를 통해서 데이터를 수집하기 때문이다. 사실 `Range Vector` 타입 혼자서 쓰이지는 않고 보통은 `rate()` 함수랑 같이 쓰인다. 다음을 쿼리해보자.
+
+```
+rate(process_resident_memory_bytes{job="node-exporter"}[1m])
+```
+
+쿼리 결과는 다음과 같다.
+
+![07](./07.png)
+
+타입에 메트릭 이름이 빠진 것 말고는 뭐가 바뀐지 잘 모르겠다. 한 번 Graph 탭을 눌러보자. 
+
+![08](./08.png)
+
+그렇다. `rate()` 함수는 `Range Vector`를 `Instant Vector`로 바꿔주는 역할을 한다. 정확하게는 `process_resident_memory_bytes{job="node-exporter"}[1m]`의 초당 평균 값을 보여준다.
 
 ## 5.5 Time Duration과 Offset
 
@@ -113,7 +137,7 @@ process_resident_memory_bytes{job="node-exporter"} offset 1m
 
 쿼리 결과는 다음과 같다.
 
-![07](./07.png)
+![08](./08.png)
 
 `offset 1m`을 제거하면 다른 데이터가 보이는 것을 확인할 수 있다. `Time Duration`과 `offset`을 사용할 때는 주의할 점이 크게 2가지가 있다.
 
