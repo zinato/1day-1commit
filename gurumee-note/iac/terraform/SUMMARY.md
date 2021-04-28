@@ -1,10 +1,10 @@
 # Summary
 
-* 1부 테라폼이란 무엇인가
+* 1부 Terraform이란 무엇인가
   * [01장. Terraform과 설치](./part1/01_what_is_terraform/01_what_is_terraform.md)
   * [02장. Terraform 튜토리얼](./part1/02_terraform_tutorial/02_terraform_tutorial.md)
   * [03장. 추후 진행될 실습 과정](./part1/03_what_we_managed_infrastructure/03_what_we_managed_infrastructure.md)
-* 2부 테라폼으로 인프라 관리하기 AWS편
+* 2부 Terraform으로 AWS 관리하기
   * [04장. Terraform으로 AWS 관리하기 (1) 준비하기]()
   * [05장. Terraform으로 AWS 관리하기 (2) IAM]()
   * [06장. Terraform으로 AWS 관리하기 (3) S3]()
@@ -14,8 +14,8 @@
   * [10장. Terraform으로 AWS 관리하기 (7) CLB와 ASG]()
   * [11장. Terraform으로 AWS 관리하기 (8) NLB와 ASG]()
   * [12장. Terraform으로 AWS 관리하기 (9) ALB와 ASG]()
-* 3부 테라폼 더 심도 있게 사용하기
-  * [13장. Terraform 코드 다듬기 (1) variable]()
+* 3부 Terraform 더 깊이 있게 사용하기
+  * [13장. Terraform 코드 다듬기 (1) variable과 local]()
   * [14장. Terraform 코드 다듬기 (2) data]()
   * [15장. Terraform 코드 다듬기 (3) module]()
   * [16장. Terraform 코드 다듬기 (4) template]()

@@ -8,12 +8,14 @@
 
 `IaC`란, `Infrastructure As Code`의 약자로써, 코드로 인프라를 관리하는 것을 말한다. 여기서 `IaC`가 관리하는 것은, 인프라를 이루는 서버, 미들웨어, 서비스 등 인프라를 구성하는 모든 요소들이 그 대상이다. 또한 `IaC` 도구는 크게 다음으로 분류된다.
 
-* 서버 템플릿 ex) Packer, Docker
-* 컨테이너 오케스트레이션 ex) Kubernetes
-* 설정 관리 ex) Ansible, Puppet
-* 인프라 선언 ex) Terraform
+![01](./01.png)
 
- `Terraform`은 0.x 버전임에도 불구하고 인프라 선언 도구 분야에서 표준으로 자리 잡았다. `HCL`이라는 도메인 특화 언어를 통해서 `AWS`, `GCP` 등의 퍼블릭 클라우드는 물론 여러 프로바이더의 원하는 인프라 구성을 자동화할 수 있다.
+* 서버 템플릿 ex) Packer, Docker
+* 컨테이너 오케스트레이션 ex) Kubernetes, Apache Mesos
+* 서버 설정 관리 ex) Ansible, Puppet, Chef
+* 인프라스트럭처 프로비저닝 ex) Terraform, AWS CloudFormation
+
+ `Terraform`은 0.x 버전임에도 불구하고 인프라 선언 도구 분야에서 표준으로 자리 잡았다. `HCL`이라는 도메인 특화 언어를 통해서 쉽고 일관되게 `AWS`, `GCP` 등의 퍼블릭 클라우드는 물론 여러 프로바이더의 원하는 인프라 구성을 자동화할 수 있다.
 
 ### Terraform의 장점
 
