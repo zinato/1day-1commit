@@ -10,10 +10,10 @@
 
 ![01](./01.png)
 
-* 서버 템플릿 ex) Packer, Docker
-* 컨테이너 오케스트레이션 ex) Kubernetes, Apache Mesos
-* 서버 설정 관리 ex) Ansible, Puppet, Chef
-* 인프라스트럭처 프로비저닝 ex) Terraform, AWS CloudFormation
+* 서버 템플릿(Image Build) ex) Packer, Docker
+* 컨테이너 오케스트레이션(Container Orchestration) ex) Kubernetes, Apache Mesos
+* 서버 설정 관리(Configuration Management) ex) Ansible, Puppet, Chef
+* 인프라 선언(Infrastructure Provisioning) ex) Terraform, AWS CloudFormation
 
  `Terraform`은 0.x 버전임에도 불구하고 인프라 선언 도구 분야에서 표준으로 자리 잡았다. `HCL`이라는 도메인 특화 언어를 통해서 쉽고 일관되게 `AWS`, `GCP` 등의 퍼블릭 클라우드는 물론 여러 프로바이더의 원하는 인프라 구성을 자동화할 수 있다.
 
@@ -88,7 +88,7 @@ $ terraform version
 Terraform v0.14.6
 ```
 
-잘 설치되었다.
+위와 같은 결과가 나왔다면 잘 설치 된 것이다.
 
 ### AWS Linux 환경에서 Terraform 설치
 
@@ -115,5 +115,5 @@ Terraform v0.14.2
 
 > 참고! Terraform 버전이 안떠요 어떻게 해야 하죠?
 > 
-> 만약 설치까지 잘 헀는데 위 명령어가 잘 실행되지 않는다면 EC2 접속을 해제한 후 다시 접속을 해보세요. 그러면 정상적으로 실행이 될 것입니다. 그래도 안된다면, 다시 한 번 차근차근 설치를 진행해보시길 바랍니다.
+> 만약 설치까지 잘 했는데 위 명령어가 잘 실행되지 않는다면 EC2 접속을 해제한 후 다시 접속을 해보세요. 그러면 정상적으로 실행이 될 것입니다. 그래도 안된다면, 다시 한 번 차근차근 설치를 진행해보시길 바랍니다.
 
