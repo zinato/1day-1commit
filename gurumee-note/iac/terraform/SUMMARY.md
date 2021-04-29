@@ -3,7 +3,7 @@
 * 1부 Terraform이란 무엇인가
   * [01장. Terraform과 설치](./part1/01_what_is_terraform/01_what_is_terraform.md)
   * [02장. Terraform 튜토리얼](./part1/02_terraform_tutorial/02_terraform_tutorial.md)
-  * [03장. 추후 진행될 실습 과정](./part1/03_what_we_managed_infrastructure/03_what_we_managed_infrastructure.md)
+  * [03장. Terraform으로 어떤 인프라스트럭처를 구성할까](./part1/03_what_we_managed_infrastructure/03_what_we_managed_infrastructure.md)
 * 2부 Terraform으로 AWS 관리하기
   * [04장. Terraform으로 AWS 관리하기 (1) 준비하기]()
   * [05장. Terraform으로 AWS 관리하기 (2) IAM]()
