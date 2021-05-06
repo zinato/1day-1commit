@@ -5,7 +5,7 @@
   * [02장. Terraform 튜토리얼](./part1/02_terraform_tutorial/02_terraform_tutorial.md)
   * [03장. Terraform 실습 방향](./part1/03_terraform_training/03_terraform_training.md)
 * 2부 Terraform으로 AWS 관리하기
-  * [04장. Terraform으로 AWS 관리하기 (01) AWS 준비하기]()
+  * [04장. Terraform으로 AWS 관리하기 (01) AWS 준비하기](./part2/01_ready_to_aws/01_ready_to_aws.md)
   * [05장. Terraform으로 AWS 관리하기 (02) IAM]()
   * [06장. Terraform으로 AWS 관리하기 (03) S3]()
   * [07장. Terraform으로 AWS 관리하기 (04) DynamoDB]()
