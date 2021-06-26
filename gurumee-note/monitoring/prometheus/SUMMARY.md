@@ -32,10 +32,10 @@
   * [27장. 서비스 디스커버리 통합 (2) Consul]()
   * [28장. 서비스 디스커버리 통합 (3) Kubernetes]()
 * 4부 Prometheus 기록 규칙과 알람
-  * [29장. 알람 파이프라인 구축해보기]()
-  * [30장. 기록 규칙이란 무엇인가]()
-  * [31장. 알람 규칙이란 무엇인가]()
-  * [32장. Alertmanager에 대한 고찰]()
+  * [29장. 알람 파이프라인 구축하기](./part4/01_build_alert_pipeline/README.md)
+  * [30장. 기록 규칙이란 무엇인가](./part4/02_recording_rule/README.md)
+  * [31장. 알람 규칙이란 무엇인가](./part4/03_alert_rule/README.md)
+  * [32장. Alertmanager란 무엇인가](./part4/04_alertmanager/README.md)
 * 5부 Prometheus HA
   * [33장. Cortex (1) Cortex란 무엇인가]()
   * [34장. Cortex (2) 튜토리얼1 Gossiped Ring 클러스터 구성하기]())
