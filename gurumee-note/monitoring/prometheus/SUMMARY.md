@@ -2,7 +2,7 @@
 
 * 1부 Prometheus의 기본
   * [01장. Prometheus란 무엇인가](./part1/01_what_is_prometheus/README.md)
-  * [02장. Prometheus 설치](./part1/02_install_prometheus/README.md)
+  * [02장. Prometheus 설치하기](./part1/02_install_prometheus/README.md)
   * [03장. Prometheus Metric Type](./part1/03_prometheus_metric_type/README.md)
   * [04장. Prometheus Label (1) Label 기본](./part1/04_prometheus_label_01/README.md)
   * [05장. Prometheus Label (2) Label 재지정하기](./part1/05_prometheus_label_02/README.md)
