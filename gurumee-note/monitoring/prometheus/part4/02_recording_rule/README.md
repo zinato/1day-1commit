@@ -190,7 +190,7 @@ max_over_time(sum(rate(nginx_http_response_count_total{status=~"4.."}[1m]))[1h])
 max_over_time(status:nginx_http_response_count_total:4xx_1m[1h])
 ```
 
-마찬가지로 `Prometheus` 웹 UI로 쿼리했을 때 결과는 다음과 같다. 유효한 쿼리이기 때문에 결과가 나온다.
+위 쿼리를 `Prometheus` 웹 UI로 쿼리했을 때 결과는 다음과 같다. 유효한 쿼리이기 때문에 결과가 나온다.
 
 ![max_over_time 성공](./07.png)
  
