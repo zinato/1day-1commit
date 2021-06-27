@@ -129,7 +129,7 @@ $ sudo systemctl status alertmanager
 
 이제 위 `PromQL`을 이용해서 `Alert Rule`을 작성하면, 알람을 만들 수 있다. `Prometheus`에서 만들 알람에 대한 정보를 저장할 파일을 `rule file`이라고 부른다. `rule file`은 `prometheus.yml`과 같은 위치에 `rules` 디렉토리를 만들고 규칙을 작성할 잡과 같은 이름으로 작성하면 된다. 지금은 `prometheus-nginxlog-exporter`를 수집하는 job 이름을 `prometheus-nginxlog-exporter`로 설정 했으니까, `prometheus_nginxlog_exporter_rules.yml` 같은 이름으로 지으면 된다. 파일 내용은 다음과 같다.
 
-[part4/ch01/prometheus/rules/prometheus_nginxlog_exporter_rules.yml (초기 버전)]()
+[part4/ch01/prometheus/rules/prometheus_nginxlog_exporter_rules.yml (초기 버전)](https://github.com/gurumee92/gurumee-prometheus-code/blob/master/part4/ch01/prometheus/rules/prometheus_nginx_log_exporter_rules_backup.yml)
 ```yml
 groups:
 - name: prometheus_nginxlog_exporter
@@ -154,7 +154,7 @@ groups:
 
 `rule file`을 작성했으면, `Prometheus` 설정 파일인 `promethes.yml`에 다음과 같이 작성해두면 된다.
 
-[part4/ch01/prometheus/prometheus.yml]()
+[part4/ch01/prometheus/prometheus.yml](https://github.com/gurumee92/gurumee-prometheus-code/blob/master/part4/ch01/prometheus/prometheus.yml)
 ```yml
 global:
   scrape_interval:     15s # By default, scrape targets every 15 seconds.
@@ -202,7 +202,7 @@ SUCCESS: 1 rules found
 
 다음과 같이 `prometheus_nginxlog_exporter_rules.yml`을 수정한다.
 
-[part4/ch01/prometheus/rules/prometheus_nginxlog_exporter_rules.yml]()
+[part4/ch01/prometheus/rules/prometheus_nginxlog_exporter_rules.yml](https://github.com/gurumee92/gurumee-prometheus-code/blob/master/part4/ch01/prometheus/rules/prometheus_nginx_log_exporter_rules.yml)
 ```yml
 groups:
 - name: prometheus_nginxlog_exporter
@@ -244,7 +244,7 @@ groups:
 
 이제 마지막으로 `Prometheus`에서 발생한 알람을 `Alertmanager`에 전달하여, 처리하기 전까지 매 2분동안 `Slack`에 전달해보자. `Alertmanger`의 설정 파일인 `alertmanager.yml`을 다음과 같이 설정한다. 
 
-[part4/ch01/alertmanager/alertmanager.yml]()
+[part4/ch01/alertmanager/alertmanager.yml](https://github.com/gurumee92/gurumee-prometheus-code/blob/master/part4/ch01/alertmanager/alertmanager.yml)
 ```yml
 global:
   slack_api_url: '<당신의 슬랙 Webhook URL>'
@@ -279,7 +279,7 @@ $ sudo systemctl restart alertmanager
 
 그 다음 `prometheus.yml`을 다음과 같이 수정한 후 `Prometheus`를 재시작하면 우리가 원하는 파이프라인 구축이 완료된다.
 
-[part4/ch01/prometheus/prometheus.yml]()
+[part4/ch01/prometheus/prometheus.yml](https://github.com/gurumee92/gurumee-prometheus-code/blob/master/part4/ch01/prometheus/prometheus.yml)
 ```yml
 # ...
 rule_files:

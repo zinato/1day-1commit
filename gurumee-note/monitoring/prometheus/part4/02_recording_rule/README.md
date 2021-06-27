@@ -29,12 +29,31 @@ sum by (method, request_uri)(rate(nginx_http_response_time_seconds_hist_count[1m
 위의 쿼리는 단순한 수준에 속하지만 `PromQL`을 잘 모르는 경우에는 무슨 쿼리인지 도통 알아보기가 힘들다. 쿼리가 복잡해지면 복잡해질수록, 해석하기가 점점 히들어질 것이다. 이를 위해서 `Recording Rule`을 사용하면, 다음과 같이 단순하게 표현 가능하다.
 
 ```
-job:prometheus_nginxlog_exporter:avg_response_time_1m
+prometheus_nginxlog_exporter:nginx_http_response_time_seconds:avg_1m
 ```
 
 다음과 같이 쿼리하게 되면 적어도, 패널이 쿼리하는 데이터가 1분간 집계된 평균 응답 시간이라는 것을 쉽게 알 수 있다. 사실은 이런 효과보다도, `InfluxDB`의 `Continuous Query` 같이, 복잡한 집계 쿼리를 배치를 돌듯 쿼리 결과를 하나의 시계열 데이터로 저장하여 쿼리 성능을 높이는 데 더 큰 의미가 있다고 생각한다.
 
 ## Recording Rule 사용법 (1) 작성 방법과 관례
+
+`Recording Rule`을 만들기 위해서는 다음과 같은 절차가 필요하다.
+
+1. Recording Rule 작성 (보통 <job_name>_rules.yml 파일에 작성한다.)
+2. prometheus.yml에서 rules 설정 (<job_name>_rules.yml 상대 경로를 지정)
+
+먼저 `Recording Rule`을 만들어보자. `prometheus.yml`이 저장된 디렉토리 경로에서 `rules`라는 디렉토리를 만들고 `prometheus_nginxlog_exporter_rules.yml`을 다음과 같이 작성한다.
+
+[]()
+```yml
+groups:
+- name: prometheus_nginxlog_exporter
+  rules:
+  - record: prometheus_nginxlog_exporter:nginx_http_response_time_seconds:avg_1m
+    expr: |
+      sum by (method, request_uri)(rate(nginx_http_response_time_seconds_hist_sum[1m])) 
+      / 
+      sum by (method, request_uri)(rate(nginx_http_response_time_seconds_hist_count[1m]))
+```
 
 ## Recording Rule 사용법 (2) 권장되는 상황
 
