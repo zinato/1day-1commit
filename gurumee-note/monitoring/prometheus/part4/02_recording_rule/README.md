@@ -121,6 +121,12 @@ root 17625 1 2 6월03 ? 09:53:10 /home/ec2-user/apps/prometheus/prometheus --con
 $ sudo kill -HUP 17625
 ```
 
+이렇게 설정이 완료되면 `Prometheus` 웹 UI 상단 메뉴 "Status"의 "Rules"에서 작성된 `Recording Rule`을 확인할 수 있다.
+
+![Prometheus Web UI > Status > Rules](./02.png)
+
+위 화면에서 알 수 있듯이, `Recording Rule`의 이름, 쓰였던 집계 쿼리는 무엇인지는 물론 사용 가능한 상태인지, 언제 집계 데이터를 저장했는지, 저장할 때 얼마나 시간이 걸렸는지까지 확인할 수 있다.
+
 ## Recording Rule 사용법 (2) 권장되는 상황
 
 `Recording Rule`이 권장되는 상황은 크게 다음과 같다.
