@@ -38,8 +38,8 @@
   * [32장. Alertmanager란 무엇인가](./part4/04_alertmanager/README.md)
 * 5부 Prometheus HA
   * [33장. Cortex (1) Cortex란 무엇인가]()
-  * [34장. Cortex (2) 튜토리얼1 Gossiped Ring 클러스터 구성하기]())
-  * [35장. Cortex (3) 튜토리얼2 Block Storage 클러스터 구성하기]()
-  * [36장. Cortex (4) 튜토리얼3 Chunk Storage 클러스터 구성하기]()
+  * [34장. Cortex (2) 튜토리얼1 memeberlist로 클러스터 구성하기]())
+  * [35장. Cortex (3) 튜토리얼2 consul로 클러스터 구성하기]()
+  * [36장. Cortex (4) 튜토리얼3 production 환경 구성하기]()
   * [37장. Thanos (1) Thanos란 무엇인가]()
   * [38장. Thanos (2) 튜토리얼]()
