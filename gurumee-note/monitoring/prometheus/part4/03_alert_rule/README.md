@@ -19,6 +19,8 @@
 
 ## Alert Rule 사용법 (2) 알람의 상태
 
+PENDING과 for
+
 ## Alert Rule 사용법 (3) 작성 시 주의 사항
 
 
