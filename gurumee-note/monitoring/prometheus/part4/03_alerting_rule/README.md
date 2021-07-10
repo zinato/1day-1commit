@@ -1,4 +1,4 @@
-# Alerting Rule
+# 알림 규칙(Alerting Rule)이란 무엇인가
 
 ![logo](../../logo.png)
 

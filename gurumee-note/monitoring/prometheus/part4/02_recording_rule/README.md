@@ -1,4 +1,4 @@
-# Recording Rule
+# 기록 규칙(Recording Rule)이란 무엇인가
 
 ![logo](../../logo.png)
 
