@@ -15,6 +15,49 @@
 
 ## Alertmanager 설치
 
+`AWS EC2 Amazon Linux2` 서버 환경에서 `Alertmanager`는 다음 명령어로 설치할 수 있다.
+
+```bash
+# 압축 파일 설치
+$ wget https://github.com/prometheus/alertmanager/releases/download/v0.22.2/alertmanager-0.22.2.linux-amd64.tar.gz
+
+# 압축 파일 해제
+$ tar -xf alertmanager-0.22.2.linux-amd64.tar.gz
+
+# 해제된 파일 /home/ec2-user/apps/alertmanager 경로로 변경
+$ mv alertmanager-0.22.2.linux-amd64.tar.gz ~/apps/alertmanager
+```
+
+실행을 하고 싶다면 터미널에 다음을 입력하면 된다.
+
+```bash
+# 설치 경로 이동
+$ cd ~/apps/alertmanager
+
+# alertmanager 실행
+$ ./alertmanager
+```
+
+`Prometheus`에서 설정을 하고 싶다면, `Prometheus`가 실행되는 서버에서 다음과 같이 설정하면 된다.
+
+```yml
+# my global config
+global:
+  scrape_interval:     15s # By default, scrape targets every 15 seconds.
+  evaluation_interval: 15s # By default, scrape targets every 15 seconds.
+
+# ...
+
+# alert
+alerting:
+  alertmanagers:
+  - scheme: http
+    static_configs:
+    - targets:
+      # alertmanager ip:port
+      - "alertmanager:9093"
+```
+
 ## 알람 라우팅
 
 ## 알람 조절과 반복
