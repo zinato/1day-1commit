@@ -34,7 +34,7 @@
 * 4부 Prometheus 기록 규칙과 알람
   * [29장. 알람 파이프라인 구축하기](./part4/01_build_alert_pipeline/README.md)
   * [30장. 기록 규칙이란 무엇인가](./part4/02_recording_rule/README.md)
-  * [31장. 알람 규칙이란 무엇인가](./part4/03_alert_rule/README.md)
+  * [31장. 알람 규칙이란 무엇인가](./part4/03_alerting_rule/README.md)
   * [32장. Alertmanager란 무엇인가](./part4/04_alertmanager/README.md)
 * 5부 Prometheus HA
   * [33장. Cortex (1) Cortex란 무엇인가]()
