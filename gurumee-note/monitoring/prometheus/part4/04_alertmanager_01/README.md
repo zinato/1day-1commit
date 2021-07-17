@@ -83,7 +83,79 @@ alerting:
 
 ### Slack 설정
 
-`Slack`은 대표적인 리시버의 예이다.
+`Slack`은 대표적인 리시버의 예이다. 먼저 터미널에 다음을 입력하자.
+
+```bash
+# 현재 위치 확인
+$ pwd
+/Users/gurumee/Workspace/gurumee-prometheus-code/part4/ch04
+
+# 인프라스트럭처 구성
+$ docker compse up
+```
+
+이번 장의 코드를 통해 구성되는 인프라스트럭처는 다음과 같다.
+
+![01](./01.png)
+
+`Node Exporter` 4대에서 `Prometheus`가 메트릭을 수집하고 있다. 
+
+![02](./02.png)
+
+또한, `rules/node_exporter_rules.yml`에 설정된 `alerting rule`을 통해서 `Node Exporter` 4대 중 절반 이하가 다운되면 알람이 생성된다. 
+
+![03](./03.png)
+
+그 후, 생성된 알람은 PENDING 상태를 거쳐 FIRING이 되면 `Prometheus`에서 `Alertmanager`로 알람이 전달된다. 
+
+![04](./04.png)
+
+그 후 `Alertmanager` 설정을 통해서, 알람은 슬랙으로 통보된다. 해당 설정은 다음과 같다.
+
+[part4/ch04/alertmanager/alertmanager.yml]()
+```yml
+global:
+  slack_api_url: 'slack_api_url' # 슬랙 API 웹 훅 URL
+
+route:
+  receiver: 'slack'
+  repeat_interval: 2m
+  group_interval: 10s
+  group_wait: 5s
+
+receivers:
+  - name: 'slack'
+    slack_configs:
+    - channel: '#_monitoring' # 채널
+      send_resolved: true 
+      title: "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}"
+      text: "{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}"
+  # ...
+```
+
+[part4/ch04/alertmanager/alertmanager.yml]()
+```yml
+global:
+  # slack_api_url: '' # <전역 설정>
+
+route:
+  receiver: 'webhook'
+  repeat_interval: 2m
+  group_interval: 10s
+  group_wait: 5s
+
+receivers:
+  - name: 'slack'
+    slack_configs:
+    - channel: '#_monitoring'
+      api_url: 'slack_api_url' # 리시버 개별 설정
+      send_resolved: true 
+      title: "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}"
+      text: "{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}"
+  
+  # ...
+```
+
 
 ### API 서버 설정
 
