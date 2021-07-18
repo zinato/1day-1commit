@@ -11,9 +11,8 @@
 
 이 문서에서는 `Prometheus`에서 전달된 알람을 제 3자, `Slack`, `Email` 등으로 전달하는 `Alertmanager`에 대해서 다룰 예정이다. 이번 장에서 다음 내용들을 살펴볼 것이다.
 
-1. Alertmanager 설치
+1. Alertmanager 설치 및 연동
 2. 리시버
-3. 템플릿
 
 또한 현재 문서에서 진행되는 실습들은 편의성을 위해 `Docker` 환경에서 진행하나, 실제 서버 환경에서도 크게 다르지 않으니 거의 동일하게 작업할 수 있다. 관련 코드는 다음 링크를 참고하길 바란다.
 
@@ -98,24 +97,43 @@ $ docker compse up
 
 ![01](./01.png)
 
-`Node Exporter` 4대에서 `Prometheus`가 메트릭을 수집하고 있다. 
+현재 `Node Exporter` 4대에서 `Prometheus`가 메트릭을 수집하고 있다. 또한, `rules/node_exporter_rules.yml`에 설정된 `alerting rule`을 통해서 `Node Exporter` 4대 중 절반 이하가 다운되면 알람이 생성된다. 
+
+[part4/ch04/prometheus/rules/node_exporter_rules.yml]()
+```yml
+groups:
+- name: node_exporter
+  rules:
+  # node-exporter 인스턴스 평균을 구하는 recording rule
+  - record: job:up:avg
+    expr: avg without(instance)(up{job="node-exporter"})
+  
+  # 인스턴스 평균이 0.5보다 낮으면 알람 세트를 생성하는 alerting rule
+  - alert: ManyInstanceDown
+    expr: job:up:avg{job="node-exporter"} < 0.5
+    for: 15s
+    labels:
+      severity: 'critical'
+    annotations:
+      summary: 'Many Instance Down(Alive 50% Below)'  
+
+```
+
+이제 실제로 다음 그림과 같이 `Node Exporter` 인스턴스 3대를 제거해서 알람이 오는지 확인해보자.
 
 ![02](./02.png)
 
-또한, `rules/node_exporter_rules.yml`에 설정된 `alerting rule`을 통해서 `Node Exporter` 4대 중 절반 이하가 다운되면 알람이 생성된다. 
+터미널에 다음을 입력한다.
 
-![03](./03.png)
+```bash
+$ docker compose stop node1 node2 node3
+```
 
-그 후, 생성된 알람은 PENDING 상태를 거쳐 FIRING이 되면 `Prometheus`에서 `Alertmanager`로 알람이 전달된다. 
-
-![04](./04.png)
-
-그 후 `Alertmanager` 설정을 통해서, 알람은 슬랙으로 통보된다. 해당 설정은 다음과 같다.
+어느 정도 시간이 지나면, `Promethes`에서 생성된 알람은 PENDING 상태를 거쳐 FIRING이 되면 `Alertmanager`로 알람이 전달된다. 그러면 `Alertmanager`는 설정을 통해서, 슬랙으로 전달 받은 알람을 통보한다. 해당 설정은 다음과 같다.
 
 [part4/ch04/alertmanager/alertmanager.yml]()
 ```yml
 global:
-  slack_api_url: 'slack_api_url' # 슬랙 API 웹 훅 URL
 
 route:
   receiver: 'slack'
@@ -126,20 +144,28 @@ route:
 receivers:
   - name: 'slack'
     slack_configs:
-    - channel: '#_monitoring' # 채널
+    - channel: '<YOUR_SLACK_CHANNEL>'
+      api_url: '<YOUR_SLACK_WEBHOOK_URL>'
       send_resolved: true 
       title: "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}"
       text: "{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}"
-  # ...
+
+# ...
 ```
+
+결과는 다음과 같다.
+
+![03](./03.png)
+
+만약 같은 슬랙에 여러 채널에 알람을 통보해야 하는 경우 `receiver` 개별 설정마다 일일이 `api_url`을 설정해줘도 좋지만, `global`의 `slack_api_url` 설정을 통해서 전역적으로 설정할 수 있다. 전역 설정은 다음과 같다.
 
 [part4/ch04/alertmanager/alertmanager.yml]()
 ```yml
 global:
-  # slack_api_url: '' # <전역 설정>
+  slack_api_url: '<YOUR_SLACK_WEBHOOK_URL>' # <전역 설정>
 
 route:
-  receiver: 'webhook'
+  receiver: 'slack'
   repeat_interval: 2m
   group_interval: 10s
   group_wait: 5s
@@ -147,15 +173,20 @@ route:
 receivers:
   - name: 'slack'
     slack_configs:
-    - channel: '#_monitoring'
-      api_url: 'slack_api_url' # 리시버 개별 설정
+    - channel: '<YOUR_SLACK_CHANNEL>'
       send_resolved: true 
       title: "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}"
       text: "{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}"
   
-  # ...
-```
+  - name: 'slack2'
+    slack_configs:
+    - channel: '<YOUR_SLACK_CHANNEL_2>'
+      send_resolved: true 
+      title: "{{ range .Alerts }}{{ .Annotations.summary }}\n{{ end }}"
+      text: "{{ range .Alerts }}{{ .Annotations.description }}\n{{ end }}"
 
+# ...
+```
 
 ### API 서버 설정
 
@@ -164,17 +195,14 @@ receivers:
 [part4/ch04/alertmanager/alertmanager.yml]
 ```yml
 global:
-  # slack_api_url: '' # <전역 설정>
 
 route:
-  receiver: 'webhook' # slack에서 webhook으로 변경
+  receiver: 'webhook'
   repeat_interval: 2m
   group_interval: 10s
   group_wait: 5s
 
-receivers:
-  # ...
-
+receivers:  
   - name: 'webhook'
     webhook_configs:
       # API 서버 IP:PORT/<PATH>
@@ -192,7 +220,7 @@ $ docker compose up -d
 ```
 이제 인프라스트럭처는 다음과 같이 변경된다.
 
-![]()
+![04](./04.png)
 
 여기서 `app`은 `golang`으로 작성된 API 서버로 코드는 다음과 같다.
 
@@ -251,7 +279,7 @@ app           | 2021/07/17 04:52:10 body : [map[annotations:map[summary:Many Ins
 ...
 ```
 
-FIRING된 알람이 `app`에 전달된 것을 확인할 수 있다. 다시 `node-exporter`들을 연결시켜보자.
+FIRING된 알람이 `app`에 전달된 것을 확인할 수 있다. 다시 `Node Exporter`들을 실행시켜보자.
 
 ```bash
 $ docker compose up -d node1 node2 node3
@@ -266,8 +294,6 @@ app           | 2021/07/17 04:57:09 body : [map[annotations:map[summary:Many Ins
 ```
 
 위 예제에서는 단순히 로그를 찍는 것 뿐이지만 알람에 대해서 비지니스 로직이 필요한 경우 해당 엔드포인트를 처리하는 핸들러에 이에 대한 코드를 구현하면 된다.
-
-## 통보 템플릿
 
 
 
