@@ -99,7 +99,7 @@ $ docker compse up
 
 현재 `Node Exporter` 4대에서 `Prometheus`가 메트릭을 수집하고 있다. 또한, `rules/node_exporter_rules.yml`에 설정된 `alerting rule`을 통해서 `Node Exporter` 4대 중 절반 이하가 다운되면 알람이 생성된다. 
 
-[part4/ch04/prometheus/rules/node_exporter_rules.yml]()
+[part4/ch04/prometheus/rules/node_exporter_rules.yml](https://github.com/gurumee92/gurumee-prometheus-code/blob/master/part4/ch04/prometheus/rules/node_exporter_rules.yml)
 ```yml
 groups:
 - name: node_exporter
@@ -131,7 +131,7 @@ $ docker compose stop node1 node2 node3
 
 어느 정도 시간이 지나면, `Promethes`에서 생성된 알람은 PENDING 상태를 거쳐 FIRING이 되면 `Alertmanager`로 알람이 전달된다. 그러면 `Alertmanager`는 설정을 통해서, 슬랙으로 전달 받은 알람을 통보한다. 해당 설정은 다음과 같다.
 
-[part4/ch04/alertmanager/alertmanager.yml]()
+[part4/ch04/alertmanager/alertmanager.yml](https://github.com/gurumee92/gurumee-prometheus-code/blob/master/part4/ch04/alertmanager/alertmanager_step1.yml)
 ```yml
 global:
 
@@ -159,7 +159,7 @@ receivers:
 
 만약 같은 슬랙에 여러 채널에 알람을 통보해야 하는 경우 `receiver` 개별 설정마다 일일이 `api_url`을 설정해줘도 좋지만, `global`의 `slack_api_url` 설정을 통해서 전역적으로 설정할 수 있다. 전역 설정은 다음과 같다.
 
-[part4/ch04/alertmanager/alertmanager.yml]()
+[part4/ch04/alertmanager/alertmanager.yml](https://github.com/gurumee92/gurumee-prometheus-code/blob/master/part4/ch04/alertmanager/alertmanager_step2.yml)
 ```yml
 global:
   slack_api_url: '<YOUR_SLACK_WEBHOOK_URL>' # <전역 설정>
@@ -192,7 +192,7 @@ receivers:
 
 알람 처리 중 비지니스 로직이 필요한 경우를 제외하고 권장하는 클라이언트는 아니지만 `Webhook`을 이용하여 `API 서버`에 알람을 통보할 수 있다. 다음과 같이 설정할 수 있다.
 
-[part4/ch04/alertmanager/alertmanager.yml]
+[part4/ch04/alertmanager/alertmanager.yml](https://github.com/gurumee92/gurumee-prometheus-code/blob/master/part4/ch04/alertmanager/alertmanager_step3.yml)
 ```yml
 global:
 
@@ -224,7 +224,7 @@ $ docker compose up -d
 
 여기서 `app`은 `golang`으로 작성된 API 서버로 코드는 다음과 같다.
 
-[part4/ch04/app/main.go]()
+[part4/ch04/app/main.go](https://github.com/gurumee92/gurumee-prometheus-code/blob/master/part4/ch04/app/main.go)
 ```golang
 package main
 
