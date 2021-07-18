@@ -45,6 +45,7 @@ $ ./alertmanager
 
 `Prometheus`에서 `Alertmanager`를 연동하려면, `Prometheus`가 실행되는 서버에서 다음과 같이 설정하면 된다.
 
+[par4/ch04/prometheus/prometheus.yml](https://github.com/gurumee92/gurumee-prometheus-code/blob/master/part4/ch04/prometheus/prometheus.yml)
 ```yml
 # my global config
 global:
