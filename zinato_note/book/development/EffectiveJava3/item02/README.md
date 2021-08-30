@@ -94,7 +94,7 @@ public class NutrionsFactsJavaBean {
 > 점층적 생성자 패턴의 안정성과 자바 빈즈 패턴의 가독성의 장점을 갖춘 것이 ***빌더 패턴(Builder pattern)*** 이다.
 
 ## 빌더 패턴 (Builder pattern)
-- [코드 참고](item02/NutriotionFacts.java)
+- [코드 참고](https://github.com/zinato/1day-1commit/blob/zinato/2021_08/zinato_note/book/development/EffectiveJava3/item02/NutritionFactsBuilderPattern.java)
 
 ```java
 //파이썬과 스칼라에 있는 네임드 매개변수를 사용하여 가독성을 높일 수 있다.
