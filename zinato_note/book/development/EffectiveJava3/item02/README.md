@@ -90,4 +90,26 @@ public class NutrionsFactsJavaBean {
   1. 객체 하나를 만들려면 메서드를 여러개 호출해야 한다.
   2. 객체가 완전히 생성되기 전까지는 일관성이 무너진 상태이다.
       - 점층적 생성자 패턴에서는 매개변수들이 유효한지 생성자에서만 확인하면 일관성을 유지할 수 있었지만 자바빈즈는 확인할 수 없다.
+
 > 점층적 생성자 패턴의 안정성과 자바 빈즈 패턴의 가독성의 장점을 갖춘 것이 ***빌더 패턴(Builder pattern)*** 이다.
+
+## 빌더 패턴 (Builder pattern)
+- [코드 참고](item02/NutriotionFacts.java)
+
+```java
+//파이썬과 스칼라에 있는 네임드 매개변수를 사용하여 가독성을 높일 수 있다.
+    NutriotionFactsBuilderPattern cocaCola = new NutriotionFactsBuilderPattern.Builder(240, 8) //필수 매개변수 
+      .calories(100) //메서드 체인닝 
+      .sodium(35)
+      .carbohydrate(27)
+      .build();
+
+```
+
+- 빌더의 세터 메서드들을 빌더 자신을 반환하기 때문에 연쇄적으로 호출할 수 있다. (method chaining)
+- 빌더 패턴은 파이썬과 스칼라에 있는 named optional parameter를 흉내낸 것이다.
+- 점층적 생성자 패턴보다 코드가 깔끔하고 가독성이 있으며 필수 매개변수와 옵션 매개변수를 구분하여 저장할 수 있다.
+- 클라이언트가 코드를 읽기 쉬고 쓰기 쉽다.
+- 서버 쪽 코딩이 조금 더 투자된다.
+
+## 계층적으로 설계된 클래스와 잘 어울리는 빌더 패턴
