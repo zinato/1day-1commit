@@ -2,9 +2,9 @@ package item02;
 
 public class NutritionFactsBuilderPattern {
   //2-3 빌더 패턴 - 점층적 생성자 패턴과 자바빈즈 패턴의 장점만 취했다.
-  private final int servingSize;  
-  private final int servings;     
-  private final int calories;     
+  private final int servingSize;
+  private final int servings;
+  private final int calories;
   private final int fat;
   private final int sodium;
   private final int carbohydrate;
@@ -26,6 +26,7 @@ public class NutritionFactsBuilderPattern {
     }
 
     public Builder calories(int val) {
+      // 여기서 매개 변수를 검사하여 IllegalArgumentException을 던짐.
       calories = val;
       return this;
     }
@@ -61,8 +62,8 @@ public class NutritionFactsBuilderPattern {
 
   public static void main(String[] args) {
     //파이썬과 스칼라에 있는 네임드 매개변수를 사용하여 가독성을 높일 수 있다.
-    NutritionFactsBuilderPattern cocaCola = new NutritionFactsBuilderPattern.Builder(240, 8) //필수 매개변수 
-      .calories(100) //메서드 체인닝 
+    NutritionFactsBuilderPattern cocaCola = new NutritionFactsBuilderPattern.Builder(240, 8) //필수 매개변수
+      .calories(100) //메서드 체인닝
       .sodium(35)
       .carbohydrate(27)
       .build();
