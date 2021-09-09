@@ -111,11 +111,21 @@ WhiteIP 등록하여 연결 (with Chakun, Now)
 ###ajoara 백업 지원 및 성능 최적화 
 
 - 기간 : 2021.01 ~ 2021.04 (4 X 4m)
-- 사용 기술 : GCL Cloud Run, Spanner, Java, SrpingBoot, K6
+- 사용 기술 : GCP Cloud Run, Spanner, Java, SrpingBoot, K6
 - 내용 : 
     - 조아라 글로벌 프로젝트 ajoara.com의 서버 개발 
     - CloudRun + Spanner + SrpingBoot 최적화 작업 (Hammer Test : RPS 500, Scenario Test : 1500명이 4개의 API를 순서대로 2분 간격으로 호출)
     - K6 Test tool로 테스트 환경 구축
 
-### XPeare-Wallet 및 XDT 작업
-- 기간 : 2021.05 ~ 
+### 이더리움 XDT 발행 
+- 기간 : 2021.05 ~ 2021.05
+
+### XPeare-Wallet v1.0.0 서버 개발 
+
+- 기간 : 2021.08 ~ 2021.09 (3 X 1m)
+- 사용 기술 : Java, SpringBoot, GCP Cloud Run, GCP CloudSQL, Firebase,K6
+- 내용 : 
+    - XPeare Wallet 지갑 서버 개발 및 팀 리딩 
+    - CloudRun + Postgresql + SpringBoot 서버 구축
+    - 통합 테스트 코드 작성  
+    - K6로 부하 테스트 진행 (200 tps)
