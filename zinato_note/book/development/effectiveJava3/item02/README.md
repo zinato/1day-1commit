@@ -103,7 +103,6 @@ public class NutrionsFactsJavaBean {
       .sodium(35)
       .carbohydrate(27)
       .build();
-
 ```
 
 - 빌더의 세터 메서드들을 빌더 자신을 반환하기 때문에 연쇄적으로 호출할 수 있다. (method chaining)
@@ -113,3 +112,26 @@ public class NutrionsFactsJavaBean {
 - 서버 쪽 코딩이 조금 더 투자된다.
 
 ## 계층적으로 설계된 클래스와 잘 어울리는 빌더 패턴
+- 코드 참고 
+    - [Pizza.java]()
+    - [NyPizza.java]()
+    - [Calzone.java]()
+- 빌더 패턴은 계층적으로 설계된 클래스와 함께 쓰기에 좋다. 
+- NyPizza는 사이즈를 필수 매개변수로 받고 Calzone는 소스를 안에 넣을지를 필수 매개변수로 받는다. 
+- 각 하위 클래스의 빌더가 정의한 build 메서드는 각 구체 하위 클래스를 반환한다. 즉 NyPizza.Builder -> NyPizza를 반환,
+Calzone.Builder -> Calzone 를 반환
+- 위와 같이 하위 클래스의 메서드가 상위 클래스의 메서드가 정의한 반환 타입이 아닌 호출한 하위 타입을 반환하는 기능을 
+covariant return typing이라고 한다. 이 기능 때문에 형변환에 신경쓰지 않고 빌더를 사용할 수 있다. 
+  
+```java
+  NyPizza pizza = new NyPizza.Builder(SMALL)
+  .addTopping(SAUSAGE).addTopping(ONION).build();
+
+  Calzone calzone = new Calzone.Builder().addTopping(HAM).sauceInside().build();
+```
+- 빌더 패턴은 유연하다. 
+- 빌더 패턴은 빌더를 만드는 것에 생성비용, 성능에 이슈가 생길 수 있지만 점점 확장될 서비스에서는 빌더 패턴을 미리 고려하여 
+작성하는 것이 좋다. 
+  
+> 생성자나 정적 팩토리 처리해야 할 매개변수가 많다면 빌더 패턴을 고려해라~!
+> 빌더는 점층적 생성자보다 클라이언트 코드가 읽고 쓰기 쉽고 자바빈즈보다 안전하다.
