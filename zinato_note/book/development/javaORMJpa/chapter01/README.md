@@ -72,3 +72,62 @@ Album album = jpa.find(Album.class, albumId);
 ```
 
 - JPA는 ITEM과 ALBUM 두 테이블을 조인해서 필요한 데이터를 조회하고 그 결과를 반환한다.
+
+```sql
+SELECT I.*, A.* FROM ITEM I JOIN ALBUM A ON I.ITEM_ID = A.ITEM_ID
+```
+
+### 1.2.2 연관 관계
+
+- 객체는 참고를 사용해서 다른 객체와 연관관계를 가지고 참고에 접근해서 연관된 객체를 조회한다.
+- 테이블은 외래 키를 사용해서 다른 테이블과 연관 관계를 가지고 조인을 사용해서 연관된 테이블을 조회한다.
+- 위 이유로 인해 객체와 관계형 데이터베이스 사이의 패러다임 불일치가 발생한다.
+- 객체는 참조가 있는 방향으로만 조회가 가능하지만 테이블은 양쪽 모두 가능하다.
+
+#### 객체를 테이블에 맞추어 모델링
+
+- 객체를 테이블에 맞춰 작성해보자.
+
+```java
+class Member {
+  String id; //MEMEBER_ID 컬럼 
+  Long teamId; //TEAM_ID FK 컬럼 <- 문제 발생!!! 
+  String username; //USERNAME 컬럼 
+}
+
+class Team {
+  Long id; //TEAM_ID PK 
+  String name; //name 컬럼 
+}
+```
+
+- 관계형 데이터 베이스는 조인 기능 때문에 외래의 키의 값을 그대로 보관할 수 있지만 객체는 연관된 객체의 참조를 보관해야 참고를 통해 
+객체를 찾을 수 있다.
+
+```
+Team team = member.getTeam();
+```
+
+#### 객체지향 모델링
+
+- 객체는 참조를 통해서 관계를 맺는다. 객체 지향적인 방법으로 다시 코드를 작성해보자.
+
+```java
+class Member {
+  String id; //MEMEBER_ID 컬럼 
+  Team team; //참조로 연관괸계를 맺는다. 
+  String username; //USERNAME 컬럼
+  
+  Team getTeam() {
+    return team;
+  }
+}
+
+class Team {
+  Long id; //TEAM_ID PK 
+  String name; //name 컬럼
+}
+```
+
+- 객체지향 모델링을 해도 두 패러다임을 맞추기가 쉽지 않다. 객체 모델은 참조를 사용해야하고 테이블은 참조가 필요 없고 외래키만 있으면 된다. 
+- 결국 개발자가 중간 역할을 해줘야 한다.
