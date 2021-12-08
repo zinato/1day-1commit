@@ -10,13 +10,14 @@
 
 ### 토큰 스마트 컨트랙트 작성 및 블록체인 서비스 설계
 
-- 기간 : 2020.03 ~ 05
+- 기간 : 2020.03 ~ 05 (1 x 2m)
 - 사용 기술 : Solidity, Ethereum, Javascript 
 - 메인 토큰과 팬덤 토큰의 스마트 컨트랙트 작성
 - OpenZepplin을 통한 ERC20 표준 컨트랙트 구현
 - 테스트 코드 구현 (로컬, 테스트 서버)
 - 실제 Xpeare 서비스를 위한 토큰 및 루니버스 API를 통한 자체 Asset API 설계 / DB 설계
 - 보안 가이드 라인 설계
+- XDT 스마트 컨트랙트 수호에게 Audit 진행 
 
 ### Xp-soultion-Asset API - Proxy Server 구축, 통합 테스트 코드 작성 
 
@@ -29,7 +30,7 @@ WhiteIP 등록하여 연결 (with Chakun, Now)
 
 ### 2020 데이터 바우처 사업
 
-- 2020.05 ~ 12월 (아직 진행 중 마무리 단계)
+- 2020.05 ~ 12월 
 - 실무 책임자로 참여 
 - 수호와 데이터 바우처 가공 업체로 지원 '적격'
 - 코로나로 인해 발표질의응답을 비디오 녹화로 대체
@@ -40,7 +41,7 @@ WhiteIP 등록하여 연결 (with Chakun, Now)
 
 ### 쿠버네티스 학습 및 테스트 진행 
 
-- 기간 : 2020.07~ 08월
+- 기간 : 2020.07~ 08월 (1 x 3w)
 - 사용기술 : GCP, Kubernetes, Docker, Locust
 - 쿠버네티스 학습 및 사내 서버 구축을 위한 테스트 진행
 - 로드 밸런싱, 롤링 업데이트등 테스트, 동접 성능 테스트
@@ -68,7 +69,7 @@ WhiteIP 등록하여 연결 (with Chakun, Now)
  - 추천 엔진에서 Serving을 위해 Ignite 사용 가능한지에 대한 테스트
 
 ### Project D 단비 프로젝트 진행
- - 기간 : 2020.10.21 ~ 2020.11.30 
+ - 기간 : 2020.10.21 ~ 2020.11.30 (1 x 1m)
  - 사용기술 : GCP ComputeEngine, CloudSQL, Java, Javascript, FireStore 
  - 내용 :
  - Cron 프로그램 개발 
@@ -118,14 +119,42 @@ WhiteIP 등록하여 연결 (with Chakun, Now)
     - K6 Test tool로 테스트 환경 구축
 
 ### 이더리움 XDT 발행 
-- 기간 : 2021.05 ~ 2021.05
+- 기간 : 2021.05 ~ 2021.05 (1 x 1d)
+- 사용 기술 : Solidity, Truffle, Ganache, Ethereum, Chai
+- 내용 :
+  - Burn, Pause, ERC20, ERC20Detailed 테스트 진행
+  - OpenZepplelin을 활용한 XDT 토큰 스마트 컨트랙트 작성  
+  - Truffle을 활용하여 Ethereum 메인넷에 배포 
+  
 
 ### XPeare-Wallet v1.0.0 서버 개발 
 
 - 기간 : 2021.08 ~ 2021.09 (3 X 1m)
-- 사용 기술 : Java, SpringBoot, GCP Cloud Run, GCP CloudSQL, Firebase,K6
+- 사용 기술 : Java, SpringBoot, GCP Cloud Run, GCP CloudSQL, Firebase, K6, Flutter, Firebase
 - 내용 : 
     - XPeare Wallet 지갑 서버 개발 및 팀 리딩 
     - CloudRun + Postgresql + SpringBoot 서버 구축
     - 통합 테스트 코드 작성  
     - K6로 부하 테스트 진행 (200 tps)
+    - 회원 가입, 잔액 확인, 지갑 생성 기능  
+
+### XPeare-Wallet v1.0.1 서버 개발
+
+- 기간 : 2021.10 ~ 2021.11 (3 X 3 weeks)
+- 사용 기술 : Java, SpringBoot, GCP Cloud Run, GCP CloudSQL, Firebase, K6, Flutter, Firebase
+- 내용 :
+    - XPeare Wallet 지갑 서버 개발 및 팀 리딩
+    - CloudRun + Postgresql + SpringBoot 서버 구축
+    - 통합 테스트 코드 작성
+    - K6로 부하 테스트 진행 (200 tps)
+    - 토큰 전송 기능, 다날 본인 인증 기능
+
+### LaunchPad 서비스를 위한 기획 및 Auction SmartContract 기능 분석 
+
+- 기간 : 2021.11 ~ 2021.12 (6 x 1m)
+- 내용  : 
+  - NFT를 활용한 LaunchPad 서비스 기획
+    - 타사 런치패드 및 NFT MarketPlace 시장 조사 
+  - Opensea에서 사용되고 있는 서비스 조사 
+    - Auction Smart Contract 리스팅 
+    - Auction Smart Contract 코드 분석 
