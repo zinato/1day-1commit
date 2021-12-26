@@ -32,7 +32,7 @@ public class Settings {
 
 ### 멀티 쓰레드 환경에서 안전하게 구현하는 방법
 
-#### synchronized 키워드 사용 
+#### 1. synchronized 키워드 사용 
 ```
 public static synchronized  Settings getInstance() {
     if (instance == null) {
@@ -45,7 +45,7 @@ public static synchronized  Settings getInstance() {
 - synchronized 키워드로 생성하게 되면 멀티 쓰레드 상황에서 안전해진다. 
 - 하지만 getInstance()를 동기화 하는데 비용이 많이 들어 성능상 단점이 존재한다.
 
-#### 이른 초기화 (eager initialization) 사용하기 
+#### 2. 이른 초기화 (eager initialization) 사용하기 
 
 ```java
 public class Settings {
@@ -66,7 +66,7 @@ public class Settings {
   - 처음 초기화 하는 작업이 오래 걸리면 성능이 느려짐
   - 해당 객체를 사용하지 않으면 사용하지도 않는 객체를 미리 만들어두는 것이 됨(심지어 초기화도 느리면 ...)
 
-#### double checked locking 사용하기
+#### 3. double checked locking 사용하기
 
 ```java
 public class Settings {
@@ -98,7 +98,7 @@ public class Settings {
   - 멀티 쓰레드 환경에서 메모리를 관리하는 방법을 이해해야 제대로 사용할 수 있음 
   - jdk 1.5 버전 이상에서만 동작함 
 
-#### static inner 클래스 사용하기 (권장)
+#### 4. static inner 클래스 사용하기 (권장)
 
 ```java
 public class Settings {
@@ -175,4 +175,35 @@ public class Settings implements Serializable {
 }
 ```
 
+### 안전하고 단순하게 구현 하는 방법 
 
+- Enum 으로도 간단하게 구현 가능 
+- Constructor, Getter, Setter 모두 구현 가능 
+- reflection에 안전한 코드 
+- Enum Class 자체가 Serializable을 구현한 Class 
+
+```java
+public enum SettingsWithEnum {
+  INSTANCE;
+  //생성자 , Getter, Setter 모두 가능 ,
+  // reflection에 안전한 코드
+  SettingsWithEnum() {
+  }
+}
+```
+
+### 싱글톤 (Singleton) 패턴 복습 
+
+- 자바에서 enum을 사용하지 않고 싱글톤 패턴을 구현하는 방법은?
+- private 생성자와 static 메소드를 사용하는 방법의 단점은?
+- enum 을 사용해 싱글톤 패턴을 구현하는 방법의 장점과 단점은 ?
+  - 장점 : reflection에 안전, multi thread safe, 간단한 구조 
+  - 단점 : 다른 class 상속을 쓰지 못함 , 오로지 enum만 상속 가능, **lazy loading**을 사용하고 싶으면 holder를 사용한 패턴을 사용해야함.  
+- static inner 클래스를 사용해 싱글톤 패턴을 구현하라. 
+
+
+### 실무에서는 ?
+
+- 스프링에서 Bean의 스코프 중에 하나로 싱글톤 스코프.
+- 자바 java.lang.Runtime 
+- 다른 디자인 패턴(빌더, 퍼사드, 추상 팩토리 등) 구현체의 일부로 쓰이기도 함.  

@@ -6,8 +6,12 @@ import java.lang.reflect.InvocationTargetException;
 
 public class App {
   public static void main(String[] args) throws IOException, ClassNotFoundException {
+
     Settings settings1 = Settings.getInstance();
     Settings settings2 = null;
+
+    //ENUM 으로도 Singleton 구현 가능
+//    SettingsWithEnum settings3 = SettingsWithEnum.INSTANCE;
 
     try (ObjectOutput out = new ObjectOutputStream(new FileOutputStream("settings.obj"))){
       out.writeObject(settings1);
