@@ -1,0 +1,30 @@
+# my global config
+global:
+  scrape_interval:     15s # By default, scrape targets every 15 seconds.
+  evaluation_interval: 15s # By default, scrape targets every 15 seconds.
+
+rule_files:
+  # - 'alert.rules'
+  # - "first.rules"
+  # - "second.rules"
+
+# alert
+# alerting:
+#   alertmanagers:
+#   - scheme: http
+#     static_configs:
+#     - targets:
+#       - "alertmanager:9093"
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+  - job_name: 'node-exporter'
+    scrape_interval: 15s
+
+    static_configs:
+      - targets: [
+        'node-exporter-a:9100',
+        'node-exporter-b:9100',
+        'node-exporter-c:9100',
+      ]
