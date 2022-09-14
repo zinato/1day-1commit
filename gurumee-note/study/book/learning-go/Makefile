@@ -1,5 +1,6 @@
 .DEFAULT_GOAL := build
-EXAMPLE_DIR?=ch01-hello-go
+CH?=ch01
+EXAMPLE?=ch01-hello-go
 
 fmt:
 	go fmt ./...
@@ -15,5 +16,5 @@ vet: fmt
 .PHONY:vet
 
 build: vet
-	go build examples/$(EXAMPLE_DIR)/main.go
+	go build examples/$(CH)/$(EXAMPLE)/main.go
 .PHONY:build
