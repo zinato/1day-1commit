@@ -1,0 +1,37 @@
+version: "3.9"  # optional since v1.27.0
+services:  
+  grafana9:
+    container_name: grafana9
+    image: grafana/grafana:9.0.5
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./config/grafana-datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
+    environment:
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - 9090:9090
+
+  node-exporter-a:
+    container_name: node-exporter-a
+    image: prom/node-exporter
+
+  node-exporter-b:
+    container_name: node-exporter-b
+    image: prom/node-exporter
+
+  node-exporter-c:
+    container_name: node-exporter-c
+    image: prom/node-exporter
