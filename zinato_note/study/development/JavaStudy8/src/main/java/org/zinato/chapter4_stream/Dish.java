@@ -1,4 +1,4 @@
-package org.zinato.chapter4;
+package org.zinato.chapter4_stream;
 
 public class Dish {
 
