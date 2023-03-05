@@ -1,0 +1,4 @@
+This is Test for java stream.
+Hello word this is java world.
+B
+C
