@@ -1,6 +1,6 @@
 package org.zinato.java8book.chapter02.behavior_parameterization;
 
-public class PrintAppleByFormatter implements AppleFormatter{
+public class AppleFancyFormatter implements AppleFormatter{
   @Override
   public String accept(Apple a) {
     String weight = a.getWeight() > 150 ? " Heavy " : " Lower ";
