@@ -72,4 +72,18 @@ public static <T> Collector<T, ?, Long> counting() {
 }
 ```
 
-P208
+- reduce 보다 joining을 사용하는 것이 가독성, 성능 면에서 더 좋음
+```
+String shortMenu = menu.stream().map(Dish::getName).collect(joining());
+String shortMenu = menu.stream().collect(reducing("", Dish::getName, (s1, s2) -> s1+s2));
+String shortMenu = menu.stream().collect(reducing((s1, s2) -> s1+s2)).get();
+```
+
+### 6.3 그룹화 
+
+- Collectors.groupingBy를 이용해서 쉽게 그룹화 
+
+P218
+
+
+
