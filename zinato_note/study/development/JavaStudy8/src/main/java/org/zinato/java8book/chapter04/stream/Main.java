@@ -1,4 +1,4 @@
-package org.zinato.java8book.chapter04_stream;
+package org.zinato.java8book.chapter04.stream;
 
 import java.io.IOException;
 import java.nio.charset.Charset;
