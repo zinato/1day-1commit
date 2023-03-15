@@ -83,7 +83,127 @@ String shortMenu = menu.stream().collect(reducing((s1, s2) -> s1+s2)).get();
 
 - Collectors.groupingBy를 이용해서 쉽게 그룹화 
 
-P218
+#### groupingBy와 함께 사용하는 다른 컬렉터 예제
+
+- 메뉴에 있는 모든 요리의 칼로리 합계
+```java
+Map<Dish.Type, Integer> totalCaloriesByType = 
+  menu.stream().collect(groupingBy(Dish::getType), summingInt(Dish::getCalories));
+```
+
+### 6.4 분할
+
+- 분할은 분할 함수 (partitioning function)라 불리는 프레디케이트를 분류 함수로 사용하는 특수한 
+그룹 기능이다.
+- 분할 함수는 boolean을 반환하므로 맵의 키 형식은 Boolean이다.
+- 채식 요리와 채식이 아닌 요리 분류
+```java
+Map<Boolean, List<Dish>> partitionedMenu = 
+  menu.stream().collect(partitioningBy(Dish::isVegetarian));
+
+// 참 값의 키로 맵에서 모든 채식 요리를 얻을 수 있다.
+        
+List<Dish> vegetarianDished = partitionedMenu.get(true);
+
+// 또는 리스트로 생성한 스트림을 프레디케이트로 필터링해서 사용도 가능 
+List<Dish> vegetarianDished = 
+  menu.stream().filter(Dish::isVegetarian).collect(toList());
+```
+
+#### 6.4.1 분할의 강점
+
+- 분할 함수가 반환하는 참, 거짓 두 가지 요소의 스트림 리스트를 모두 유지한다는 것이 분할의 장점이다.
+- 분할이란 특수한 종류의 그룹화, partitioningBy는 사실 내부적으로 특수한 맵과 두개의 필드로 구현
+- partitioningBy 는 반환한 맵 구현은 참과 거짓 두가지 키만 포함하므로 간결하고 효과적
+
+#### 6.4.2 숫자를 소수와 비소수로 분할하기
+````java
+public boolean isPrime(int candidate) {
+    return IntStream.range(2, candidate).noneMatch(i -> candidate % i == 0);
+  }
+
+  public Map<Boolean, List<Integer>> partitionPrimes(int n) {
+    return IntStream.rangeClosed(2, n).boxed()
+        .collect(partitioningBy(candidate -> isPrime(candidate)));
+  }
+````
+
+##### Collectors 클래스의 정적 팩토리 메서드
+
+- counting <Long> : 스트림의 항목 수 계산
+```java
+long howmanyDishes = menu.stream().collect(counting());
+```
+
+- summingInt <Integer> : 스트리밍의 항목에서 정수 프로퍼티 값을 더 함
+```java
+int totalCalories = menu.stream().collect(summingInt(Dish::getCalories));
+```
+
+- summarizingInt <IntSummaryStatistics> : 스트림 내 항목의 최대값, 최솟값, 합계, 평균 등의 정수 정보 통계 수집
+```java
+IntSummaryStatistics menuStatistics =
+        menu.stream().collect(summarizingInt(Dish::getCalories));
+```
+
+- joining <String> : 스트림의 각 항목에 toString 메서드를 호출한 결과 문자열 연결
+```java
+String shorMenu = menu.stream().map(Dish::getName).collect(Collectors.joining(", "));
+```
+
+- averagingInt <Double> : 스트림 항목의 정수 프로퍼티의 평균값 계산
+- maxBy <Optional<T>> : 주어진 비교자를 이용해서 스트림의 최댓값 요소를 Optional로 감싼 값을 반환,
+스트림에 요소가 없을 때는 Optional.empty() 반환
+- minBy<Optional<T>> : max 반대 
+- reducing : 누적자를 초깃값으로 설정한 다음에 BinaryOperator로 스트림의 각 요소를 반복적으로 누적자와 합쳐 
+스트림을 하나의 값으로 리듀싱
+```java
+int totalCalories = 
+  menu.stream().collect(reducing(0, Dish::getCalories, Integer::sum));
+```
+
+- collectiongAndThen : 다른 컬렉터를 감싸고 그 결과 변환 함수 적용
+```java
+int howManyDished = 
+  menu.stream().collect(collectingAndThen(toList(), List::size));
+```
+
+- groupingBy <Map<K, List<T>> : 하나의 프로퍼티 값을 기준으로 스트림의 항목을 그룹화하며 기준 프로퍼티 값을 결과 맵의 키로 사용
+```java
+Map<Dish.Type, List<Dish>> dishesByType =
+        menu.stream().collect(groupingBy(Dish::getType));
+```
+- partitioningBy <Map<Boolean, List<T>>> : 프레디케이트를 스트림의 각 항목에 적용한 결과로 항목 분할
+```java
+Map<Boolean, List<Dish>> vegetarianDishes =
+        menu.stream().collect(partitioningBy(Dish::isVegetarian));
+```
+
+### 6.5 Collector 인터페이스
+
+```java
+public interface Collector<T, A, R> {
+
+  Supplier<A> supplier();
+
+  BiConsumer<A, T> accumulator();
+
+  Function<A, R> finisher();
+
+  BinaryOperator<A> combiner();
+
+  Set<Characteristics> characteristics();
+}
+```
+
+- T는 수집될 스트림 항목의 제네릭 형식
+- A는 누적자, 즉 수집 과정에서 중간 결과를 누적하는 객체의 형식
+- R은 수집 연산 결과 객체의 형식 (항상은 아니지만 대개 컬렉션 형식)
+
+#### 6.5.1 Collector 인터페이스의 메서드 살펴보기 P227
+
+
+
 
 
 
