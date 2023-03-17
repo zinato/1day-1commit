@@ -89,7 +89,8 @@ public class Main {
 
     System.out.println(vegetarianDishes);
     List<Dish> dishes = vegetarianDishes.get(true);
-    System.out.println("true : " +  dishes);
+//    System.out.println("true : " +  dishes);
+    dishes.forEach(System.out::println);
 
 
   }
